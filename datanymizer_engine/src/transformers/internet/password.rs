@@ -7,6 +7,29 @@ pub struct MinValue(usize);
 #[derive(Serialize, Deserialize, PartialEq, Eq, Hash, Clone, Debug)]
 pub struct MaxValue(usize);
 
+/// Transformer generates random passwords.
+/// You can set minimum and maximum string length
+///
+/// # Examples
+///
+/// With default values:
+/// ```yaml
+/// #...
+/// rules:
+///   field_name:
+///     password: {}
+/// ```
+///
+/// with custom length:
+///
+/// ```yaml
+/// #...
+/// rules:
+///   field_name:
+///     password:
+///       min: 5
+///       max: 10
+/// ```
 #[derive(Serialize, Deserialize, PartialEq, Eq, Hash, Clone, Debug)]
 pub struct PasswordTransformer {
     #[serde(default)]
