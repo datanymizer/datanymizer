@@ -1,0 +1,21 @@
+[package]
+name = "pg_dump_faker"
+version = "0.1.0"
+authors = ["Aleksandr Kirillov <saratovsource@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0"
+datanymizer_dumper = {path = "../../datanymizer_dumper"}
+datanymizer_engine = {path = "../../datanymizer_engine"}
+postgres = "0.18.1"
+structopt = "0.3.20"
+url = "2.2"
+
+[profile.release]
+opt-level = 'z'  # Optimize for size
+lto = true
+codegen-units = 1
+panic = 'abort'

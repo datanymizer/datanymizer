@@ -1,0 +1,6 @@
+[workspace]
+members = [
+"datanymizer_engine",
+"datanymizer_dumper",
+"cli/pg_dump_faker",
+]
