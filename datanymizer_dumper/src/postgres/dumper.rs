@@ -3,8 +3,6 @@ use super::schema_inspector::PgSchemaInspector;
 use super::table::PgTable;
 use crate::{Dumper, SchemaInspector, Table};
 use anyhow::Result;
-use csv::Writer;
-use csv::{Reader, StringRecord};
 use datanymizer_engine::{Engine, Settings};
 use indicatif::{HumanDuration, ProgressBar, ProgressStyle};
 use postgres::Client;
@@ -98,16 +96,16 @@ impl Dumper for PgDumper {
                 self.dump_writer.write_all(b"\n")?;
                 self.dump_writer.write_all(&table.query_from().as_bytes())?;
                 self.dump_writer.write_all(b"\n")?;
-                let mut rdr = Reader::from_reader(reader);
-                rdr.set_headers(StringRecord::from(table.get_columns_names()));
-                for line in rdr.records() {
+                for line in reader.lines() {
                     // Tick for bar
                     pb.inc(1);
 
                     let l = line?;
-                    let row = PgRow::from_string_row(l, table.clone());
-                    let transformed_row = row.transform(&self.engine)?;
-                    Writer::from_writer(&self.dump_writer).write_record(&transformed_row)?;
+                    let row = PgRow::from_string_row(l.to_string(), table.clone());
+                    let transformed = row.transform(&self.engine)?;
+                    // Writer::from_writer(&self.dump_writer).write_record(&transformed_row)?;
+                    self.dump_writer.write_all(transformed.as_bytes())?;
+                    self.dump_writer.write_all(b"\n")?;
                 }
                 self.dump_writer.write_all(b"\\.\n")?;
                 pb.finish();

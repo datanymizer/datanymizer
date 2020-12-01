@@ -47,8 +47,8 @@ impl From<PostgresRow> for PgColumn {
 }
 
 impl ColumnData<Type> for PgColumn {
-    fn position(&self) -> i32 {
-        self.position - 1
+    fn position(&self) -> usize {
+        (self.position - 1) as usize
     }
 
     fn name(&self) -> &str {
