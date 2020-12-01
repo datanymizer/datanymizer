@@ -281,7 +281,6 @@ name = "datanymizer_dumper"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "csv",
  "datanymizer_engine",
  "indicatif",
  "postgres",

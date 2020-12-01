@@ -136,7 +136,7 @@ pub trait Table<T>: Sized + Send + Clone + Eq + Hash {
 }
 
 pub trait ColumnData<T> {
-    fn position(&self) -> i32;
+    fn position(&self) -> usize;
     fn name(&self) -> &str;
     fn inner_kind(&self) -> Option<T>;
 }

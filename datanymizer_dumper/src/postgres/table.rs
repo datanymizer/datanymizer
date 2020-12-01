@@ -61,17 +61,17 @@ impl Table<Type> for PgTable {
 impl PgTable {
     pub fn query_to(&self) -> String {
         format!(
-            "COPY {}({}) TO STDOUT WITH(FORMAT CSV, NULL '\\N', FORCE_QUOTE *)",
+            "COPY {}({}) TO STDOUT",
             self.get_full_name(),
-            self.quoted_columns().join(","),
+            self.quoted_columns().join(", "),
         )
     }
 
     pub fn query_from(&self) -> String {
         format!(
-            "COPY {}({}) FROM STDIN WITH CSV NULL '\\N';",
+            "COPY {}({}) FROM STDIN;",
             self.get_full_name(),
-            self.quoted_columns().join(","),
+            self.quoted_columns().join(", "),
         )
     }
 
