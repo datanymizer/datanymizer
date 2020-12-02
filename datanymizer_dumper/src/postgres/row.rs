@@ -2,6 +2,7 @@ use crate::{ColumnData, Table};
 use anyhow::Result;
 use datanymizer_engine::{Engine, StringValue};
 use postgres::types::Type;
+use std::char;
 
 #[derive(Debug)]
 pub struct PgRow<T>
@@ -27,7 +28,8 @@ where
     /// Returs new StringRecord for store in dump
     pub fn transform(&self, engine: &Engine) -> Result<String> {
         let mut result: Vec<String> = Vec::new();
-        let cols: Vec<&str> = self.source.split('\t').collect();
+        let split_char: char = char::from_u32(0x0009).unwrap();
+        let cols: Vec<&str> = self.source.split(split_char).collect();
         for col in self.table.get_columns().iter() {
             let pos = col.position();
             let value = cols.get(pos).unwrap_or(&"");
