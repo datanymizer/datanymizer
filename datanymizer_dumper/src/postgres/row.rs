@@ -30,8 +30,8 @@ where
         let mut result: Vec<String> = Vec::new();
         let split_char: char = char::from_u32(0x0009).unwrap();
         let cols: Vec<&str> = self.source.split(split_char).collect();
-        for col in self.table.get_columns().iter() {
-            let pos = col.position();
+        for (ind, col) in self.table.get_columns().iter().enumerate() {
+            let pos = ind;
             let value = cols.get(pos).unwrap_or(&"");
             let mut dto = StringValue {
                 table_name: self.table.get_name().clone(),
