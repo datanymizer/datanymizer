@@ -4,6 +4,6 @@ use crate::transformer::TransformError;
 
 #[derive(Error, Debug)]
 pub enum EngineError {
-    #[error("Transform for `{0}` is failed")]
+    #[error("Failed transform {0}")]
     TransformFieldError(TransformError),
 }
