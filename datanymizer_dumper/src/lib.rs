@@ -12,7 +12,6 @@ pub trait Dumper: 'static + Sized + Send {
     type Table;
     type Connection;
     type SchemaInspector: SchemaInspector<Dumper = Self>;
-    type DumpWriter: Write;
 
     /// Process steps
     fn dump(&mut self, connection: &mut Self::Connection) -> Result<()> {

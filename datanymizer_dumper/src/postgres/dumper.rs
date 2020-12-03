@@ -18,6 +18,7 @@ pub struct PgDumper {
     engine: Engine,
     dump_writer: File,
     pg_dump_location: String,
+    progress_bar: Option<ProgressBar>,
 }
 
 impl PgDumper {
@@ -33,14 +34,42 @@ impl PgDumper {
             dump_writer,
             pg_dump_location,
             schema_inspector: PgSchemaInspector {},
+            progress_bar: None,
         })
+    }
+
+    fn init_progress_bar(&self, tsize: u64, prefix: &str) {
+        if let Some(pb) = &self.progress_bar {
+            let delta = tsize / 100;
+            pb.set_length(tsize);
+            pb.set_draw_delta(delta);
+            pb.set_prefix(prefix);
+            pb.set_style(
+                ProgressStyle::default_bar()
+                    .template(
+                        "[Dumping: {prefix}] [|{bar:50}|] {pos} of {len} rows [{percent}%] ({eta})",
+                    )
+                    .progress_chars("#>-"),
+            );
+        };
+    }
+
+    fn finish_progress_bar(&self) {
+        if let Some(pb) = &self.progress_bar {
+            pb.finish_and_clear();
+        }
+    }
+
+    fn tick_progress_bar(&self) {
+        if let Some(pb) = &self.progress_bar {
+            pb.inc(1);
+        }
     }
 }
 
 impl Dumper for PgDumper {
     type Connection = Client;
     type SchemaInspector = PgSchemaInspector;
-    type DumpWriter = File;
     type Table = PgTable;
 
     fn schema_inspector(&self) -> Self::SchemaInspector {
@@ -77,16 +106,9 @@ impl Dumper for PgDumper {
                 table.get_full_name()
             );
             if self.filter_table(table.get_full_name(), &settings.filter) {
-                let tsize: u64 = table.get_size() as u64;
-                let pb = ProgressBar::new(tsize);
-                let delta = tsize / 100;
-                pb.set_draw_delta(delta);
-                pb.set_prefix(&table.get_full_name());
-                pb.set_style(ProgressStyle::default_bar().template(
-                    "[Dumping: {prefix}] [|{bar:50}|] {pos} of {len} rows [{percent}%] ({eta})",
-                ).progress_chars("#>-"));
-
                 let started = Instant::now();
+
+                self.init_progress_bar(table.get_size() as u64, &table.get_full_name());
 
                 let qt = table.query_to();
                 let reader = tr.copy_out(qt.as_str())?;
@@ -98,7 +120,7 @@ impl Dumper for PgDumper {
                 self.dump_writer.write_all(b"\n")?;
                 for line in reader.lines() {
                     // Tick for bar
-                    pb.inc(1);
+                    self.tick_progress_bar();
 
                     let l = line?;
                     let row = PgRow::from_string_row(l.to_string(), table.clone());
@@ -108,7 +130,8 @@ impl Dumper for PgDumper {
                     self.dump_writer.write_all(b"\n")?;
                 }
                 self.dump_writer.write_all(b"\\.\n")?;
-                pb.finish();
+                self.finish_progress_bar();
+
                 let finished = started.elapsed();
                 println!(
                     "[Dumping: {}] Finished in {}",
