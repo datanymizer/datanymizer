@@ -1,3 +1,5 @@
+use super::deserialize_phone_format;
+use super::phone_format::PhoneFormat;
 use crate::{
     add_to_collector,
     transformer::{Globals, TransformResult, TransformResultHelper, Transformer},
@@ -6,21 +8,18 @@ use fake::Fake;
 use serde::{Deserialize, Serialize};
 use std::char;
 
-const DEFAULT_FORMAT: &str = "+###########";
-
 #[derive(Serialize, Deserialize, PartialEq, Eq, Hash, Debug, Clone)]
 pub struct PhoneTransformer {
-    pub format: Option<String>,
+    #[serde(deserialize_with = "deserialize_phone_format", default)]
+    pub format: Option<PhoneFormat>,
 
     #[serde(default)]
     pub uniq: bool,
 }
 
 impl PhoneTransformer {
-    fn format(&self) -> String {
-        self.format
-            .clone()
-            .unwrap_or_else(|| DEFAULT_FORMAT.to_string())
+    fn phone_format(&self) -> PhoneFormat {
+        self.format.clone().unwrap_or_default()
     }
 
     fn transform_simple(
@@ -31,7 +30,8 @@ impl PhoneTransformer {
     ) -> String {
         let mut rng = rand::thread_rng();
 
-        self.format()
+        self.phone_format()
+            .source_format
             .chars()
             .map(|x| match x {
                 '^' => char::from_digit((1..10).fake_with_rng::<u32, _>(&mut rng), 10).unwrap(),
@@ -47,12 +47,7 @@ impl PhoneTransformer {
         field_value: &str,
         globals: &Option<Globals>,
     ) -> Option<String> {
-        let uniq_len = self.format().len() as u32;
-        let mut retry_count = if uniq_len > 10 || uniq_len < 2 {
-            10
-        } else {
-            uniq_len.pow(uniq_len - 1)
-        };
+        let mut retry_count = self.phone_format().invariants();
         while retry_count > 0 {
             let val = self.transform_simple(field_name, field_value, globals);
             if add_to_collector(val.clone()) {
@@ -84,7 +79,16 @@ impl Transformer for PhoneTransformer {
         if self.uniq {
             match self.transform_uniq(field_name, field_value, globals) {
                 Some(val) => TransformResult::present(val),
-                None => TransformResult::error(field_name, field_value, "Retry limit exceeded"),
+                None => {
+                    let phone_format = self.phone_format();
+                    let message = format!(
+                        "field: `{}` with retry limit: `{}` exceeded for format: `{}`",
+                        field_name,
+                        phone_format.invariants(),
+                        phone_format.source_format
+                    );
+                    TransformResult::error(field_name, field_value, &message)
+                }
             }
         } else {
             TransformResult::present(self.transform_simple(field_name, field_value, globals))

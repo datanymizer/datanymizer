@@ -37,7 +37,7 @@ impl TransformResultHelper for TransformResult {}
 
 impl Display for TransformError {
     fn fmt(&self, formatter: &mut Formatter) -> fmt::Result {
-        write!(formatter, "failed to transform field: {}", self.reason)
+        write!(formatter, "{}", self.reason)
     }
 }
 
