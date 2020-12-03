@@ -3,7 +3,7 @@ use core::iter::Iterator;
 use datanymizer_engine::{Filter, Settings};
 use indicatif::HumanDuration;
 use solvent::DepGraph;
-use std::{collections::HashMap, hash::Hash, io::Write, time::Instant};
+use std::{collections::HashMap, hash::Hash, time::Instant};
 
 pub mod postgres;
 
@@ -21,7 +21,7 @@ pub trait Dumper: 'static + Sized + Send {
         self.post_data(connection)?;
 
         let finished = started.elapsed();
-        println!("Full Dump finished in {}", HumanDuration(finished));
+        self.debug(format!("Full Dump finished in {}", HumanDuration(finished)));
         Ok(())
     }
 
@@ -49,6 +49,8 @@ pub trait Dumper: 'static + Sized + Send {
     fn settings(&mut self) -> Settings;
 
     fn write_log(&mut self, message: String) -> Result<()>;
+
+    fn debug(&self, message: String);
 }
 
 pub trait SchemaInspector: 'static + Sized + Send + Clone {

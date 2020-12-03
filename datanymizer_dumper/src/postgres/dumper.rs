@@ -1,69 +1,51 @@
 use super::row::PgRow;
 use super::schema_inspector::PgSchemaInspector;
 use super::table::PgTable;
+use super::writer::DumpWriter;
 use crate::{Dumper, SchemaInspector, Table};
 use anyhow::Result;
 use datanymizer_engine::{Engine, Settings};
 use indicatif::{HumanDuration, ProgressBar, ProgressStyle};
 use postgres::Client;
-use std::{
-    fs::{File, OpenOptions},
-    io::prelude::*,
-    process::Command,
-    time::Instant,
-};
+use std::{io::prelude::*, process::Command, time::Instant};
 
 pub struct PgDumper {
     schema_inspector: PgSchemaInspector,
     engine: Engine,
-    dump_writer: File,
+    dump_writer: DumpWriter,
     pg_dump_location: String,
-    progress_bar: Option<ProgressBar>,
+    progress_bar: ProgressBar,
 }
 
 impl PgDumper {
-    pub fn new(engine: Engine, pg_dump_location: String) -> Result<Self> {
-        let destination = engine.settings.destination()?;
-        let dump_writer = OpenOptions::new()
-            .write(true)
-            .create_new(true)
-            .open(destination)?;
-
+    pub fn new(engine: Engine, pg_dump_location: String, target: Option<String>) -> Result<Self> {
+        let dump_writer = DumpWriter::new(target)?;
+        let pb: ProgressBar = if dump_writer.can_log_to_stdout() {
+            ProgressBar::new(0)
+        } else {
+            ProgressBar::hidden()
+        };
         Ok(Self {
             engine,
             dump_writer,
             pg_dump_location,
             schema_inspector: PgSchemaInspector {},
-            progress_bar: None,
+            progress_bar: pb,
         })
     }
 
     fn init_progress_bar(&self, tsize: u64, prefix: &str) {
-        if let Some(pb) = &self.progress_bar {
-            let delta = tsize / 100;
-            pb.set_length(tsize);
-            pb.set_draw_delta(delta);
-            pb.set_prefix(prefix);
-            pb.set_style(
-                ProgressStyle::default_bar()
-                    .template(
-                        "[Dumping: {prefix}] [|{bar:50}|] {pos} of {len} rows [{percent}%] ({eta})",
-                    )
-                    .progress_chars("#>-"),
-            );
-        };
-    }
-
-    fn finish_progress_bar(&self) {
-        if let Some(pb) = &self.progress_bar {
-            pb.finish_and_clear();
-        }
-    }
-
-    fn tick_progress_bar(&self) {
-        if let Some(pb) = &self.progress_bar {
-            pb.inc(1);
-        }
+        let delta = tsize / 100;
+        self.progress_bar.set_length(tsize);
+        self.progress_bar.set_draw_delta(delta);
+        self.progress_bar.set_prefix(prefix);
+        self.progress_bar.set_style(
+            ProgressStyle::default_bar()
+                .template(
+                    "[Dumping: {prefix}] [|{bar:50}|] {pos} of {len} rows [{percent}%] ({eta})",
+                )
+                .progress_chars("#>-"),
+        );
     }
 }
 
@@ -78,33 +60,33 @@ impl Dumper for PgDumper {
 
     // Stage before dumping data. It makes dump schema with any options
     fn pre_data(&mut self, _connection: &mut Self::Connection) -> Result<()> {
-        println!("Prepare data scheme...");
+        self.debug("Prepare data scheme...".into());
         let dump_output = Command::new(&self.pg_dump_location)
             .args(&["--section", "pre-data"])
             .arg(self.engine.settings.source.get_database_url())
             .output()?;
         self.dump_writer
             .write_all(&dump_output.stdout)
-            .map_err(|e| e.into())
+            .map_err(|e| e)
     }
 
     // This stage makes dump data only
     fn data(&mut self, connection: &mut Self::Connection) -> Result<()> {
         let settings = self.settings();
         self.write_log("Start dumping data".into())?;
-        //TODO: Return combined error from results
+        self.debug("Fetch tables metadata...".into());
         let mut tables = self.schema_inspector().ordered_tables(connection);
         tables.sort_by(|a, b| b.1.cmp(&a.1));
         let all_tables_count = tables.len();
         // In transaction
         let mut tr = connection.transaction()?;
         for (ind, (table, _weidth)) in tables.iter().enumerate() {
-            println!(
+            self.debug(format!(
                 "[{} / {}] Prepare to dump table: {}",
                 ind + 1,
                 all_tables_count,
-                table.get_full_name()
-            );
+                table.get_full_name(),
+            ));
             if self.filter_table(table.get_full_name(), &settings.filter) {
                 let started = Instant::now();
 
@@ -120,7 +102,7 @@ impl Dumper for PgDumper {
                 self.dump_writer.write_all(b"\n")?;
                 for line in reader.lines() {
                     // Tick for bar
-                    self.tick_progress_bar();
+                    self.progress_bar.inc(1);
 
                     let l = line?;
                     let row = PgRow::from_string_row(l.to_string(), table.clone());
@@ -130,16 +112,17 @@ impl Dumper for PgDumper {
                     self.dump_writer.write_all(b"\n")?;
                 }
                 self.dump_writer.write_all(b"\\.\n")?;
-                self.finish_progress_bar();
+                self.progress_bar.finish();
+                self.progress_bar.reset();
 
                 let finished = started.elapsed();
-                println!(
+                self.debug(format!(
                     "[Dumping: {}] Finished in {}",
                     table.get_full_name(),
-                    HumanDuration(finished)
-                );
+                    HumanDuration(finished),
+                ));
             } else {
-                println!("[Dumping: {}] --- SKIP ---", table.get_full_name());
+                self.debug(format!("[Dumping: {}] --- SKIP ---", table.get_full_name()));
             }
         }
 
@@ -149,14 +132,14 @@ impl Dumper for PgDumper {
 
     // This stage mekes dump foreign keys, indeces and other...
     fn post_data(&mut self, _connection: &mut Self::Connection) -> Result<()> {
-        println!("Finishing with indexes...");
+        self.debug("Finishing with indexes...".into());
         let dump_output = Command::new(&self.pg_dump_location)
             .args(&["--section", "post-data"])
             .arg(self.engine.settings.source.get_database_url())
             .output()?;
         self.dump_writer
             .write_all(&dump_output.stdout)
-            .map_err(|e| e.into())
+            .map_err(|e| e)
     }
 
     fn settings(&mut self) -> Settings {
@@ -166,6 +149,12 @@ impl Dumper for PgDumper {
     fn write_log(&mut self, message: String) -> Result<()> {
         self.dump_writer
             .write_all(format!("\n---\n--- {}\n---\n", message).as_bytes())
-            .map_err(|e| e.into())
+            .map_err(|e| e)
+    }
+
+    fn debug(&self, message: String) {
+        if self.dump_writer.can_log_to_stdout() {
+            println!("{}", message)
+        }
     }
 }

@@ -51,7 +51,6 @@ impl SchemaInspector for PgSchemaInspector {
         &self,
         connection: &mut <Self::Dumper as Dumper>::Connection,
     ) -> Result<Vec<Self::Table>> {
-        println!("Fetch tables metadata...");
         let mut counter = 0;
         let items: Vec<Self::Table> = connection
             .query(PG_CATALOG_SCHEMA, &[])?
@@ -64,16 +63,11 @@ impl SchemaInspector for PgSchemaInspector {
 
                 match self.get_table_size(connection, table.get_name()) {
                     Ok(size) => table.size = size as i64,
-                    Err(e) => println!("ERR: {}", e),
+                    Err(e) => panic!("ERR: {}", e),
                 }
 
                 counter += 1;
 
-                println!(
-                    "[{}] Fetched table info for: {}",
-                    counter,
-                    table.get_full_name()
-                );
                 table
             })
             .collect();

@@ -60,18 +60,14 @@ pub struct Options {
 
 impl Options {
     pub fn database_url(&self) -> Result<String> {
-        match Url::parse(self.database.as_str()) {
-            Ok(url) => {
-                if url.scheme() == "postgres" {
-                    return Ok(url.to_string());
-                } else {
-                    return Err(anyhow!("Scheme url error"));
-                }
+        if let Ok(url) = Url::parse(self.database.as_str()) {
+            if url.scheme() == "postgres" {
+                return Ok(url.to_string());
+            } else {
+                return Err(anyhow!("Scheme url error"));
             }
-            Err(_) => (),
-        };
-
-        return self.build_url(Some(self.database.to_string()).filter(|x| !x.is_empty()));
+        }
+        self.build_url(Some(self.database.to_string()).filter(|x| !x.is_empty()))
     }
 
     fn build_url(&self, override_db_name: Option<String>) -> Result<String> {
