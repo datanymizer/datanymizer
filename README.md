@@ -2,7 +2,7 @@
 
 Simple data anonymizer with flexible rules.
 
-## Supperted databases
+## Supported databases
 
 - [x] Postgresql
 - [ ] MySQL or MariaDB (TODO)
