@@ -1,13 +1,43 @@
 use super::deserialize_phone_format;
 use super::phone_format::PhoneFormat;
 use crate::{
-    add_to_collector,
     transformer::{Globals, TransformResult, TransformResultHelper, Transformer},
+    uniq_collector::add_to_collector,
 };
 use fake::Fake;
 use serde::{Deserialize, Serialize};
 use std::char;
 
+/// Generates phone numbers by template
+///
+/// # Example:
+///
+/// ```yaml
+/// #...
+/// rules:
+///   field_name:
+///     phone:
+///       format: +^##########
+/// ```
+/// where:
+/// * `format` - you can specify format for you phone number
+/// * `#` - any digit from `0` to `9`
+/// * `^` - any digit from `1` to `9`
+/// Also, you can use any other symbols in `format`, like: `^##-00-### (##-##)`
+///
+/// If you want to generate unique phone numbers, use this option:
+///
+/// ```yaml
+/// #...
+/// rules:
+///   field_name:
+///     phone:
+///       format: +^12345678##
+///       uniq: true
+/// ```
+/// The transformer will collect information about generated numbers and check their uniqueness.
+/// If such a number already exists in the list, then the transformer will try to generate the value again.
+/// The number of attempts is limited by the number of available invariants based on the `format`.
 #[derive(Serialize, Deserialize, PartialEq, Eq, Hash, Debug, Clone)]
 pub struct PhoneTransformer {
     #[serde(deserialize_with = "deserialize_phone_format", default)]
@@ -138,11 +168,10 @@ mod tests {
         let transformer: Transformers = serde_yaml::from_str(config).unwrap();
 
         let mut phones: Vec<TransformResult> = vec![];
-        for _ in 0..9 {
+        for _ in 0..7 {
             phones.push(transformer.transform("field", "value", &None));
         }
 
-        /// If the number of invariants is less than the number of generated values
         assert!(phones.iter().any(|x| x.is_err()))
     }
 }

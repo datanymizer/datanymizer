@@ -3,6 +3,16 @@ use fake::{faker::number::raw::*, locales::EN, Fake};
 use rand::distributions::{Distribution, Uniform};
 use serde::{Deserialize, Serialize};
 
+/// Generates digit from `0` to `9`
+///
+/// # Example:
+///
+/// ```yaml
+/// #...
+/// rules:
+///   field_name:
+///     digit: ~
+/// ```
 #[derive(Serialize, Deserialize, PartialEq, Eq, Hash, Debug, Clone)]
 pub struct DigitTransformer;
 
@@ -23,6 +33,29 @@ pub struct MinValue(usize);
 #[derive(Serialize, Deserialize, PartialEq, Eq, PartialOrd, Hash, Clone, Debug)]
 pub struct MaxValue(usize);
 
+/// Generates random number from `min` to `max` range.
+///
+/// # Example:
+///
+/// with default values:
+///
+/// ```yaml
+/// #...
+/// rules:
+///   field_name:
+///     random_num: {}
+/// ```
+///
+/// or with custom range:
+///
+/// ```yaml
+/// #...
+/// rules:
+///   field_name:
+///     random_num:
+///       min: 10
+///       max: 20
+/// ```
 #[derive(Serialize, Deserialize, PartialEq, Eq, Hash, Clone, Debug)]
 pub struct RandomNumberTransformer {
     #[serde(default)]

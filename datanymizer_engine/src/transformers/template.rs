@@ -10,6 +10,30 @@ use tera::{Context, Tera};
 
 const TEMPLATE_NAME: &str = "TemplateTransformerTemplate";
 
+/// Using a templating engine to generate or transform values.
+/// [Tera](https://tera.netlify.app/) is used as a template engine in this transformer.
+///
+/// # Example:
+///
+/// ```yaml
+/// #...
+/// rules:
+///   field_name:
+///     template:
+///       format: "Hello, {{name}}! {{_1}}:{{_0 | upper}}
+///       rules:
+///         - email:
+///             kind: Safe
+///       variables:
+///         name: Alex
+/// ```
+///
+/// where:
+/// * `_0` - transformed value;
+/// * `_1` and `_N` - Rules by index (started from `1`). You can use any transformer from engine;
+/// * `{{name}}` - Named variable from `variables` config;
+///
+/// Also, you can use any filter or markup from [Tera](tera.netlify.app/) template engine.
 #[derive(Serialize, Deserialize, PartialEq, Eq, Debug, Clone)]
 pub struct TemplateTransformer {
     pub format: String,
@@ -93,7 +117,7 @@ mod test {
 
     #[test]
     fn tempalte_interpolation() {
-        let expected: String = String::from("Hello, Alex! rule:field_value, global: test");
+        let expected: String = String::from("Hello, ALEX! Any text with replace:Dr, global: test");
         let mut global_values = Globals::new();
         global_values.insert(
             "global_value_1".to_string(),
@@ -102,17 +126,17 @@ mod test {
 
         let config = r#"
 template:
-    format: "Hello, {{name}}! {{_1}}:{{_0}}, global: {{ global_value_1 }}"
+    format: "Hello, {{name | upper }}! {{_1}} with replace:{{_0 | replace(from=\"Mr\", to=\"Dr\")}}, global: {{ global_value_1 }}"
     rules:
       - template:
-            format: rule
+            format: Any text
     variables:
         name: Alex
 "#;
 
         let transformer: Transformers = serde_yaml::from_str(config).unwrap();
 
-        let res = transformer.transform("", "field_value", &Some(global_values));
+        let res = transformer.transform("", "Mr", &Some(global_values));
         assert_eq!(res, Ok(Some(expected)));
     }
 }

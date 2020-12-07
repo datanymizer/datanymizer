@@ -4,9 +4,29 @@ use fake::locales::EN;
 use fake::Fake;
 use serde::{Deserialize, Serialize};
 
+/// First name transformer
+///
+/// # Example:
+///
+/// ```yaml
+/// #...
+/// rules:
+///   field_name:
+///     first_name: ~
+/// ```
 #[derive(Serialize, Deserialize, PartialEq, Eq, Hash, Clone, Debug, Default)]
 pub struct FirstNameTransformer;
 
+/// Last name transformer
+///
+/// # Example:
+///
+/// ```yaml
+/// #...
+/// rules:
+///   field_name:
+///     last_name: ~
+/// ```
 #[derive(Serialize, Deserialize, PartialEq, Eq, Hash, Clone, Debug, Default)]
 pub struct LastNameTransformer;
 

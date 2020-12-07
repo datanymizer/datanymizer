@@ -2,11 +2,11 @@ use super::transformer::{TransformResult, Transformer};
 use crate::transformer::Globals;
 use serde::{Deserialize, Serialize};
 
-mod none;
+pub mod none;
 pub use none::NoneTransformer;
 
 mod internet;
-pub use internet::{EmailTransformer, IpTransformer, PasswordTransformer};
+pub use internet::{EmailKind, EmailTransformer, IpTransformer, PasswordTransformer};
 
 mod lorem;
 pub use lorem::WordsTransformer;

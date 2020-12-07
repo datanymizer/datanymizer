@@ -4,6 +4,16 @@ use fake::locales::EN;
 use fake::Fake;
 use serde::{Deserialize, Serialize};
 
+/// Generates City names (EN locale only yet)
+///
+/// # Example:
+///
+/// ```yaml
+/// #...
+/// rules:
+///   field_name:
+///     city: ~
+/// ```
 #[derive(Serialize, Deserialize, PartialEq, Eq, Hash, Clone, Debug, Default)]
 pub struct CityTransformer;
 

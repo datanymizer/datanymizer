@@ -32,8 +32,10 @@ pub struct MaxValue(usize);
 /// ```
 #[derive(Serialize, Deserialize, PartialEq, Eq, Hash, Clone, Debug)]
 pub struct PasswordTransformer {
+    /// Minimum password length
     #[serde(default, rename = "min")]
     pub min: MinValue,
+    /// Maximum password length
     #[serde(default, rename = "max")]
     pub max: MaxValue,
 }

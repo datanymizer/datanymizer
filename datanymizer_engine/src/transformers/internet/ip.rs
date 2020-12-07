@@ -2,14 +2,36 @@ use crate::transformer::{Globals, TransformResult, TransformResultHelper, Transf
 use fake::{faker::internet::raw::*, locales::EN, Fake};
 use serde::{Deserialize, Serialize};
 
+/// IP address kind
 #[derive(Serialize, Deserialize, PartialEq, Eq, Hash, Clone, Debug)]
 pub enum IpKind {
     V4,
     V6,
 }
 
+/// Generates IP adress by `kind` type.
+///
+/// # Example:
+///
+/// Default kind is `V4`:
+///
+/// ```yaml
+/// #...
+/// rules:
+///   field_name:
+///     ip: {}
+/// ```
+///
+/// ```yaml
+/// #...
+/// rules:
+///   field_name:
+///     ip:
+///       kind: V6
+/// ```
 #[derive(Serialize, Deserialize, PartialEq, Eq, Hash, Clone, Debug)]
 pub struct IpTransformer {
+    /// IP address kind (V4 or V6)
     pub kind: Option<IpKind>,
 }
 

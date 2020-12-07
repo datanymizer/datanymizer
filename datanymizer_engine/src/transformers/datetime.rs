@@ -11,6 +11,42 @@ pub struct ToValue(String);
 #[derive(Serialize, Deserialize, PartialEq, Eq, PartialOrd, Hash, Clone, Debug)]
 pub struct Format(String);
 
+/// Generates random dates.
+///
+/// # Example:
+///
+/// With default values:
+///
+/// ```yaml
+/// #...
+/// rules:
+///   birth_date:
+///     datetime: {}
+/// ```
+///
+/// or custome date ranges:
+///
+/// ```yaml
+/// #...
+/// rules:
+///   birth_date:
+///     datetime:
+///       from: 1990-01-01T00:00:00+00:00
+///       to: 2010-12-31T00:00:00+00:00
+/// ```
+///
+/// Also, you can specify datetime format.
+/// Be careful with it...
+///
+/// ```yaml
+/// #...
+/// rules:
+///   birth_date:
+///     datetime:
+///       from: 1990-01-01T00:00:00+00:00
+///       to: 2010-12-31T00:00:00+00:00
+///       format: %Y-%m-%dT%H:%M:%S%.f%:z
+/// ```
 #[derive(Serialize, Deserialize, PartialEq, Eq, Hash, Clone, Debug)]
 pub struct RandomDateTimeTransformer {
     #[serde(default)]

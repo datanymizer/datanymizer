@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use unicode_segmentation::UnicodeSegmentation;
 
-pub fn capitalize(string: &str) -> String {
+pub(crate) fn capitalize(string: &str) -> String {
     string
         .unicode_words()
         .map(capitalize_word)
@@ -24,6 +24,7 @@ fn capitalize_word(word: &str) -> String {
         .collect()
 }
 
+/// Capitalize inner value (from database or previews value in pipeline)
 #[derive(Serialize, Deserialize, PartialEq, Eq, Hash, Clone, Debug, Default)]
 pub struct CapitalizeTransformer;
 

@@ -1,8 +1,8 @@
 mod email;
-pub use email::EmailTransformer;
+pub use email::{EmailKind, EmailTransformer};
 
 mod ip;
-pub use ip::IpTransformer;
+pub use ip::{IpKind, IpTransformer};
 
 mod password;
 pub use password::PasswordTransformer;
