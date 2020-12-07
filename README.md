@@ -97,7 +97,7 @@ tables:
 And then start to make dump from your database instance:
 
 ``` shell
-./pg_dump_faker -f /tmp/dump.sql -c ./config.yml postgres://postgres:postgres@localhost/test_database
+pg_dump_faker -f /tmp/dump.sql -c ./config.yml postgres://postgres:postgres@localhost/test_database
 ```
 
 It creates new dump file `/tmp/dump.sql` with native SQL dump for Postgresql database.
@@ -106,6 +106,13 @@ You can import fake data from this dump into new Postgresql database with comman
 ``` shell
 psql -Upostgres -d new_database < /tmp/dump.sql
 ```
+
+Dumper can stream dump to `STDOUT` like `pg_dump` and you can use it in other pipelines:
+
+``` shell
+pg_dump_faker -c ./config.yml postgres://postgres:postgres@localhost/test_database > /tmp/dump.sql
+```
+
 
 ## Additional options
 
