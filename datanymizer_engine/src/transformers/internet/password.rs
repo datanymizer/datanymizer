@@ -32,9 +32,9 @@ pub struct MaxValue(usize);
 /// ```
 #[derive(Serialize, Deserialize, PartialEq, Eq, Hash, Clone, Debug)]
 pub struct PasswordTransformer {
-    #[serde(default)]
+    #[serde(default, rename = "min")]
     pub min: MinValue,
-    #[serde(default)]
+    #[serde(default, rename = "max")]
     pub max: MaxValue,
 }
 
@@ -74,26 +74,37 @@ impl Transformer for PasswordTransformer {
 
 #[cfg(test)]
 mod test {
-    use super::{MaxValue, MinValue, PasswordTransformer};
+    use super::{MaxValue, MinValue};
+    use crate::Transformers;
 
     #[test]
     fn deserialize_default_transformer() {
         let config = r#"
-key: ~
+password: {}
 "#;
-        let transformer: PasswordTransformer = serde_yaml::from_str(config).unwrap();
-        assert_eq!(transformer.min, MinValue(8));
-        assert_eq!(transformer.max, MaxValue(20));
+        let transformer: Transformers = serde_yaml::from_str(config).unwrap();
+        if let Transformers::Password(p_transformer) = transformer {
+            assert_eq!(p_transformer.min, MinValue(8));
+            assert_eq!(p_transformer.max, MaxValue(20));
+        } else {
+            assert!(false);
+        }
     }
 
     #[test]
     fn deserialize_custom_transformer() {
         let config = r#"
-min: 1
-max: 10
+password:
+  min: 1
+  max: 10
 "#;
-        let transformer: PasswordTransformer = serde_yaml::from_str(config).unwrap();
-        assert_eq!(transformer.min, MinValue(1));
-        assert_eq!(transformer.max, MaxValue(10));
+        let transformer: Transformers = serde_yaml::from_str(config).unwrap();
+
+        if let Transformers::Password(p_transformer) = transformer {
+            assert_eq!(p_transformer.min, MinValue(1));
+            assert_eq!(p_transformer.max, MaxValue(10));
+        } else {
+            assert!(false);
+        }
     }
 }

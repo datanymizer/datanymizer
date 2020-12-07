@@ -42,3 +42,30 @@ impl Transformer for IpTransformer {
         TransformResult::present(val)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::IpKind;
+    use crate::Transformers;
+
+    #[test]
+    fn test_parse_config_v4() {
+        let config = r#"ip: {}"#;
+        let transformer: Transformers = serde_yaml::from_str(config).unwrap();
+        if let Transformers::IP(transformer) = &transformer {
+            assert_eq!(transformer.kind, None);
+        }
+    }
+
+    #[test]
+    fn test_parse_config_v6() {
+        let config = r#"
+ip:
+  kind: V6
+"#;
+        let transformer: Transformers = serde_yaml::from_str(config).unwrap();
+        if let Transformers::IP(transformer) = &transformer {
+            assert_eq!(transformer.kind, Some(IpKind::V6));
+        }
+    }
+}

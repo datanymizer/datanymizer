@@ -95,3 +95,54 @@ impl Transformer for PhoneTransformer {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::{transformer::TransformResult, Transformer, Transformers};
+
+    #[test]
+    fn parse_config_to_phone_transformer() {
+        let config = r#"
+        phone:
+            format: +123456789#
+        "#;
+
+        let transformer: Transformers = serde_yaml::from_str(config).unwrap();
+        assert!(matches!(transformer, Transformers::Phone(_)));
+    }
+
+    #[test]
+    fn generate_uniq_phone_number() {
+        let config = r#"
+        phone:
+            format: +123456789#
+            uniq: true
+        "#;
+
+        let transformer: Transformers = serde_yaml::from_str(config).unwrap();
+
+        let val1 = transformer.transform("field", "value", &None);
+        let val2 = transformer.transform("field", "value", &None);
+
+        assert_ne!(val1, val2);
+    }
+
+    #[test]
+    #[warn(unused_doc_comments)]
+    fn test_max_invariants_of_uniq_phones() {
+        let config = r#"
+        phone:
+            format: +123456789#
+            uniq: true
+        "#;
+        let transformer: Transformers = serde_yaml::from_str(config).unwrap();
+
+        let mut phones: Vec<TransformResult> = vec![];
+        for _ in 0..9 {
+            phones.push(transformer.transform("field", "value", &None));
+        }
+
+        /// If the number of invariants is less than the number of generated values
+        assert!(phones.iter().any(|x| x.is_err()))
+    }
+}

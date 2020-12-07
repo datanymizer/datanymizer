@@ -62,3 +62,31 @@ impl Transformer for EmailTransformer {
         TransformResult::present(val)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::EmailKind;
+    use crate::Transformers;
+
+    #[test]
+    fn test_parse_config() {
+        let config = r#"email: {}"#;
+        let transformer: Transformers = serde_yaml::from_str(config).unwrap();
+        if let Transformers::Email(transformer) = &transformer {
+            assert_eq!(transformer.kind, None);
+        }
+        assert!(matches!(transformer, Transformers::Email(_)));
+    }
+
+    #[test]
+    fn test_different_email_kinds() {
+        let config = r#"
+email:
+  kind: Safe
+"#;
+        let transformer: Transformers = serde_yaml::from_str(config).unwrap();
+        if let Transformers::Email(transformer) = &transformer {
+            assert_eq!(transformer.kind, Some(EmailKind::Safe));
+        }
+    }
+}

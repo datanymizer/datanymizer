@@ -38,3 +38,18 @@ impl Transformer for CapitalizeTransformer {
         TransformResult::present(&result)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::{Transformer, Transformers};
+
+    #[test]
+    fn test_capitalize_word() {
+        let config = r#"capitalize: ~"#;
+        let transformer: Transformers = serde_yaml::from_str(config).unwrap();
+        let expected = String::from("Value");
+        let founded = transformer.transform("field", "value", &None);
+
+        assert_eq!(founded, Ok(Some(expected)))
+    }
+}

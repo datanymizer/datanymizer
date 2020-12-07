@@ -42,3 +42,29 @@ impl Transformer for WordsTransformer {
         TransformResult::present(val.join(" "))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::WordsTransformer;
+    use crate::Transformers;
+
+    #[test]
+    fn test_parse_config() {
+        let config = r#"words: {}"#;
+        let transformer: Transformers = serde_yaml::from_str(config).unwrap();
+        if let Transformers::Words(WordsTransformer { min, max }) = transformer {
+            assert_eq!(min, None);
+            assert_eq!(max, None);
+        }
+    }
+
+    #[test]
+    fn test_parse_config_with_values() {
+        let config = r#"words: {min: 1, max: 2}"#;
+        let transformer: Transformers = serde_yaml::from_str(config).unwrap();
+        if let Transformers::Words(WordsTransformer { min, max }) = transformer {
+            assert_eq!(min, Some(1));
+            assert_eq!(max, Some(2));
+        }
+    }
+}
