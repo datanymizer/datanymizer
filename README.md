@@ -12,7 +12,7 @@ Datanymizer generates database-native dump.
 
 ## Getting started with CLI dumper
 
-Build supported database dumper (`pg_dump_faker` for example).
+Build supported database dumper (`pg_datanymizer` for example).
 
 ``` shell
 cargo build --release
@@ -97,7 +97,7 @@ tables:
 And then start to make dump from your database instance:
 
 ``` shell
-pg_dump_faker -f /tmp/dump.sql -c ./config.yml postgres://postgres:postgres@localhost/test_database
+pg_datanymizer -f /tmp/dump.sql -c ./config.yml postgres://postgres:postgres@localhost/test_database
 ```
 
 It creates new dump file `/tmp/dump.sql` with native SQL dump for Postgresql database.
@@ -110,7 +110,7 @@ psql -Upostgres -d new_database < /tmp/dump.sql
 Dumper can stream dump to `STDOUT` like `pg_dump` and you can use it in other pipelines:
 
 ``` shell
-pg_dump_faker -c ./config.yml postgres://postgres:postgres@localhost/test_database > /tmp/dump.sql
+pg_datanymizer -c ./config.yml postgres://postgres:postgres@localhost/test_database > /tmp/dump.sql
 ```
 
 

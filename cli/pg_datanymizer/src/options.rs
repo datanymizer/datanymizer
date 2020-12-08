@@ -3,7 +3,7 @@ use structopt::StructOpt;
 use url::Url;
 
 #[derive(StructOpt, Debug, Clone)]
-#[structopt(name = "pg_dump_faker")]
+#[structopt(name = "pg_datanymizer")]
 pub struct Options {
     #[structopt(name = "DBNAME")]
     database: String,

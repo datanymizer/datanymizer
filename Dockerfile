@@ -13,6 +13,6 @@ COPY . .
 RUN cargo build --target x86_64-unknown-linux-musl --release
 
 FROM scratch
-COPY --from=builder /usr/src/target/x86_64-unknown-linux-musl/release/pg_dump_faker .
+COPY --from=builder /usr/src/target/x86_64-unknown-linux-musl/release/pg_datanymizer .
 USER 1000
-ENTRYPOINT ["./pg_dump_faker"]
+ENTRYPOINT ["./pg_datanymizer"]
