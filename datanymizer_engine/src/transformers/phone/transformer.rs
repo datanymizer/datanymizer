@@ -166,12 +166,12 @@ mod tests {
             uniq: true
         "#;
         let transformer: Transformers = serde_yaml::from_str(config).unwrap();
-    
+
         let mut phones: Vec<TransformResult> = vec![];
         for _ in 0..5 {
             phones.push(transformer.transform("field", "value", &None));
         }
-    
+
         assert!(phones.iter().any(|x| x.is_ok()))
     }
 }
