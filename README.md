@@ -1,5 +1,10 @@
 # [Data]nymizer
 
+![](https://github.com/datanymizer/datanymizer/workflows/CI/badge.svg)
+![](https://img.shields.io/github/license/datanymizer/datanymizer)
+![](https://img.shields.io/github/v/release/datanymizer/datanymizer)
+[![](https://codecov.io/gh/datanymizer/datanymizer/branch/main/graph/badge.svg)](https://codecov.io/gh/datanymizer/datanymizer)
+
 Simple data anonymizer with flexible rules.
 
 ## How it works
