@@ -5,7 +5,7 @@
 ![](https://img.shields.io/github/v/release/datanymizer/datanymizer)
 [![](https://codecov.io/gh/datanymizer/datanymizer/branch/main/graph/badge.svg)](https://codecov.io/gh/datanymizer/datanymizer)
 
-Simple data anonymizer with flexible rules.
+Powerful database anonymizer with flexible rules. Written in Rust.
 
 ## How it works
 
