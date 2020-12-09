@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### 🚀 Added
+- Add the uniqueness option for email, ip and random_num [#16](https://github.com/datanymizer/datanymizer/pull/16)
+  ([@evgeniy-r](https://github.com/evgeniy-r))
 
 ### ⚙️ Changed
 - Automate release process [#17](https://github.com/datanymizer/datanymizer/pull/17) ([@mgrachev](https://github.com/mgrachev))

@@ -79,10 +79,13 @@ tables:
             - random_num: {}
             - email:
                 kind: Safe
+                uniq: true
       phone:
         phone:
           format: +7##########
-          uniq: true
+          uniq:
+            required: true
+            try_count: 5
       city:
         city: ~
       age:
@@ -186,6 +189,29 @@ globals:
 | `password`      | Password with different <br>length options (support `max` and `min` options) |
 | `datetime`      | Make DateTime strings with options (`from` and `to`)                         |
 | and more...     |                                                                              |
+
+## Uniqueness
+
+You can specify that result values must be unique (they are not unique by default).
+You can use short or full syntax.
+
+Short:
+```yaml
+uniq: true
+```
+
+Full:
+```yaml
+uniq:
+  required: true
+  try_count: 5
+```
+
+Uniqueness is ensured by re-generating values when they are same.
+You can customize the number of attempts with `try_count` (this is an optional field, the default number of tries
+depends on the rule).
+
+Currently, uniqueness is supported by: `email`, `ip`, `phone`, `random_number`.
 
 ## Supported databases
 

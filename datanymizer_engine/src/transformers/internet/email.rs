@@ -1,4 +1,4 @@
-use crate::transformer::{Globals, TransformResult, TransformResultHelper, Transformer};
+use crate::transformer::{Globals, UniqTransformer, Uniqueness};
 use fake::faker::internet::raw::*;
 use fake::locales::EN;
 use fake::Fake;
@@ -19,6 +19,9 @@ use serde::{Deserialize, Serialize};
 pub struct EmailTransformer {
     /// Transformation kind
     pub kind: Option<EmailKind>,
+
+    #[serde(default)]
+    pub uniq: Uniqueness,
 }
 
 /// Kind of email generator
@@ -42,30 +45,34 @@ impl Default for EmailTransformer {
     fn default() -> Self {
         Self {
             kind: Some(EmailKind::Free),
+            uniq: Uniqueness::default(),
         }
     }
 }
 
-impl Transformer for EmailTransformer {
-    fn transform(
+impl UniqTransformer for EmailTransformer {
+    fn do_transform(
         &self,
         _field_name: &str,
         _field_value: &str,
         _globals: &Option<Globals>,
-    ) -> TransformResult {
-        let val: String = match self.kind {
+    ) -> String {
+        match self.kind {
             Some(EmailKind::FreeProvider) => FreeEmailProvider(EN).fake(),
             Some(EmailKind::Free) => FreeEmail(EN).fake(),
             _ => SafeEmail(EN).fake(),
-        };
+        }
+    }
 
-        TransformResult::present(val)
+    fn uniq(&self) -> &Uniqueness {
+        &self.uniq
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::EmailKind;
+    use crate::transformer::Uniqueness;
     use crate::Transformers;
 
     #[test]
