@@ -1,0 +1,102 @@
+name: Release
+on:
+  push:
+    tags:
+      - '*.*.*'
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  release-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Build
+        run: |
+          cargo build --release --target x86_64-unknown-linux-gnu
+          mv target/x86_64-unknown-linux-gnu/release/pg_datanymizer ./pg_datanymizer
+          chmod +x pg_datanymizer
+          tar -czf pg_datanymizer-linux-x86_64.tar.gz pg_datanymizer
+          rm pg_datanymizer
+
+          rustup target add x86_64-unknown-linux-musl
+          cargo build --release --target x86_64-unknown-linux-musl
+          mv target/x86_64-unknown-linux-musl/release/pg_datanymizer ./pg_datanymizer
+          chmod +x pg_datanymizer
+          tar -czf pg_datanymizer-alpine-x86_64.tar.gz pg_datanymizer
+      - name: Publish release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: pg_datanymizer-*
+          draft: true
+          body_path: CHANGELOG.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  release-darwin:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - name: Build
+        run: |
+          cargo build --release --target x86_64-apple-darwin
+          mv target/x86_64-apple-darwin/release/pg_datanymizer ./pg_datanymizer
+          chmod +x pg_datanymizer
+          tar -czf pg_datanymizer-darwin-x86_64.tar.gz pg_datanymizer
+      - name: Publish release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: pg_datanymizer-*
+          draft: true
+          body_path: CHANGELOG.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  release-win:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - name: Build
+        shell: powershell
+        run: |
+          cargo build --release --target x86_64-pc-windows-msvc
+          Compress-Archive -Path ".\target\x86_64-pc-windows-msvc\release\pg_datanymizer.exe" -DestinationPath ".\pg_datanymizer-win-x64.zip"
+      - name: Publish release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: pg_datanymizer-*
+          draft: true
+          body_path: CHANGELOG.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  release-docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Build and push image
+        run: |
+          GIT_TAG=$(git describe --tags `git rev-list --tags --max-count=1` | sed "s/v//")
+          docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+
+          docker build -t datanymizer/pg_datanymizer:${GIT_TAG} .
+          docker push datanymizer/pg_datanymizer:${GIT_TAG}
+
+          docker build -t datanymizer/pg_datanymizer:latest .
+          docker push datanymizer/pg_datanymizer:latest
+
+  release-crate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Build and publish to crates.io
+        run: |
+          cargo login ${{ secrets.CRATES_TOKEN }}
+          cargo publish
