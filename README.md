@@ -79,13 +79,13 @@ tables:
             - random_num: {}
             - email:
                 kind: Safe
-                uniq: true
+                uniq:  
+                  required: true
+                  try_count: 5
       phone:
         phone:
           format: +7##########
-          uniq:
-            required: true
-            try_count: 5
+          uniq: true
       city:
         city: ~
       age:
