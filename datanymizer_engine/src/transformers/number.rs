@@ -1,4 +1,6 @@
-use crate::transformer::{Globals, TransformResult, TransformResultHelper, Transformer};
+use crate::transformer::{
+    Globals, TransformResult, TransformResultHelper, Transformer, UniqTransformer, Uniqueness,
+};
 use fake::{faker::number::raw::*, locales::EN, Fake};
 use rand::distributions::{Distribution, Uniform};
 use serde::{Deserialize, Serialize};
@@ -60,8 +62,12 @@ pub struct MaxValue(usize);
 pub struct RandomNumberTransformer {
     #[serde(default)]
     pub min: MinValue,
+
     #[serde(default)]
     pub max: MaxValue,
+
+    #[serde(default)]
+    pub uniq: Uniqueness,
 }
 
 impl Default for MinValue {
@@ -81,19 +87,25 @@ impl Default for RandomNumberTransformer {
         Self {
             min: MinValue::default(),
             max: MaxValue::default(),
+            uniq: Uniqueness::default(),
         }
     }
 }
 
-impl Transformer for RandomNumberTransformer {
-    fn transform(
+impl UniqTransformer for RandomNumberTransformer {
+    fn do_transform(
         &self,
         _field_name: &str,
         _field_value: &str,
         _globals: &Option<Globals>,
-    ) -> TransformResult {
+    ) -> String {
         let mut rng = rand::thread_rng();
-        let num = Uniform::new_inclusive(self.min.0, self.max.0).sample(&mut rng);
-        TransformResult::present(num.to_string())
+        Uniform::new_inclusive(self.min.0, self.max.0)
+            .sample(&mut rng)
+            .to_string()
+    }
+
+    fn uniq(&self) -> &Uniqueness {
+        &self.uniq
     }
 }

@@ -15,7 +15,7 @@ impl Engine {
             .lookup_transformers(value.table_name.clone(), value.field_name.clone())
         {
             match tr.transform(
-                &value.field_name,
+                &format!("{}.{}", value.table_name, value.field_name),
                 value.value.clone().as_ref(),
                 &self.settings.globals,
             ) {

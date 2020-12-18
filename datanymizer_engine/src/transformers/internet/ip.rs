@@ -1,4 +1,4 @@
-use crate::transformer::{Globals, TransformResult, TransformResultHelper, Transformer};
+use crate::transformer::{Globals, UniqTransformer, Uniqueness};
 use fake::{faker::internet::raw::*, locales::EN, Fake};
 use serde::{Deserialize, Serialize};
 
@@ -9,7 +9,7 @@ pub enum IpKind {
     V6,
 }
 
-/// Generates IP adress by `kind` type.
+/// Generates IP address by `kind` type.
 ///
 /// # Example:
 ///
@@ -33,6 +33,9 @@ pub enum IpKind {
 pub struct IpTransformer {
     /// IP address kind (V4 or V6)
     pub kind: Option<IpKind>,
+
+    #[serde(default)]
+    pub uniq: Uniqueness,
 }
 
 impl IpTransformer {
@@ -45,23 +48,26 @@ impl Default for IpTransformer {
     fn default() -> Self {
         Self {
             kind: Some(IpKind::V4),
+            uniq: Uniqueness::default(),
         }
     }
 }
 
-impl Transformer for IpTransformer {
-    fn transform(
+impl UniqTransformer for IpTransformer {
+    fn do_transform(
         &self,
         _field_name: &str,
         _field_value: &str,
         _globals: &Option<Globals>,
-    ) -> TransformResult {
-        let val: String = match self.kind {
+    ) -> String {
+        match self.kind {
             Some(IpKind::V6) => IPv6(EN).fake(),
             _ => IPv4(EN).fake(),
-        };
+        }
+    }
 
-        TransformResult::present(val)
+    fn uniq(&self) -> &Uniqueness {
+        &self.uniq
     }
 }
 

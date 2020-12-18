@@ -1,3 +1,9 @@
+mod uniq_transformer;
+mod uniqueness;
+
+pub use uniq_transformer::UniqTransformer;
+pub use uniqueness::Uniqueness;
+
 use serde_json::Value;
 use std::collections::HashMap;
 use std::fmt::{self, Display, Formatter};

@@ -1,9 +1,6 @@
 use super::deserialize_phone_format;
 use super::phone_format::PhoneFormat;
-use crate::{
-    transformer::{Globals, TransformResult, TransformResultHelper, Transformer},
-    uniq_collector::add_to_collector,
-};
+use crate::transformer::{Globals, UniqTransformer, Uniqueness};
 use fake::Fake;
 use serde::{Deserialize, Serialize};
 use std::char;
@@ -44,15 +41,26 @@ pub struct PhoneTransformer {
     pub format: Option<PhoneFormat>,
 
     #[serde(default)]
-    pub uniq: bool,
+    pub uniq: Uniqueness,
 }
 
 impl PhoneTransformer {
     fn phone_format(&self) -> PhoneFormat {
         self.format.clone().unwrap_or_default()
     }
+}
 
-    fn transform_simple(
+impl Default for PhoneTransformer {
+    fn default() -> Self {
+        Self {
+            format: None,
+            uniq: Uniqueness::default(),
+        }
+    }
+}
+
+impl UniqTransformer for PhoneTransformer {
+    fn do_transform(
         &self,
         _field_name: &str,
         _field_value: &str,
@@ -71,58 +79,21 @@ impl PhoneTransformer {
             .collect()
     }
 
-    fn transform_uniq(
-        &self,
-        field_name: &str,
-        field_value: &str,
-        globals: &Option<Globals>,
-    ) -> Option<String> {
-        let mut retry_count = self.phone_format().invariants();
-        while retry_count > 0 {
-            let val = self.transform_simple(field_name, field_value, globals);
-            if add_to_collector(val.clone()) {
-                return Some(val);
-            } else {
-                retry_count -= 1;
-            }
-        }
-        None
+    fn uniq(&self) -> &Uniqueness {
+        &self.uniq
     }
-}
 
-impl Default for PhoneTransformer {
-    fn default() -> Self {
-        Self {
-            format: None,
-            uniq: false,
-        }
+    fn default_try_count(&self) -> i64 {
+        self.phone_format().invariants()
     }
-}
 
-impl Transformer for PhoneTransformer {
-    fn transform(
-        &self,
-        field_name: &str,
-        field_value: &str,
-        globals: &Option<Globals>,
-    ) -> TransformResult {
-        if self.uniq {
-            match self.transform_uniq(field_name, field_value, globals) {
-                Some(val) => TransformResult::present(val),
-                None => {
-                    let phone_format = self.phone_format();
-                    let message = format!(
-                        "field: `{}` with retry limit: `{}` exceeded for format: `{}`",
-                        field_name,
-                        phone_format.invariants(),
-                        phone_format.source_format
-                    );
-                    TransformResult::error(field_name, field_value, &message)
-                }
-            }
-        } else {
-            TransformResult::present(self.transform_simple(field_name, field_value, globals))
-        }
+    fn try_limit_message(&self, field_name: &str) -> String {
+        format!(
+            "field: `{}` with retry limit: `{}` exceeded for format: `{}`",
+            field_name,
+            self.try_count(),
+            self.phone_format().source_format
+        )
     }
 }
 
