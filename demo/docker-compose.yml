@@ -4,10 +4,10 @@ services:
   pg_datanymizer:
     build:
       context: ..
-      dockerfile: Dockerfile
+      dockerfile: demo/Dockerfile.pg_datanynizer
     image: pg_datanymizer
     volumes:
-      - demo-volume:/demo/:ro
+      - ./dvdrental.yml:/dvdrental.yml
 
   pg_database:
     image: postgres:13-alpine
