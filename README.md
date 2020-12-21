@@ -107,7 +107,7 @@ And then start to make dump from your database instance:
 ``` shell
 pg_datanymizer -f /tmp/dump.sql -c ./config.yml postgres://postgres:postgres@localhost/test_database
 ```
-
+Uniqueness
 It creates new dump file `/tmp/dump.sql` with native SQL dump for Postgresql database.
 You can import fake data from this dump into new Postgresql database with command:
 
