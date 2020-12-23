@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### 🚀 Added
 - Add the uniqueness option for email, ip and random_num [#16](https://github.com/datanymizer/datanymizer/pull/16)
   ([@evgeniy-r](https://github.com/evgeniy-r))
-- Added demo configuration end docker-compose example [#20](https://github.com/datanymizer/datanymizer/pull/20) 
+- Add demo configuration and docker-compose example [#20](https://github.com/datanymizer/datanymizer/pull/20) ([@akirill0v](https://github.com/akirill0v))
 
 ### ⚙️ Changed
 ([@akirill0v](https://github.com/akirill0v))
