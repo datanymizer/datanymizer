@@ -15,13 +15,51 @@ You can import or process you dump with supported database without 3rd-party imp
 
 Datanymizer generates database-native dump.
 
-## Getting started with CLI dumper
+## Installation
 
-Build supported database dumper (`pg_datanymizer` for example).
+There are several ways to install `pg_datanymizer`. Choose a more convenient option for you.
 
-``` shell
-cargo build --release
+### Pre-compiled binary
+
+```shell script
+# Linux / macOS / Windows (MINGW and etc). Installs it into ./bin/ by default
+$ curl -sSfL https://raw.githubusercontent.com/datanymizer/datanymizer/main/cli/pg_datanymizer/install.sh | sh -s
+
+# Or more shorter way
+$ curl -sSfL https://git.io/pg_datanymizer | sh -s
+
+# Specify installation directory and version
+$ curl -sSfL https://git.io/pg_datanymizer | sh -s -- -b usr/local/bin v0.1.0
+
+# Alpine Linux (wget)
+$ wget -q -O - https://git.io/pg_datanymizer | sh -s
 ```
+
+#### Homebrew / Linuxbrew
+
+```bash
+# Installs the latest stable release
+$ brew install datanymizer/tap/pg_datanymizer
+
+# Builds the latest version from the repository
+$ brew install --HEAD datanymizer/tap/pg_datanymizer
+```
+
+#### Docker
+
+```bash
+$ docker run --rm -v `pwd`:/app -w /app datanymizer/pg_datanymizer
+```
+
+#### Cargo
+
+If you are a **Rust** programmer, you can install `pg_datanymizer` via `cargo`:
+
+```bash
+$ cargo install pg_datanymizer
+```
+
+## Getting started with CLI dumper
 
 Inspect your database schema, choose fields with sensitive data and create config, based on it.
 
