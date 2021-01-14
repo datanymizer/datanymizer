@@ -33,8 +33,8 @@ pub trait Dumper: 'static + Sized + Send {
     fn filter_table(&mut self, table: String, filter: &Option<Filter>) -> bool {
         if let Some(f) = filter {
             match f {
-                Filter::Only(tables) => tables.contains(&table),
-                Filter::Except(tables) => !tables.contains(&table),
+                Filter::Only(details) => details.data.contains(&table),
+                Filter::Except(details) => !details.data.contains(&table),
             }
         } else {
             true

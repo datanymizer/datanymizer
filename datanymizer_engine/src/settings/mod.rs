@@ -1,6 +1,9 @@
+mod filter_config;
+
 use crate::transformers::Transformers;
 use anyhow::{anyhow, Result};
 use config::{Config, ConfigError, File};
+use filter_config::FilterDetails;
 use serde::Deserialize;
 use serde_json::Value as JsonValue;
 use std::collections::HashMap;
@@ -33,9 +36,9 @@ pub struct Table {
 #[derive(Clone, Debug, Deserialize)]
 pub enum Filter {
     #[serde(rename = "only", alias = "include")]
-    Only(Vec<String>),
+    Only(FilterDetails),
     #[serde(rename = "except", alias = "exclude")]
-    Except(Vec<String>),
+    Except(FilterDetails),
 }
 
 #[derive(Debug, Deserialize, Clone)]
