@@ -155,6 +155,7 @@ impl Dumper for PgDumper {
             .arg(self.engine.settings.source.get_database_url())
             .args(self.table_args())
             .output()?;
+        
         self.dump_writer
             .write_all(&dump_output.stdout)
             .map_err(|e| e)
