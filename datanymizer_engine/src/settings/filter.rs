@@ -39,7 +39,7 @@ impl Filter {
 
     #[allow(clippy::ptr_arg)]
     fn filter(list: &Option<TableList>, table: &String) -> bool {
-        if let Some(l) =list {
+        if let Some(l) = list {
             l.filter(&table)
         } else {
             true
