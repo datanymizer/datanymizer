@@ -31,19 +31,14 @@ pub trait Dumper: 'static + Sized + Send {
     fn data(&mut self, connection: &mut Self::Connection) -> Result<()>;
 
     fn filter_table(&mut self, table: String, filter: &Option<Filter>) -> bool {
-        if let Some(f) = filter {
-            match f {
-                Filter::Only(details) => details.data.contains(&table),
-                Filter::Except(details) => !details.data.contains(&table),
-            }
-        } else {
-            true
-        }
+        filter
+            .as_ref()
+            .map_or(true, |f| f.filter_schema(&table) && f.filter_data(&table))
     }
 
     fn schema_inspector(&self) -> Self::SchemaInspector;
 
-    /// This stage mekes dump foreign keys, indeces and other...
+    /// This stage makes dump foreign keys, indices and other...
     fn post_data(&mut self, _connection: &mut Self::Connection) -> Result<()>;
 
     fn settings(&mut self) -> Settings;
@@ -110,7 +105,7 @@ pub trait SchemaInspector: 'static + Sized + Send + Clone {
         res.iter().map(|(k, b)| (k.clone(), *b)).collect()
     }
 
-    /// Get columnst for table
+    /// Get columns for table
     fn get_columns(
         &self,
         connection: &mut <Self::Dumper as Dumper>::Connection,

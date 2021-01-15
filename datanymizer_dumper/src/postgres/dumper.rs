@@ -4,7 +4,7 @@ use super::table::PgTable;
 use super::writer::DumpWriter;
 use crate::{Dumper, SchemaInspector, Table};
 use anyhow::Result;
-use datanymizer_engine::{Engine, Settings};
+use datanymizer_engine::{Engine, Settings, TableList};
 use indicatif::{HumanDuration, ProgressBar, ProgressStyle};
 use postgres::Client;
 use std::{io::prelude::*, process::Command, time::Instant};
@@ -47,6 +47,21 @@ impl PgDumper {
                 .progress_chars("#>-"),
         );
     }
+
+    fn table_args(&self) -> Vec<String> {
+        if let Some(filter) = &self.engine.settings.filter {
+            if let Some(list) = &filter.schema {
+                let flag = match list {
+                    TableList::Only(_) => "-t",
+                    TableList::Except(_) => "-T",
+                };
+
+                return vec![String::from(flag), format!("'{}'", list.tables().join("|"))];
+            }
+        }
+
+        Vec::new()
+    }
 }
 
 impl Dumper for PgDumper {
@@ -64,7 +79,9 @@ impl Dumper for PgDumper {
         let dump_output = Command::new(&self.pg_dump_location)
             .args(&["--section", "pre-data"])
             .arg(self.engine.settings.source.get_database_url())
+            .args(self.table_args())
             .output()?;
+
         self.dump_writer
             .write_all(&dump_output.stdout)
             .map_err(|e| e)
@@ -130,12 +147,13 @@ impl Dumper for PgDumper {
         Ok(())
     }
 
-    // This stage mekes dump foreign keys, indeces and other...
+    // This stage makes dump foreign keys, indices and other...
     fn post_data(&mut self, _connection: &mut Self::Connection) -> Result<()> {
         self.debug("Finishing with indexes...".into());
         let dump_output = Command::new(&self.pg_dump_location)
             .args(&["--section", "post-data"])
             .arg(self.engine.settings.source.get_database_url())
+            .args(self.table_args())
             .output()?;
         self.dump_writer
             .write_all(&dump_output.stdout)
