@@ -27,14 +27,17 @@ impl From<FullConfig> for Filter {
 }
 
 impl Filter {
+    #[allow(clippy::ptr_arg)]
     pub fn filter_schema(&self, table: &String) -> bool {
         Self::filter(&self.schema, table)
     }
 
+    #[allow(clippy::ptr_arg)]
     pub fn filter_data(&self, table: &String) -> bool {
         Self::filter(&self.data, table)
     }
 
+    #[allow(clippy::ptr_arg)]
     fn filter(l: &Option<TableList>, table: &String) -> bool {
         if let Some(list) = l {
             list.filter(&table)
@@ -53,6 +56,7 @@ pub enum TableList {
 }
 
 impl TableList {
+    #[allow(clippy::ptr_arg)]
     pub fn filter(&self, table: &String) -> bool {
         match self {
             Self::Only(tables) => tables.contains(table),
