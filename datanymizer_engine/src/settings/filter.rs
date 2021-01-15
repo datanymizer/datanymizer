@@ -35,8 +35,12 @@ impl Filter {
         Self::filter(&self.data, table)
     }
 
-    fn filter(list: &Option<TableList>, table: &String) -> bool {
-        list.as_ref().map_or(true, |list| list.filter(&table))
+    fn filter(l: &Option<TableList>, table: &String) -> bool {
+        if let Some(list) = l {
+            list.filter(&table)
+        } else {
+            true
+        }
     }
 }
 
