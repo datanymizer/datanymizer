@@ -4,7 +4,7 @@ use super::table::PgTable;
 use super::writer::DumpWriter;
 use crate::{Dumper, SchemaInspector, Table};
 use anyhow::Result;
-use datanymizer_engine::{Engine, Settings, TableList};
+use datanymizer_engine::{Engine, Filter, Settings, TableList};
 use indicatif::{HumanDuration, ProgressBar, ProgressStyle};
 use postgres::Client;
 use std::{io::prelude::*, process::Command, time::Instant};
@@ -48,9 +48,9 @@ impl PgDumper {
         );
     }
 
-    fn table_args(&self) -> Vec<String> {
-        if let Some(filter) = &self.engine.settings.filter {
-            if let Some(list) = &filter.schema {
+    fn table_args(filter: &Option<Filter>) -> Vec<String> {
+        if let Some(f) = filter {
+            if let Some(list) = &f.schema {
                 let flag = match list {
                     TableList::Only(_) => "-t",
                     TableList::Except(_) => "-T",
@@ -79,7 +79,7 @@ impl Dumper for PgDumper {
         let dump_output = Command::new(&self.pg_dump_location)
             .args(&["--section", "pre-data"])
             .arg(self.engine.settings.source.get_database_url())
-            .args(self.table_args())
+            .args(Self::table_args(&self.engine.settings.filter))
             .output()?;
 
         self.dump_writer
@@ -153,7 +153,7 @@ impl Dumper for PgDumper {
         let dump_output = Command::new(&self.pg_dump_location)
             .args(&["--section", "post-data"])
             .arg(self.engine.settings.source.get_database_url())
-            .args(self.table_args())
+            .args(Self::table_args(&self.engine.settings.filter))
             .output()?;
 
         self.dump_writer
@@ -175,5 +175,43 @@ impl Dumper for PgDumper {
         if self.dump_writer.can_log_to_stdout() {
             println!("{}", message)
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn table_args() {
+        let empty: Vec<String> = vec![];
+        assert_eq!(PgDumper::table_args(&None), empty);
+
+        let filter = Filter {
+            schema: Some(TableList::Except(vec![String::from("table1")])),
+            data: None,
+        };
+        assert_eq!(
+            PgDumper::table_args(&Some(filter)),
+            vec![String::from("-T"), String::from("'table1'")]
+        );
+
+        let filter = Filter {
+            schema: None,
+            data: Some(TableList::Except(vec![String::from("table1")])),
+        };
+        assert_eq!(PgDumper::table_args(&Some(filter)), empty);
+
+        let filter = Filter {
+            schema: Some(TableList::Only(vec![
+                String::from("table1"),
+                String::from("table2"),
+            ])),
+            data: None,
+        };
+        assert_eq!(
+            PgDumper::table_args(&Some(filter)),
+            vec![String::from("-t"), String::from("'table1|table2'")]
+        );
     }
 }
