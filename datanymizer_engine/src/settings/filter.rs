@@ -1,7 +1,7 @@
 use serde::Deserialize;
 
 /// Filter for include or exclude tables
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq)]
 #[serde(from = "Config")]
 pub struct Filter {
     pub schema: Option<TableList>,
@@ -47,7 +47,7 @@ impl Filter {
     }
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq)]
 pub enum TableList {
     #[serde(rename = "only", alias = "include")]
     Only(Vec<String>),
@@ -90,6 +90,221 @@ impl From<TableList> for FullConfig {
         Self {
             schema: None,
             data: Some(list),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    mod table_list {
+        use super::*;
+
+        fn deserialize(config: &str) -> TableList {
+            serde_yaml::from_str(config).unwrap()
+        }
+
+        #[test]
+        fn only_deserialization() {
+            let config = r#"
+                only:
+                  - table1
+                  - table2
+                "#;
+
+            assert_eq!(
+                deserialize(config),
+                TableList::Only(vec![String::from("table1"), String::from("table2")])
+            );
+        }
+
+        #[test]
+        fn include_deserialization() {
+            let config = r#"
+                include:
+                  - table1
+                "#;
+
+            assert_eq!(
+                deserialize(config),
+                TableList::Only(vec![String::from("table1"),])
+            );
+        }
+
+        #[test]
+        fn except_deserialization() {
+            let config = r#"
+                except:
+                  - table1
+                "#;
+
+            assert_eq!(
+                deserialize(config),
+                TableList::Except(vec![String::from("table1"),])
+            );
+        }
+
+        #[test]
+        fn exclude_deserialization() {
+            let config = r#"
+                exclude:
+                  - table3
+                  - table4
+                "#;
+
+            assert_eq!(
+                deserialize(config),
+                TableList::Except(vec![String::from("table3"), String::from("table4")])
+            );
+        }
+
+        #[test]
+        fn filter() {
+            let list = TableList::Except(vec![String::from("users")]);
+            assert!(list.filter(&String::from("posts")));
+            assert!(!list.filter(&String::from("users")));
+
+            let list = TableList::Only(vec![String::from("users")]);
+            assert!(!list.filter(&String::from("posts")));
+            assert!(list.filter(&String::from("users")));
+        }
+
+        #[test]
+        fn tables() {
+            let tables = vec![String::from("table_a"), String::from("table_b")];
+            let list = TableList::Except(tables.clone());
+            assert_eq!(*list.tables(), tables);
+
+            let list = TableList::Only(tables.clone());
+            assert_eq!(*list.tables(), tables);
+        }
+    }
+
+    mod filter {
+        use super::*;
+
+        fn deserialize(config: &str) -> Filter {
+            serde_yaml::from_str(config).unwrap()
+        }
+
+        #[test]
+        fn short_deserialization() {
+            let config = r#"
+                only:
+                  - table1
+                  - table2
+                "#;
+            assert_eq!(
+                deserialize(config),
+                Filter {
+                    schema: None,
+                    data: Some(TableList::Only(vec![
+                        String::from("table1"),
+                        String::from("table2")
+                    ])),
+                }
+            );
+        }
+
+        #[test]
+        fn full_deserialization_data() {
+            let config = r#"
+                data:
+                  except:
+                    - table1
+                    - table2
+                "#;
+
+            assert_eq!(
+                deserialize(config),
+                Filter {
+                    schema: None,
+                    data: Some(TableList::Except(vec![
+                        String::from("table1"),
+                        String::from("table2")
+                    ])),
+                }
+            );
+        }
+
+        #[test]
+        fn full_deserialization_schema() {
+            let config = r#"
+                schema:
+                  only:
+                    - table1
+                    - table2
+                "#;
+
+            assert_eq!(
+                deserialize(config),
+                Filter {
+                    schema: Some(TableList::Only(vec![
+                        String::from("table1"),
+                        String::from("table2")
+                    ])),
+                    data: None,
+                }
+            );
+        }
+
+        #[test]
+        fn full_deserialization_schema_and_data() {
+            let config = r#"
+                schema:
+                  except:
+                    - table1
+                    - table2
+                data:
+                  only:
+                    - table1
+                "#;
+
+            assert_eq!(
+                deserialize(config),
+                Filter {
+                    schema: Some(TableList::Except(vec![
+                        String::from("table1"),
+                        String::from("table2")
+                    ])),
+                    data: Some(TableList::Only(vec![String::from("table1"),])),
+                }
+            );
+        }
+
+        #[test]
+        fn filter_schema() {
+            let filter = Filter {
+                schema: Some(TableList::Except(vec![String::from("table1")])),
+                data: None,
+            };
+            assert!(!filter.filter_schema(&String::from("table1")));
+            assert!(filter.filter_schema(&String::from("table2")));
+
+            let filter = Filter {
+                schema: None,
+                data: Some(TableList::Except(vec![String::from("table1")])),
+            };
+            assert!(filter.filter_schema(&String::from("table1")));
+            assert!(filter.filter_schema(&String::from("table2")));
+        }
+
+        #[test]
+        fn filter_data() {
+            let filter = Filter {
+                schema: Some(TableList::Except(vec![String::from("table1")])),
+                data: None,
+            };
+            assert!(filter.filter_data(&String::from("table1")));
+            assert!(filter.filter_data(&String::from("table2")));
+
+            let filter = Filter {
+                schema: None,
+                data: Some(TableList::Only(vec![String::from("table1")])),
+            };
+            assert!(filter.filter_data(&String::from("table1")));
+            assert!(!filter.filter_data(&String::from("table2")));
         }
     }
 }
