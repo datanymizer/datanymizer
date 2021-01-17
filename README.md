@@ -183,10 +183,51 @@ For dumping only `public.markets` and `public.users` data.
 filter:
   except:
     - public.markets
-    - public.users
+    - public.users       
 ```
 
 For ignoring those tables and dump data from others.
+
+You can also specify data and schema filters separately.
+
+``` yaml
+# config.yml
+#...
+filter:
+  data:
+    except:
+      - public.markets
+      - public.users       
+```
+
+This is equivalent to the previous example.
+
+``` yaml
+# config.yml
+#...
+filter:
+  schema:
+    only:
+      - public.markets
+      - public.users       
+```
+
+For skipping schema and data from other tables.
+
+``` yaml
+# config.yml
+#...
+filter:
+  data:
+    only:
+      - public.users
+  schema:
+    except:
+      - public.markets             
+```
+
+For skipping schema for `markets` table and dumping data only from `users` table.
+
 
 ### Global variables
 
