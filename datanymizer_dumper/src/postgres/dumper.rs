@@ -56,7 +56,12 @@ impl PgDumper {
                     TableList::Except(_) => "-T",
                 };
 
-                return vec![String::from(flag), format!("'{}'", list.tables().join("|"))];
+                let mut args = Vec::with_capacity(list.tables().len() * 2);
+                for table in list.tables() {
+                    args.push(String::from(flag));
+                    args.push(table.clone());
+                }
+                return args;
             }
         }
 
@@ -78,8 +83,8 @@ impl Dumper for PgDumper {
         self.debug("Prepare data scheme...".into());
         let dump_output = Command::new(&self.pg_dump_location)
             .args(&["--section", "pre-data"])
-            .arg(self.engine.settings.source.get_database_url())
             .args(Self::table_args(&self.engine.settings.filter))
+            .arg(self.engine.settings.source.get_database_url())
             .output()?;
 
         self.dump_writer
@@ -152,8 +157,8 @@ impl Dumper for PgDumper {
         self.debug("Finishing with indexes...".into());
         let dump_output = Command::new(&self.pg_dump_location)
             .args(&["--section", "post-data"])
-            .arg(self.engine.settings.source.get_database_url())
             .args(Self::table_args(&self.engine.settings.filter))
+            .arg(self.engine.settings.source.get_database_url())
             .output()?;
 
         self.dump_writer
@@ -193,7 +198,7 @@ mod tests {
         };
         assert_eq!(
             PgDumper::table_args(&Some(filter)),
-            vec![String::from("-T"), String::from("'table1'")]
+            vec![String::from("-T"), String::from("table1")]
         );
 
         let filter = Filter {
@@ -211,7 +216,12 @@ mod tests {
         };
         assert_eq!(
             PgDumper::table_args(&Some(filter)),
-            vec![String::from("-t"), String::from("'table1|table2'")]
+            vec![
+                String::from("-t"),
+                String::from("table1"),
+                String::from("-t"),
+                String::from("table2")
+            ]
         );
     }
 }
