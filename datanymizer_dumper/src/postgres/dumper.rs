@@ -56,12 +56,11 @@ impl PgDumper {
                     TableList::Except(_) => "-T",
                 };
 
-                let mut args = Vec::with_capacity(list.tables().len() * 2);
-                for table in list.tables() {
-                    args.push(String::from(flag));
-                    args.push(table.clone());
-                }
-                return args;
+                return list
+                    .tables()
+                    .iter()
+                    .flat_map(|table| vec![String::from(flag), table.clone()])
+                    .collect();
             }
         }
 

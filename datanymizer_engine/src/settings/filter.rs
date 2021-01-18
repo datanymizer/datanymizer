@@ -27,20 +27,17 @@ impl From<FullConfig> for Filter {
 }
 
 impl Filter {
-    #[allow(clippy::ptr_arg)]
-    pub fn filter_schema(&self, table: &String) -> bool {
+    pub fn filter_schema(&self, table: &str) -> bool {
         Self::filter(&self.schema, table)
     }
 
-    #[allow(clippy::ptr_arg)]
-    pub fn filter_data(&self, table: &String) -> bool {
+    pub fn filter_data(&self, table: &str) -> bool {
         Self::filter(&self.data, table)
     }
 
-    #[allow(clippy::ptr_arg)]
-    fn filter(list: &Option<TableList>, table: &String) -> bool {
+    fn filter(list: &Option<TableList>, table: &str) -> bool {
         if let Some(l) = list {
-            l.filter(&table)
+            l.filter(table)
         } else {
             true
         }
@@ -56,11 +53,10 @@ pub enum TableList {
 }
 
 impl TableList {
-    #[allow(clippy::ptr_arg)]
-    pub fn filter(&self, table: &String) -> bool {
+    pub fn filter(&self, table: &str) -> bool {
         match self {
-            Self::Only(tables) => tables.contains(table),
-            Self::Except(tables) => !tables.contains(table),
+            Self::Only(tables) => tables.iter().any(|t| t == table),
+            Self::Except(tables) => !tables.iter().any(|t| t == table),
         }
     }
 
