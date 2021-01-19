@@ -4,7 +4,7 @@ use super::table::PgTable;
 use super::writer::DumpWriter;
 use crate::{Dumper, SchemaInspector, Table};
 use anyhow::Result;
-use datanymizer_engine::{Engine, Settings};
+use datanymizer_engine::{Engine, Filter, Settings, TableList};
 use indicatif::{HumanDuration, ProgressBar, ProgressStyle};
 use postgres::Client;
 use std::{io::prelude::*, process::Command, time::Instant};
@@ -47,6 +47,25 @@ impl PgDumper {
                 .progress_chars("#>-"),
         );
     }
+
+    fn table_args(filter: &Option<Filter>) -> Vec<String> {
+        if let Some(f) = filter {
+            if let Some(list) = &f.schema {
+                let flag = match list {
+                    TableList::Only(_) => "-t",
+                    TableList::Except(_) => "-T",
+                };
+
+                return list
+                    .tables()
+                    .iter()
+                    .flat_map(|table| vec![String::from(flag), table.clone()])
+                    .collect();
+            }
+        }
+
+        Vec::new()
+    }
 }
 
 impl Dumper for PgDumper {
@@ -63,8 +82,10 @@ impl Dumper for PgDumper {
         self.debug("Prepare data scheme...".into());
         let dump_output = Command::new(&self.pg_dump_location)
             .args(&["--section", "pre-data"])
+            .args(Self::table_args(&self.engine.settings.filter))
             .arg(self.engine.settings.source.get_database_url())
             .output()?;
+
         self.dump_writer
             .write_all(&dump_output.stdout)
             .map_err(|e| e)
@@ -130,13 +151,15 @@ impl Dumper for PgDumper {
         Ok(())
     }
 
-    // This stage mekes dump foreign keys, indeces and other...
+    // This stage makes dump foreign keys, indices and other...
     fn post_data(&mut self, _connection: &mut Self::Connection) -> Result<()> {
         self.debug("Finishing with indexes...".into());
         let dump_output = Command::new(&self.pg_dump_location)
             .args(&["--section", "post-data"])
+            .args(Self::table_args(&self.engine.settings.filter))
             .arg(self.engine.settings.source.get_database_url())
             .output()?;
+
         self.dump_writer
             .write_all(&dump_output.stdout)
             .map_err(|e| e)
@@ -156,5 +179,48 @@ impl Dumper for PgDumper {
         if self.dump_writer.can_log_to_stdout() {
             println!("{}", message)
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn table_args() {
+        let empty: Vec<String> = vec![];
+        assert_eq!(PgDumper::table_args(&None), empty);
+
+        let filter = Filter {
+            schema: Some(TableList::Except(vec![String::from("table1")])),
+            data: None,
+        };
+        assert_eq!(
+            PgDumper::table_args(&Some(filter)),
+            vec![String::from("-T"), String::from("table1")]
+        );
+
+        let filter = Filter {
+            schema: None,
+            data: Some(TableList::Except(vec![String::from("table1")])),
+        };
+        assert_eq!(PgDumper::table_args(&Some(filter)), empty);
+
+        let filter = Filter {
+            schema: Some(TableList::Only(vec![
+                String::from("table1"),
+                String::from("table2"),
+            ])),
+            data: None,
+        };
+        assert_eq!(
+            PgDumper::table_args(&Some(filter)),
+            vec![
+                String::from("-t"),
+                String::from("table1"),
+                String::from("-t"),
+                String::from("table2")
+            ]
+        );
     }
 }

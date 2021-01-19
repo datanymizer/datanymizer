@@ -1,9 +1,13 @@
+mod filter;
+
 use crate::transformers::Transformers;
 use anyhow::{anyhow, Result};
 use config::{Config, ConfigError, File};
 use serde::Deserialize;
 use serde_json::Value as JsonValue;
 use std::collections::HashMap;
+
+pub use filter::{Filter, TableList};
 
 pub type Rules = HashMap<String, Transformers>;
 pub type Tables = Vec<Table>;
@@ -27,15 +31,6 @@ pub struct Table {
     pub name: String,
     /// Rule set for columns
     pub rules: Rules,
-}
-
-/// Filter for include or exclude tables
-#[derive(Clone, Debug, Deserialize)]
-pub enum Filter {
-    #[serde(rename = "only", alias = "include")]
-    Only(Vec<String>),
-    #[serde(rename = "except", alias = "exclude")]
-    Except(Vec<String>),
 }
 
 #[derive(Debug, Deserialize, Clone)]

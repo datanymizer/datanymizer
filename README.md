@@ -166,6 +166,8 @@ pg_datanymizer -c ./config.yml postgres://postgres:postgres@localhost/test_datab
 
 You can specify which tables you choose or ignore for making dump.
 
+For dumping only `public.markets` and `public.users` data.
+
 ``` yaml
 # config.yml
 #...
@@ -175,7 +177,7 @@ filter:
     - public.users
 ```
 
-For dumping only `public.markets` and `public.users` data.
+For ignoring those tables and dump data from others.
 
 ``` yaml
 # config.yml
@@ -186,7 +188,45 @@ filter:
     - public.users
 ```
 
-For ignoring those tables and dump data from others.
+You can also specify data and schema filters separately.
+
+This is equivalent to the previous example.
+
+``` yaml
+# config.yml
+#...
+filter:
+  data:
+    except:
+      - public.markets
+      - public.users
+```
+
+For skipping schema and data from other tables.
+
+``` yaml
+# config.yml
+#...
+filter:
+  schema:
+    only:
+      - public.markets
+      - public.users
+```
+
+For skipping schema for `markets` table and dumping data only from `users` table.
+
+``` yaml
+# config.yml
+#...
+filter:
+  data:
+    only:
+      - public.users
+  schema:
+    except:
+      - public.markets
+```
 
 ### Global variables
 
