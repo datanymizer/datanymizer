@@ -1,5 +1,6 @@
 mod engine;
 mod errors;
+mod locale;
 mod settings;
 mod transformer;
 pub mod transformers;
