@@ -7,6 +7,10 @@
 
 Powerful database anonymizer with flexible rules. Written in Rust.
 
+Datanymizer is created & [supported by Evrone](https://evrone.com/?utm_campaign=datanymizer). What else we [develop with Rust](https://evrone.com/rust?utm_source=github&utm_campaign=datanymizer).
+
+More information you can find in articles in [English](https://evrone.com/datanymizer?utm_source=github&utm_campaign=datanymizer) and [Russian](https://evrone.ru/datanymizer?utm_source=github&utm_campaign=datanymizer).
+
 ## How it works
 
 Database -> Dumper (+Faker) -> Dump.sql
