@@ -92,11 +92,12 @@ jobs:
           docker build -t datanymizer/pg_datanymizer:latest .
           docker push datanymizer/pg_datanymizer:latest
 
-  release-crate:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v1
-      - name: Build and publish to crates.io
-        run: |
-          cargo login ${{ secrets.CRATES_TOKEN }}
-          cargo publish
+  # TODO: Fix release process with cargo
+  # release-crate:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v1
+  #     - name: Build and publish to crates.io
+  #       run: |
+  #         cargo login ${{ secrets.CRATES_TOKEN }}
+  #         cargo publish --manifest-path cli/pg_datanymizer/Cargo.toml

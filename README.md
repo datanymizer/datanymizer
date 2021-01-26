@@ -59,14 +59,6 @@ $ brew install --HEAD datanymizer/tap/pg_datanymizer
 $ docker run --rm -v `pwd`:/app -w /app datanymizer/pg_datanymizer
 ```
 
-#### Cargo
-
-If you are a **Rust** programmer, you can install `pg_datanymizer` via `cargo`:
-
-```bash
-$ cargo install pg_datanymizer
-```
-
 ## Getting started with CLI dumper
 
 Inspect your database schema, choose fields with sensitive data and create config, based on it.
