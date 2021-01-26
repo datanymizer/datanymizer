@@ -1,5 +1,9 @@
 # [Data]nymizer
 
+<img align="right" 
+     alt="datanymizer"
+     src="https://raw.githubusercontent.com/datanymizer/datanymizer/master/logo.png">
+
 ![](https://github.com/datanymizer/datanymizer/workflows/CI/badge.svg)
 ![](https://img.shields.io/github/license/datanymizer/datanymizer)
 ![](https://img.shields.io/github/v/release/datanymizer/datanymizer)
