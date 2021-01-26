@@ -13,6 +13,7 @@ COPY . .
 RUN cargo build --target x86_64-unknown-linux-musl --release
 
 FROM scratch
+WORKDIR /
 COPY --from=builder /usr/src/target/x86_64-unknown-linux-musl/release/pg_datanymizer .
 USER 1000
-ENTRYPOINT ["./pg_datanymizer"]
+ENTRYPOINT ["/pg_datanymizer"]
