@@ -35,7 +35,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   release-darwin:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
       - uses: actions-rs/toolchain@v1
@@ -43,7 +43,7 @@ jobs:
           toolchain: stable
       - name: Build
         run: |
-          cargo build --release --target x86_64-apple-darwin
+          docker run --rm -v $(pwd):/build wearejh/rust-macos-build
           mv target/x86_64-apple-darwin/release/pg_datanymizer ./pg_datanymizer
           chmod +x pg_datanymizer
           tar -czf pg_datanymizer-darwin-x86_64.tar.gz pg_datanymizer
