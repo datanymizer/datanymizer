@@ -44,8 +44,8 @@ jobs:
       - name: Build
         run: |
           docker run --rm -v $(pwd):/build wearejh/rust-macos-build
-          sudo mv target/x86_64-apple-darwin/release/pg_datanymizer ./pg_datanymizer
-          sudo chmod +x pg_datanymizer
+          cp target/x86_64-apple-darwin/release/pg_datanymizer ./pg_datanymizer
+          chmod +x pg_datanymizer
           tar -czf pg_datanymizer-darwin-x86_64.tar.gz pg_datanymizer
       - name: Publish release
         uses: softprops/action-gh-release@v1
