@@ -531,4 +531,13 @@ mod tests {
         let value = t.transform("table.field", "t", &None).unwrap().unwrap();
         assert_eq!(value.split(" ").count(), 5);
     }
+
+    #[test]
+    fn zh_tw_locale() {
+        let t = PersonNameTransformer {
+            locale: LocaleConfig::ZH_TW,
+        };
+        let value = t.transform("table.field", "t", &None).unwrap().unwrap();
+        assert!(!('A'..='Z').contains(&value.chars().next().unwrap()));
+    }
 }
