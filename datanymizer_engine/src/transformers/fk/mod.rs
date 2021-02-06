@@ -1,3 +1,8 @@
+// We use macros to easily create transformers for the fakers from [`fake`](https://github.com/cksac/fake-rs)
+// crate.
+// To create a new faker-based transformer please refer to
+// [this doc](/datanymizer_engine/docs/new_fk_transformer.md).
+
 mod sql_value;
 
 use crate::{
