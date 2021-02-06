@@ -1,7 +1,7 @@
-// We use macros to easily create transformers for the fakers from [`fake`](https://github.com/cksac/fake-rs)
-// crate.
-// To create a new faker-based transformer please refer to
-// [this doc](/datanymizer_engine/docs/new_fk_transformer.md).
+/// We use macros to easily create transformers for the fakers from
+/// [`fake`](https://github.com/cksac/fake-rs) crate.
+/// To create a new faker-based transformer please refer to
+/// [/datanymizer_engine/docs/new_fk_transformer.md].
 
 mod sql_value;
 
@@ -45,6 +45,9 @@ where
     }
 }
 
+/// This macro defines a document test for a faker-based transformer.
+/// `$ser` - serialization name that also used in [Transformers] enum (e.g., `city`).
+/// `$tr` - transformer identificator (e.g., `CityTransformer`).
 macro_rules! fk_doctest {
     ( $ser:literal, $tr:ident ) => {
         concat!(
@@ -64,6 +67,8 @@ macro_rules! fk_doctest {
     };
 }
 
+/// This macro defines a configuration doc section test for a faker-based transformers
+/// depends on configuration signature.
 macro_rules! fk_config_example {
     ( Empty ) => {
         ""
@@ -86,6 +91,11 @@ macro_rules! fk_config_example {
     };
 }
 
+/// This macro defines an entire document comment for a faker-based transformer.
+/// `$desc` - transformer description.
+/// `$ser` - serialization name that also used in [Transformers] enum (e.g., `city`).
+/// `$tr` - transformer identificator (e.g., `CityTransformer`).
+/// `$cfg` - transformer configuration signature (e.g., `Empty`).
 macro_rules! fk_doc_comment {
     ( $desc:literal, $ser:literal, $tr:ident, $cfg:ident ) => {
         concat!(
@@ -118,6 +128,10 @@ macro_rules! fk_doc_comment {
     };
 }
 
+/// This macro defines a faker-based transformer struct itself and also implements [Default] trait
+/// for it.
+/// `$tr` - transformer identificator (e.g., `CityTransformer`).
+/// `$doc` - doc comment contents.
 macro_rules! define_fk_struct {
     ( $tr:ident, Empty, $doc:expr ) => {
         #[doc = $doc]
@@ -169,6 +183,9 @@ macro_rules! define_fk_struct {
     };
 }
 
+/// This macro implements [LocalizedFaker] trait for a transformer.
+/// `$fk` - faker type (e.g. [CityName]).
+/// `$sql` - faker value type (must implements [AsSqlValue] trait).
 macro_rules! impl_localized_faker {
     ( $fk:ident, $sql:ty, Empty ) => {
         fn fake<L: Copy + fake::locales::Data>(&self, l: L) -> $sql {
@@ -189,6 +206,13 @@ macro_rules! impl_localized_faker {
     };
 }
 
+/// This macro defines a single faker-based transformer.
+/// `$desc` - transformer description.
+/// `$ser` - serialization name that also used in [Transformers] enum (e.g., `city`).
+/// `$tr` - transformer identificator (e.g., `CityTransformer`).
+/// `$fk` - faker type (e.g. [CityName]).
+/// `$sql` - faker value type (must implements [AsSqlValue] trait).
+/// `$cfg` - transformer configuration signature (e.g., `Empty`).
 macro_rules! define_fk_transformer {
     ( $desc:literal, ($ser:literal, $tr:ident, $fk:ident, $sql:ty, $cfg:ident) ) => {
         define_fk_struct! { $tr, $cfg, fk_doc_comment!($desc, $ser, $tr, $cfg) }
@@ -218,6 +242,7 @@ macro_rules! define_fk_transformer {
     };
 }
 
+/// This macro defines faker-based transformers.
 macro_rules! define_fk_transformers {
     ( $(  $desc:literal, $tt:tt ),* ) => {
         $(
