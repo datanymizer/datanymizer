@@ -266,7 +266,7 @@ globals:
 | `random_number` | Random number with `min` and `max` options                                   |
 | `password`      | Password with different <br>length options (support `max` and `min` options) |
 | `datetime`      | Make DateTime strings with options (`from` and `to`)                         |
-| and more...     |                                                                              |
+| more than 70 rules in total...     |                                                                              |
 
 ## Uniqueness
 
@@ -290,6 +290,19 @@ You can customize the number of attempts with `try_count` (this is an optional f
 depends on the rule).
 
 Currently, uniqueness is supported by: `email`, `ip`, `phone`, `random_number`.
+
+## Locales
+
+You can specify the locale for rules:
+
+```yaml
+first_name:
+  locale: RU
+```
+
+The default locale is `EN`.
+
+We also support `ZH_TW` (traditional chinese) and `RU` (translation in progress).
 
 ## Supported databases
 
