@@ -1,34 +1,6 @@
-use crate::transformer::{
-    Globals, TransformResult, TransformResultHelper, Transformer, UniqTransformer, Uniqueness,
-};
-use fake::{faker::number::raw::*, locales::EN, Fake};
+use crate::transformer::{Globals, UniqTransformer, Uniqueness};
 use rand::distributions::{Distribution, Uniform};
 use serde::{Deserialize, Serialize};
-
-/// Generates digit from `0` to `9`
-///
-/// # Example:
-///
-/// ```yaml
-/// #...
-/// rules:
-///   field_name:
-///     digit: ~
-/// ```
-#[derive(Serialize, Deserialize, PartialEq, Eq, Hash, Debug, Clone)]
-pub struct DigitTransformer;
-
-impl Transformer for DigitTransformer {
-    fn transform(
-        &self,
-        _field_name: &str,
-        _field_value: &str,
-        _globals: &Option<Globals>,
-    ) -> TransformResult {
-        let val: String = Digit(EN).fake();
-        TransformResult::present(val)
-    }
-}
 
 #[derive(Serialize, Deserialize, PartialEq, Eq, PartialOrd, Hash, Clone, Debug)]
 pub struct MinValue(usize);

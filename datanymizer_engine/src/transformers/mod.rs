@@ -8,15 +8,6 @@ pub use none::NoneTransformer;
 mod internet;
 pub use internet::{EmailKind, EmailTransformer, IpTransformer, PasswordTransformer};
 
-mod lorem;
-pub use lorem::WordsTransformer;
-
-mod names;
-pub use names::{FirstNameTransformer, LastNameTransformer};
-
-mod city;
-pub use city::CityTransformer;
-
 mod phone;
 pub use phone::PhoneTransformer;
 
@@ -30,7 +21,7 @@ mod template;
 pub use template::TemplateTransformer;
 
 mod number;
-pub use number::{DigitTransformer, RandomNumberTransformer};
+pub use number::RandomNumberTransformer;
 
 mod datetime;
 pub use datetime::RandomDateTimeTransformer;
@@ -71,96 +62,86 @@ define_transformers_enum![
     ("none", None, NoneTransformer),
     ("email", Email, EmailTransformer),
     ("ip", IP, IpTransformer),
-    ("words", Words, WordsTransformer),
-    ("first_name", FirstName, FirstNameTransformer),
-    ("last_name", LastName, LastNameTransformer),
-    ("city", City, CityTransformer),
     ("phone", Phone, PhoneTransformer),
     ("pipeline", Pipeline, PipelineTransformer<Transformers>),
     ("capitalize", Capitalize, CapitalizeTransformer),
     ("template", Template, TemplateTransformer),
-    ("digit", Digit, DigitTransformer),
     ("random_num", RandomNum, RandomNumberTransformer),
     ("password", Password, PasswordTransformer),
     ("datetime", DateTime, RandomDateTimeTransformer),
 
-    ("fk_city_prefix", FkCityPrefix, FkCityPrefixTransformer),
-    ("fk_city_suffix", FkCitySuffix, FkCitySuffixTransformer),
-    ("fk_city_name", FkCityName, FkCityNameTransformer),
-    ("fk_country_name", FkCountryName, FkCountryNameTransformer),
-    ("fk_country_code", FkCountryCode, FkCountryCodeTransformer),
-    ("fk_street_suffix", FkStreetSuffix, FkStreetSuffixTransformer),
-    ("fk_street_name", FkStreetName, FkStreetNameTransformer),
-    ("fk_time_zone", FkTimeZone, FkTimeZoneTransformer),
-    ("fk_state_name", FkStateName, FkStateNameTransformer),
-    ("fk_state_abbr", FkStateAbbr, FkStateAbbrTransformer),
-    ("fk_secondary_address_type", FkSecondaryAddressType, FkSecondaryAddressTypeTransformer),
-    ("fk_secondary_address", FkSecondaryAddress, FkSecondaryAddressTransformer),
-    ("fk_zip_code", FkZipCode, FkZipCodeTransformer),
-    ("fk_post_code", FkPostCode, FkPostCodeTransformer),
-    ("fk_building_number", FkBuildingNumber, FkBuildingNumberTransformer),
-    ("fk_latitude", FkLatitude, FkLatitudeTransformer),
-    ("fk_longitude", FkLongitude, FkLongitudeTransformer),
+    ("city", City, CityTransformer),
+    ("city_prefix", CityPrefix, CityPrefixTransformer),
+    ("city_suffix", CitySuffix, CitySuffixTransformer),
+    ("country_name", CountryName, CountryNameTransformer),
+    ("country_code", CountryCode, CountryCodeTransformer),
+    ("street_suffix", StreetSuffix, StreetSuffixTransformer),
+    ("street_name", StreetName, StreetNameTransformer),
+    ("time_zone", TimeZone, TimeZoneTransformer),
+    ("state_name", StateName, StateNameTransformer),
+    ("state_abbr", StateAbbr, StateAbbrTransformer),
+    ("dwelling_type", DwellingType, DwellingTypeTransformer),
+    ("dwelling", Dwelling, DwellingTransformer),
+    ("zip_code", ZipCode, ZipCodeTransformer),
+    ("post_code", PostCode, PostCodeTransformer),
+    ("building_number", BuildingNumber, BuildingNumberTransformer),
+    ("latitude", Latitude, LatitudeTransformer),
+    ("longitude", Longitude, LongitudeTransformer),
 
-    ("fk_boolean", FkBoolean, FkBooleanTransformer),
+    ("boolean", Boolean, BooleanTransformer),
 
-    ("fk_date", FkDate, FkDateTransformer),
-    ("fk_date_time", FkDateTime, FkDateTimeTransformer),
+    ("raw_date", RawDate, RawDateTransformer),
+    ("raw_datetime", RawDateTime, RawDateTimeTransformer),
 
-    ("fk_company_suffix", FkCompanySuffix, FkCompanySuffixTransformer),
-    ("fk_company_name", FkCompanyName, FkCompanyNameTransformer),
-    ("fk_buzzword", FkBuzzword, FkBuzzwordTransformer),
-    ("fk_buzzword_middle", FkBuzzwordMiddle, FkBuzzwordMiddleTransformer),
-    ("fk_buzzword_tail", FkBuzzwordTail, FkBuzzwordTailTransformer),
-    ("fk_catch_phase", FkCatchPhase, FkCatchPhaseTransformer),
-    ("fk_bs_verb", FkBsVerb, FkBsVerbTransformer),
-    ("fk_bs_adj", FkBsAdj, FkBsAdjTransformer),
-    ("fk_bs_noun", FkBsNoun, FkBsNounTransformer),
-    ("fk_bs", FkBs, FkBsTransformer),
-    ("fk_profession", FkProfession, FkProfessionTransformer),
-    ("fk_industry", FkIndustry, FkIndustryTransformer),
+    ("company_suffix", CompanySuffix, CompanySuffixTransformer),
+    ("company_name", CompanyName, CompanyNameTransformer),
+    ("company_motto", CompanyMotto, CompanyMottoTransformer),
+    ("company_motto_head", CompanyMottoHead, CompanyMottoHeadTransformer),
+    ("company_motto_middle", BCompanyMottoMiddle, CompanyMottoMiddleTransformer),
+    ("company_motto_tail", CompanyMottoTail, CompanyMottoTailTransformer),
+    ("company_activity", CompanyActivity, CompanyActivityTransformer),
+    ("company_activity_verb", CompanyActivityVerb, CompanyActivityVerbTransformer),
+    ("company_activity_adj", CompanyActivityAdj, CompanyActivityAdjTransformer),
+    ("company_activity_noun", CompanyActivityNoun, CompanyActivityNounTransformer),
+    ("profession", Profession, ProfessionTransformer),
+    ("industry", Industry, IndustryTransformer),
 
-    ("fk_free_email_provider", FkFreeEmailProvider, FkFreeEmailProviderTransformer),
-    ("fk_domain_suffix", FkDomainSuffix, FkDomainSuffixTransformer),
-    ("fk_free_email", FkFreeEmail, FkFreeEmailTransformer),
-    ("fk_safe_email", FkSafeEmail, FkSafeEmailTransformer),
-    ("fk_username", FkUsername, FkUsernameTransformer),
-    ("fk_password", FkPassword, FkPasswordTransformer),
-    ("fk_ipv4", FkIPv4, FkIPv4Transformer),
-    ("fk_ipv6", FkIPv6, FkIPv6Transformer),
-    ("fk_mac_address", FkMACAddress, FkMACAddressTransformer),
-    ("fk_color", FkColor, FkColorTransformer),
-    ("fk_user_agent", FkUserAgent, FkUserAgentTransformer),
-    ("fk_job_seniority", FkJobSeniority, FkJobSeniorityTransformer),
-    ("fk_job_field", FkJobField, FkJobFieldTransformer),
-    ("fk_job_position", FkJobPosition, FkJobPositionTransformer),
-    ("fk_job_title", FkJobTitle, FkJobTitleTransformer),
+    ("free_email_provider", FreeEmailProvider, FreeEmailProviderTransformer),
+    ("domain_suffix", DomainSuffix, DomainSuffixTransformer),
+    ("username", Username, UsernameTransformer),
+    ("mac_address", MACAddress, MACAddressTransformer),
+    ("color", Color, ColorTransformer),
+    ("user_agent", UserAgent, UserAgentTransformer),
+    ("job_seniority", JobSeniority, JobSeniorityTransformer),
+    ("job_field", JobField, JobFieldTransformer),
+    ("job_position", JobPosition, JobPositionTransformer),
+    ("job_title", JobTitle, JobTitleTransformer),
 
-    ("fk_word", FkWord, FkWordTransformer),
-    ("fk_words", FkWords, FkWordsTransformer),
-    ("fk_sentence", FkSentence, FkSentenceTransformer),
-    ("fk_sentences", FkSentences, FkSentencesTransformer),
-    ("fk_paragraph", FkParagraph, FkParagraphTransformer),
-    ("fk_paragraphs", FkParagraphs, FkParagraphsTransformer),
+    ("word", Word, WordTransformer),
+    ("words", Words, WordsTransformer),
+    ("sentence", Sentence, SentenceTransformer),
+    ("sentences", Sentences, SentencesTransformer),
+    ("paragraph", Paragraph, ParagraphTransformer),
+    ("paragraphs", Paragraphs, ParagraphsTransformer),
 
-    ("fk_first_name", FkFirstName, FkFirstNameTransformer),
-    ("fk_last_name", FkLastName, FkLastNameTransformer),
-    ("fk_name_suffix", FkNameSuffix, FkNameSuffixTransformer),
-    ("fk_person_title", FkPersonTitle, FkPersonTitleTransformer),
-    ("fk_person_name", FkPersonName, FkPersonNameTransformer),
-    ("fk_person_name_with_title", FkPersonNameWithTitle, FkPersonNameWithTitleTransformer),
+    ("first_name", FirstName, FirstNameTransformer),
+    ("last_name", LastName, LastNameTransformer),
+    ("name_suffix", NameSuffix, NameSuffixTransformer),
+    ("person_title", PersonTitle, PersonTitleTransformer),
+    ("person_name", PersonName, PersonNameTransformer),
+    ("person_name_with_title", PersonNameWithTitle, PersonNameWithTitleTransformer),
 
-    ("fk_digit", FkDigit, FkDigitTransformer),
+    ("digit", Digit, DigitTransformer),
 
-    ("fk_phone_number", FkPhoneNumber, FkPhoneNumberTransformer),
-    ("fk_cell_number", FkCellNumber, FkCellNumberTransformer),
+    ("local_phone", LocalPhone, LocalPhoneTransformer),
+    ("local_cell_phone", LocalCellPhone, LocalCellPhoneTransformer),
 
-    ("fk_file_path", FkFilePath, FkFilePathTransformer),
-    ("fk_file_name", FkFileName, FkFileNameTransformer),
-    ("fk_file_extension", FkFileExtension, FkFileExtensionTransformer),
-    ("fk_dir_path", FkDirPath, FkDirPathTransformer),
+    ("file_path", FilePath, FilePathTransformer),
+    ("file_name", FileName, FileNameTransformer),
+    ("file_extension", FileExtension, FileExtensionTransformer),
+    ("dir_path", DirPath, DirPathTransformer),
 
-    ("fk_currency_code", FkCurrencyCode, FkCurrencyCodeTransformer),
-    ("fk_currency_name", FkCurrencyName, FkCurrencyNameTransformer),
-    ("fk_currency_symbol", FkCurrencySymbol, FkCurrencySymbolTransformer)
+    ("currency_code", CurrencyCode, CurrencyCodeTransformer),
+    ("currency_name", CurrencyName, CurrencyNameTransformer),
+    ("currency_symbol", CurrencySymbol, CurrencySymbolTransformer)
 ];

@@ -1,4 +1,3 @@
-mod configs;
 mod sql_value;
 
 use crate::{
@@ -6,7 +5,6 @@ use crate::{
     transformer::{Globals, TransformResult},
     Transformer,
 };
-use configs::*;
 use fake::{
     faker::{
         address::raw::*,
@@ -42,40 +40,153 @@ where
     }
 }
 
+macro_rules! fk_doctest {
+    ( $ser:literal, $tr:ident ) => {
+        concat!(
+            "# use datanymizer_engine::{\n",
+            "#   Transformer, Transformers, transformers::",
+            stringify!($tr),
+            "\n",
+            "# };\n",
+            "let cfg = \"",
+            $ser,
+            ": {}\";\n",
+            "let t: Transformers = serde_yaml::from_str(cfg).unwrap();\n",
+            "let s = t.transform(\"table.field\", \"t\", &None).unwrap().unwrap();\n",
+            "println!(\"{}\", s);\n",
+            "# assert!(s.len() > 0);\n"
+        )
+    };
+}
+
+macro_rules! fk_config_example {
+    ( Empty ) => {
+        ""
+    };
+
+    ( Ratio ) => {
+        concat!(
+            "      # The probability of TRUE value\n",
+            "      ratio: 50\n"
+        )
+    };
+
+    ( Count ) => {
+        concat!(
+            "      # Min count\n",
+            "      min: 2\n",
+            "      # Max count\n",
+            "      max: 5\n"
+        )
+    };
+}
+
+macro_rules! fk_doc_comment {
+    ( $desc:literal, $ser:literal, $tr:ident, $cfg:ident ) => {
+        concat!(
+            $desc,
+            "\n\n",
+            "# Config example:\n",
+            "The default:\n",
+            "```yaml\n",
+            "rules:\n",
+            "  field_name:\n",
+            "    ",
+            $ser,
+            ": {}\n",
+            "```\n",
+            "This is equal to:\n",
+            "```yaml\n",
+            "rules:\n",
+            "  field_name:\n",
+            "    ",
+            $ser,
+            ":\n",
+            "      locale: EN\n\n",
+            fk_config_example!($cfg),
+            "```\n\n",
+            "# Example:\n",
+            "```rust\n",
+            fk_doctest!($ser, $tr),
+            "```"
+        )
+    };
+}
+
+macro_rules! define_fk_struct {
+    ( $tr:ident, Empty, $doc:expr ) => {
+        #[doc = $doc]
+        #[derive(Default, Serialize, Deserialize, PartialEq, Eq, Hash, Debug, Clone)]
+        #[serde(default)]
+        pub struct $tr {
+            pub locale: LocaleConfig,
+        }
+    };
+
+    ( $tr:ident, Ratio, $doc:expr ) => {
+        #[doc = $doc]
+        #[derive(Serialize, Deserialize, PartialEq, Eq, Hash, Debug, Clone)]
+        #[serde(default)]
+        pub struct $tr {
+            pub locale: LocaleConfig,
+            pub ratio: u8,
+        }
+
+        impl Default for $tr {
+            fn default() -> Self {
+                Self {
+                    locale: LocaleConfig::default(),
+                    ratio: 50,
+                }
+            }
+        }
+    };
+
+    ( $tr:ident, Count, $doc:expr ) => {
+        #[doc = $doc]
+        #[derive(Serialize, Deserialize, PartialEq, Eq, Hash, Debug, Clone)]
+        #[serde(default)]
+        pub struct $tr {
+            pub locale: LocaleConfig,
+            pub min: usize,
+            pub max: usize,
+        }
+
+        impl Default for $tr {
+            fn default() -> Self {
+                Self {
+                    locale: LocaleConfig::default(),
+                    min: 2,
+                    max: 5,
+                }
+            }
+        }
+    };
+}
+
 macro_rules! impl_localized_faker {
-    ( $fk:ident, $sql:ty, EmptyConfig ) => {
+    ( $fk:ident, $sql:ty, Empty ) => {
         fn fake<L: Copy + fake::locales::Data>(&self, l: L) -> $sql {
             $fk(l).fake()
         }
     };
 
-    ( $fk:ident, $sql:ty, RatioConfig ) => {
+    ( $fk:ident, $sql:ty, Ratio ) => {
         fn fake<L: Copy + fake::locales::Data>(&self, l: L) -> $sql {
-            $fk(l, self.config.ratio).fake()
+            $fk(l, self.ratio).fake()
         }
     };
 
-    ( $fk:ident, $sql:ty, LenConfig ) => {
+    ( $fk:ident, $sql:ty, Count ) => {
         fn fake<L: Copy + fake::locales::Data>(&self, l: L) -> $sql {
-            $fk(l, self.config.len.range()).fake()
-        }
-    };
-
-    ( $fk:ident, $sql:ty, CountConfig ) => {
-        fn fake<L: Copy + fake::locales::Data>(&self, l: L) -> $sql {
-            $fk(l, self.config.count.range()).fake()
+            $fk(l, self.min..self.max + 1).fake()
         }
     };
 }
 
 macro_rules! define_fk_transformer {
-    ( ($tr:ident, $fk:ident, $sql:ty, $cfg:ident) ) => {
-        #[derive(Default, Serialize, Deserialize, PartialEq, Eq, Hash, Debug, Clone)]
-        #[serde(default)]
-        pub struct $tr {
-            locale: LocaleConfig,
-            config: $cfg,
-        }
+    ( $desc:literal, ($ser:literal, $tr:ident, $fk:ident, $sql:ty, $cfg:ident) ) => {
+        define_fk_struct! { $tr, $cfg, fk_doc_comment!($desc, $ser, $tr, $cfg) }
 
         impl Localized for $tr {
             fn locale(&self) -> LocaleConfig {
@@ -103,138 +214,142 @@ macro_rules! define_fk_transformer {
 }
 
 macro_rules! define_fk_transformers {
-    ( $( $tt:tt ),* ) => {
+    ( $(  $desc:literal, $tt:tt ),* ) => {
         $(
-            define_fk_transformer!($tt);
+            define_fk_transformer!($desc, $tt);
         )*
     };
 }
 
 define_fk_transformers![
-    (FkCityPrefixTransformer, CityPrefix, String, EmptyConfig),
-    (FkCitySuffixTransformer, CitySuffix, String, EmptyConfig),
-    (FkCityNameTransformer, CityName, String, EmptyConfig),
-    (FkCountryNameTransformer, CountryName, String, EmptyConfig),
-    (FkCountryCodeTransformer, CountryCode, String, EmptyConfig),
-    (FkStreetSuffixTransformer, StreetSuffix, String, EmptyConfig),
-    (FkStreetNameTransformer, StreetName, String, EmptyConfig),
-    (FkTimeZoneTransformer, TimeZone, String, EmptyConfig),
-    (FkStateNameTransformer, StateName, String, EmptyConfig),
-    (FkStateAbbrTransformer, StateAbbr, String, EmptyConfig),
-    (
-        FkSecondaryAddressTypeTransformer,
-        SecondaryAddressType,
-        String,
-        EmptyConfig
-    ),
-    (
-        FkSecondaryAddressTransformer,
-        SecondaryAddress,
-        String,
-        EmptyConfig
-    ),
-    (FkZipCodeTransformer, ZipCode, String, EmptyConfig),
-    (FkPostCodeTransformer, PostCode, String, EmptyConfig),
-    (
-        FkBuildingNumberTransformer,
-        BuildingNumber,
-        String,
-        EmptyConfig
-    ),
-    (FkLatitudeTransformer, Latitude, GenericFloat, EmptyConfig),
-    (FkLongitudeTransformer, Longitude, GenericFloat, EmptyConfig),
-    (FkBooleanTransformer, Boolean, bool, RatioConfig),
-    (FkDateTransformer, Date, GenericDate, EmptyConfig),
-    (
-        FkDateTimeTransformer,
-        DateTime,
-        GenericDateTime,
-        EmptyConfig
-    ),
-    (
-        FkCompanySuffixTransformer,
-        CompanySuffix,
-        String,
-        EmptyConfig
-    ),
-    (FkCompanyNameTransformer, CompanyName, String, EmptyConfig),
-    (FkBuzzwordTransformer, Buzzword, String, EmptyConfig),
-    (
-        FkBuzzwordMiddleTransformer,
-        BuzzwordMiddle,
-        String,
-        EmptyConfig
-    ),
-    (FkBuzzwordTailTransformer, BuzzwordTail, String, EmptyConfig),
-    (FkCatchPhaseTransformer, CatchPhase, String, EmptyConfig),
-    (FkBsVerbTransformer, BsVerb, String, EmptyConfig),
-    (FkBsAdjTransformer, BsAdj, String, EmptyConfig),
-    (FkBsNounTransformer, BsNoun, String, EmptyConfig),
-    (FkBsTransformer, Bs, String, EmptyConfig),
-    (FkProfessionTransformer, Profession, String, EmptyConfig),
-    (FkIndustryTransformer, Industry, String, EmptyConfig),
-    (
-        FkFreeEmailProviderTransformer,
-        FreeEmailProvider,
-        String,
-        EmptyConfig
-    ),
-    (FkDomainSuffixTransformer, DomainSuffix, String, EmptyConfig),
-    (FkFreeEmailTransformer, FreeEmail, String, EmptyConfig),
-    (FkSafeEmailTransformer, SafeEmail, String, EmptyConfig),
-    (FkUsernameTransformer, Username, String, EmptyConfig),
-    (FkPasswordTransformer, Password, String, LenConfig),
-    (FkIPv4Transformer, IPv4, String, EmptyConfig),
-    (FkIPv6Transformer, IPv6, String, EmptyConfig),
-    (FkMACAddressTransformer, MACAddress, String, EmptyConfig),
-    (FkColorTransformer, Color, String, EmptyConfig),
-    (FkUserAgentTransformer, UserAgent, String, EmptyConfig),
-    (FkJobSeniorityTransformer, JobSeniority, String, EmptyConfig),
-    (FkJobFieldTransformer, JobField, String, EmptyConfig),
-    (FkJobPositionTransformer, JobPosition, String, EmptyConfig),
-    (FkJobTitleTransformer, JobTitle, String, EmptyConfig),
-    (FkWordTransformer, Word, String, EmptyConfig),
-    (FkWordsTransformer, Words, Vec<String>, CountConfig),
-    (FkSentenceTransformer, Sentence, String, CountConfig),
-    (FkSentencesTransformer, Sentences, Vec<String>, CountConfig),
-    (FkParagraphTransformer, Paragraph, String, CountConfig),
-    (
-        FkParagraphsTransformer,
-        Paragraphs,
-        Vec<String>,
-        CountConfig
-    ),
-    (FkFirstNameTransformer, FirstName, String, EmptyConfig),
-    (FkLastNameTransformer, LastName, String, EmptyConfig),
-    (FkNameSuffixTransformer, NameSuffix, String, EmptyConfig),
-    (FkPersonTitleTransformer, PersonTitle, String, EmptyConfig),
-    (FkPersonNameTransformer, PersonName, String, EmptyConfig),
-    (
-        FkPersonNameWithTitleTransformer,
-        PersonNameWithTitle,
-        String,
-        EmptyConfig
-    ),
-    (FkDigitTransformer, Digit, String, EmptyConfig),
-    (FkPhoneNumberTransformer, PhoneNumber, String, EmptyConfig),
-    (FkCellNumberTransformer, CellNumber, String, EmptyConfig),
-    (FkFilePathTransformer, FilePath, String, EmptyConfig),
-    (FkFileNameTransformer, FileName, String, EmptyConfig),
-    (
-        FkFileExtensionTransformer,
-        FileExtension,
-        String,
-        EmptyConfig
-    ),
-    (FkDirPathTransformer, DirPath, String, EmptyConfig),
-    (FkCurrencyCodeTransformer, CurrencyCode, String, EmptyConfig),
-    (FkCurrencyNameTransformer, CurrencyName, String, EmptyConfig),
-    (
-        FkCurrencySymbolTransformer,
-        CurrencySymbol,
-        String,
-        EmptyConfig
-    )
+    "Gets a city prefix (e.g., `North`- or `East`-).",
+    ("city_prefix", CityPrefixTransformer, CityPrefix, String, Empty),
+    "Gets a city suffix (e.g., -`town`, -`berg` or -`ville`).",
+    ("city_suffix", CitySuffixTransformer, CitySuffix, String, Empty),
+    "Gets a city name.",
+    ("city", CityTransformer, CityName, String, Empty),
+    "Gets a country name.",
+    ("country_name", CountryNameTransformer, CountryName, String, Empty),
+    "Gets a country code (e.g., `RU`).",
+    ("country_code", CountryCodeTransformer, CountryCode, String, Empty),
+    "Gets a street suffix (e.g., `Avenue` or `Highway`).",
+    ("street_suffix", StreetSuffixTransformer, StreetSuffix, String, Empty),
+    "Gets a street name.",
+    ("street_name", StreetNameTransformer, StreetName, String, Empty),
+    "Gets a street suffix.",
+    ("time_zone", TimeZoneTransformer, TimeZone, String, Empty),
+    "Gets a time zone (e.g., `Europe/London`).",
+    ("state_name", StateNameTransformer, StateName, String, Empty),
+    "Gets a state (or the equivalent) abbreviation (e.g., `AZ` or `LA`).",
+    ("state_abbr", StateAbbrTransformer, StateAbbr, String, Empty),
+    "Gets a dwelling unit type (e.g., `Apt.` or `Suit.`).",
+    ("dwelling_type", DwellingTypeTransformer, SecondaryAddressType, String, Empty),
+    "Gets a dwelling unit part of the address (apartment, flat...).",
+    ("dwelling", DwellingTransformer, SecondaryAddress, String, Empty),
+    "Gets a zip code.",
+    ("zip_code", ZipCodeTransformer, ZipCode, String, Empty),
+    "Gets a post code.",
+    ("post_code", PostCodeTransformer, PostCode, String, Empty),
+    "Gets a building number.",
+    ("building_number", BuildingNumberTransformer, BuildingNumber, String, Empty),
+    "Gets a latitude.",
+    ("latitude", LatitudeTransformer, Latitude, GenericFloat, Empty),
+    "Gets a longitude.",
+    ("longitude", LongitudeTransformer, Longitude, GenericFloat, Empty),
+    "Gets a boolean value (TRUE/FALSE), with a given probability.",
+    ("boolean", BooleanTransformer, Boolean, bool, Ratio),
+    "Gets a random date (without formatting).",
+    ("raw_date", RawDateTransformer, Date, GenericDate, Empty),
+    "Gets a random datetime (without formatting).",
+    ("raw_datetime", RawDateTimeTransformer, DateTime, GenericDateTime, Empty),
+    "Gets a company name suffix (e.g., `Inc.` or `LLC`).",
+    ("company_suffix", CompanySuffixTransformer, CompanySuffix, String, Empty),
+    "Gets a company name.",
+    ("company_name", CompanyNameTransformer, CompanyName, String, Empty),
+    "Gets a company motto.",
+    ("company_motto", CompanyMottoTransformer, CatchPhase, String, Empty),
+    "Gets a head component of a company motto.",
+    ("company_motto_head", CompanyMottoHeadTransformer, Buzzword, String, Empty),
+    "Gets a middle component of a company motto.",
+    ("company_motto_middle", CompanyMottoMiddleTransformer, BuzzwordMiddle, String, Empty),
+    "Gets a tail component of a company motto.",
+    ("company_motto_tail", CompanyMottoTailTransformer, BuzzwordTail, String, Empty),
+    "Gets a company activity description (e.g., `integrate vertical markets`).",
+    ("company_activity", CompanyActivityTransformer, Bs, String, Empty),
+    "Gets a company activity verb.",
+    ("company_activity_verb", CompanyActivityVerbTransformer, BsVerb, String, Empty),
+    "Gets a company activity adjective.",
+    ("company_activity_adj", CompanyActivityAdjTransformer, BsAdj, String, Empty),
+    "Gets a company activity noun.",
+    ("company_activity_noun", CompanyActivityNounTransformer, BsNoun, String, Empty),
+    "Gets a profession name.",
+    ("profession", ProfessionTransformer, Profession, String, Empty),
+    "Gets an industry name.",
+    ("industry", IndustryTransformer, Industry, String, Empty),
+    "Gets a free email provider name (e. g., `gmail.com`)",
+    ("free_email_provider", FreeEmailProviderTransformer, FreeEmailProvider, String, Empty),
+    "Gets a domain suffix (e.g., `com`).",
+    ("domain_suffix", DomainSuffixTransformer, DomainSuffix, String, Empty),
+    "Gets an user name (login).",
+    ("username", UsernameTransformer, Username, String, Empty),
+    "Gets a MAC address.",
+    ("mac_address", MACAddressTransformer, MACAddress, String, Empty),
+    "Gets a color code (e.g., `#ffffff`).",
+    ("color", ColorTransformer, Color, String, Empty),
+    "Gets an User-Agent header.",
+    ("user_agent", UserAgentTransformer, UserAgent, String, Empty),
+    "Gets a job seniority (e.g., `Lead`, `Senior` or `Junior`).",
+    ("job_seniority", JobSeniorityTransformer, JobSeniority, String, Empty),
+    "Gets a job field.",
+    ("job_field", JobFieldTransformer, JobField, String, Empty),
+    "Gets a job position.",
+    ("job_position", JobPositionTransformer, JobPosition, String, Empty),
+    "Gets a job title (seniority + field + position).",
+    ("job_title", JobTitleTransformer, JobTitle, String, Empty),
+    "Gets a \"lorem\" word.",
+    ("word", WordTransformer, Word, String, Empty),
+    "Gets several \"lorem\" words (you can specify a count).",
+    ("words", WordsTransformer, Words, Vec<String>, Count),
+    "Gets a \"lorem\" sentence (you can specify a count of words).",
+    ("sentence", SentenceTransformer, Sentence, String, Count),
+    "Gets several \"lorem\" sentences (you can specify a count).",
+    ("sentences", SentencesTransformer, Sentences, Vec<String>, Count),
+    "Gets a \"lorem\" paragraph (you can specify a count sentences).",
+    ("paragraph", ParagraphTransformer, Paragraph, String, Count),
+    "Gets several \"lorem\" paragraphs (you can specify a count).",
+    ("paragraphs", ParagraphsTransformer, Paragraphs, Vec<String>, Count),
+    "Gets a person name.",
+    ("person_name", PersonNameTransformer, PersonName, String, Empty),
+    "Gets the first name",
+    ("first_name", FirstNameTransformer, FirstName, String, Empty),
+    "Gets the last name",
+    ("last_name", LastNameTransformer, LastName, String, Empty),
+    "Gets a name suffix (e.g., `Jr.`)",
+    ("name_suffix", NameSuffixTransformer, NameSuffix, String, Empty),
+    "Gets a person name title (e.g., `Mr` or `Ms`).",
+    ("person_title", PersonTitleTransformer, PersonTitle, String, Empty),
+    "Gets a person name with title.",
+    ("person_name_with_title", PersonNameWithTitleTransformer, PersonNameWithTitle, String, Empty),
+    "Gets a digit symbol (e.g., `2` or `5` for the English locale).",
+    ("digit", DigitTransformer, Digit, String, Empty),
+    "Gets a local phone number (for a given locale).",
+    ("local_phone", LocalPhoneTransformer, PhoneNumber, String, Empty),
+    "Gets a local cell phone number (for a given locale).",
+    ("local_cell_phone", LocalCellPhoneTransformer, CellNumber, String, Empty),
+    "Gets a file path.",
+    ("file_path", FilePathTransformer, FilePath, String, Empty),
+    "Gets a file name.",
+    ("file_name", FileNameTransformer, FileName, String, Empty),
+    "Gets a file extension.",
+    ("file_extension", FileExtensionTransformer, FileExtension, String, Empty),
+    "Gets a file directory path",
+    ("dir_path", DirPathTransformer, DirPath, String, Empty),
+    "Gets a currency code (e.g., `EUR` or `USD`).",
+    ("currency_code", CurrencyCodeTransformer, CurrencyCode, String, Empty),
+    "Gets a currency name.",
+    ("currency_name", CurrencyNameTransformer, CurrencyName, String, Empty),
+    "Gets a currency symbol.",
+    ("currency_symbol", CurrencySymbolTransformer, CurrencySymbol, String, Empty)
 ];
 
 #[cfg(test)]
@@ -246,16 +361,12 @@ mod tests {
 
         #[test]
         fn city_name() {
-            let cfg = r#"
-                locale: EN
-                config: ~
-                "#;
-            let t: FkCityNameTransformer = serde_yaml::from_str(cfg).unwrap();
+            let cfg = "locale: EN";
+            let t: CityTransformer = serde_yaml::from_str(cfg).unwrap();
             assert_eq!(
                 t,
-                FkCityNameTransformer {
-                    locale: LocaleConfig::EN,
-                    config: EmptyConfig
+                CityTransformer {
+                    locale: LocaleConfig::EN
                 }
             );
         }
@@ -264,28 +375,58 @@ mod tests {
         fn boolean() {
             let cfg = r#"
                 locale: EN
-                config:
-                  ratio: 30
+                ratio: 30
                 "#;
-            let t: FkBooleanTransformer = serde_yaml::from_str(cfg).unwrap();
+            let t: BooleanTransformer = serde_yaml::from_str(cfg).unwrap();
             assert_eq!(
                 t,
-                FkBooleanTransformer {
+                BooleanTransformer {
                     locale: LocaleConfig::EN,
-                    config: RatioConfig { ratio: 30 }
+                    ratio: 30
+                }
+            );
+        }
+
+        #[test]
+        fn words() {
+            let cfg = r#"
+                locale: EN
+                min: 2
+                max: 3
+                "#;
+            let t: WordsTransformer = serde_yaml::from_str(cfg).unwrap();
+            assert_eq!(
+                t,
+                WordsTransformer {
+                    locale: LocaleConfig::EN,
+                    min: 2,
+                    max: 3
+                }
+            );
+        }
+
+        #[test]
+        fn words_default() {
+            let cfg = "{}";
+            let t: WordsTransformer = serde_yaml::from_str(cfg).unwrap();
+            assert_eq!(
+                t,
+                WordsTransformer {
+                    locale: LocaleConfig::EN,
+                    min: 2,
+                    max: 5
                 }
             );
         }
 
         #[test]
         fn default_locale() {
-            let cfg = "config: ~";
-            let t: FkCityNameTransformer = serde_yaml::from_str(cfg).unwrap();
+            let cfg = "{}";
+            let t: CityTransformer = serde_yaml::from_str(cfg).unwrap();
             assert_eq!(
                 t,
-                FkCityNameTransformer {
-                    locale: LocaleConfig::EN,
-                    config: EmptyConfig
+                CityTransformer {
+                    locale: LocaleConfig::EN
                 }
             );
         }
@@ -293,12 +434,12 @@ mod tests {
         #[test]
         fn default_config() {
             let cfg = "locale: RU";
-            let t: FkBooleanTransformer = serde_yaml::from_str(cfg).unwrap();
+            let t: BooleanTransformer = serde_yaml::from_str(cfg).unwrap();
             assert_eq!(
                 t,
-                FkBooleanTransformer {
+                BooleanTransformer {
                     locale: LocaleConfig::RU,
-                    config: RatioConfig::default()
+                    ratio: 50
                 }
             );
         }
@@ -306,31 +447,25 @@ mod tests {
         #[test]
         fn default_all() {
             let cfg = "{}";
-            let t: FkBooleanTransformer = serde_yaml::from_str(cfg).unwrap();
-            assert_eq!(
-                t,
-                FkBooleanTransformer {
-                    locale: LocaleConfig::default(),
-                    config: RatioConfig::default()
-                }
-            );
+            let t: BooleanTransformer = serde_yaml::from_str(cfg).unwrap();
+            assert_eq!(t, BooleanTransformer::default());
         }
     }
 
     #[test]
     fn boolean() {
-        let t = FkBooleanTransformer {
+        let t = BooleanTransformer {
             locale: LocaleConfig::EN,
-            config: RatioConfig { ratio: 0 },
+            ratio: 0,
         };
         assert_eq!(
             t.transform("table.field", "t", &None),
             Ok(Some(String::from("FALSE")))
         );
 
-        let t = FkBooleanTransformer {
+        let t = BooleanTransformer {
             locale: LocaleConfig::EN,
-            config: RatioConfig { ratio: 100 },
+            ratio: 100,
         };
         assert_eq!(
             t.transform("table.field", "t", &None),
@@ -339,11 +474,8 @@ mod tests {
     }
 
     #[test]
-    fn city_name() {
-        let t = FkCityNameTransformer {
-            locale: LocaleConfig::EN,
-            config: EmptyConfig,
-        };
+    fn city() {
+        let t = CityTransformer::default();
         let value = t.transform("table.field", "t", &None).unwrap().unwrap();
         assert!(value.len() > 1);
         assert!(('A'..='Z').contains(&value.chars().next().unwrap()));
@@ -351,10 +483,23 @@ mod tests {
 
     #[test]
     fn country_name() {
-        let t = FkCityNameTransformer {
-            locale: LocaleConfig::EN,
-            config: EmptyConfig,
-        };
+        let t = CountryNameTransformer::default();
+        let value = t.transform("table.field", "t", &None).unwrap().unwrap();
+        assert!(value.len() > 1);
+        assert!(('A'..='Z').contains(&value.chars().next().unwrap()));
+    }
+
+    #[test]
+    fn first_name() {
+        let t = FirstNameTransformer::default();
+        let value = t.transform("table.field", "t", &None).unwrap().unwrap();
+        assert!(value.len() > 1);
+        assert!(('A'..='Z').contains(&value.chars().next().unwrap()));
+    }
+
+    #[test]
+    fn last_name() {
+        let t = LastNameTransformer::default();
         let value = t.transform("table.field", "t", &None).unwrap().unwrap();
         assert!(value.len() > 1);
         assert!(('A'..='Z').contains(&value.chars().next().unwrap()));
@@ -362,10 +507,7 @@ mod tests {
 
     #[test]
     fn longitude() {
-        let t = FkLongitudeTransformer {
-            locale: LocaleConfig::EN,
-            config: EmptyConfig,
-        };
+        let t = LongitudeTransformer::default();
         let value = t.transform("table.field", "t", &None).unwrap().unwrap();
         let value: f32 = value.parse().unwrap();
         assert!(value < 360.0 && value > -360.0);
@@ -373,34 +515,18 @@ mod tests {
 
     #[test]
     fn datetime() {
-        let t = FkDateTimeTransformer {
-            locale: LocaleConfig::EN,
-            config: EmptyConfig,
-        };
+        let t = RawDateTimeTransformer::default();
         let value = t.transform("table.field", "t", &None).unwrap().unwrap();
         // yyyy-mm-dd hh:mm:ss
         assert_eq!(value.len(), 19);
     }
 
     #[test]
-    fn password() {
-        let t = FkPasswordTransformer {
-            locale: LocaleConfig::EN,
-            config: LenConfig {
-                len: RangeConfig { min: 10, max: 10 },
-            },
-        };
-        let value = t.transform("table.field", "t", &None).unwrap().unwrap();
-        assert_eq!(value.len(), 10);
-    }
-
-    #[test]
     fn words() {
-        let t = FkWordsTransformer {
+        let t = WordsTransformer {
             locale: LocaleConfig::EN,
-            config: CountConfig {
-                count: RangeConfig { min: 5, max: 5 },
-            },
+            min: 5,
+            max: 5,
         };
         let value = t.transform("table.field", "t", &None).unwrap().unwrap();
         assert_eq!(value.split(" ").count(), 5);
