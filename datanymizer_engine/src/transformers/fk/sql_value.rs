@@ -48,3 +48,54 @@ impl AsSqlValue for GenericDateTime {
         v.format("%Y-%m-%d %H:%M:%S").to_string()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn bool() {
+        assert_eq!(bool::sql_value(true), "TRUE");
+        assert_eq!(bool::sql_value(false), "FALSE");
+    }
+
+    #[test]
+    fn string() {
+        assert_eq!(String::sql_value(String::from("str")), "str");
+    }
+
+    #[test]
+    fn vec_of_string() {
+        assert_eq!(
+            Vec::<String>::sql_value(vec![String::from("str1"), String::from("str2")]),
+            "str1 str2"
+        );
+    }
+
+    #[test]
+    fn generic_int() {
+        assert_eq!(GenericInt::sql_value(12), "12");
+    }
+
+    #[test]
+    fn generic_float() {
+        assert_eq!(GenericFloat::sql_value(17.01), "17.01");
+    }
+
+    #[test]
+    fn generic_date() {
+        assert_eq!(
+            GenericDate::sql_value(GenericDate::from_ymd(2012, 3, 4)),
+            "2012-03-04"
+        );
+    }
+
+    #[test]
+    fn generic_datetime() {
+        let dt = GenericDateTime::new(
+            GenericDate::from_ymd(2020, 5, 20),
+            chrono::naive::NaiveTime::from_hms(9, 12, 1)
+        );
+        assert_eq!(GenericDateTime::sql_value(dt), "2020-05-20 09:12:01");
+    }
+}
