@@ -4,11 +4,15 @@ mod ru;
 pub use ru::RU;
 
 pub type EN = fake::locales::EN;
+#[allow(non_camel_case_types)]
+pub type ZH_TW = fake::locales::ZH_TW;
 
+#[allow(non_camel_case_types)]
 #[derive(Copy, Serialize, Deserialize, PartialEq, Eq, Hash, Debug, Clone)]
 pub enum LocaleConfig {
     EN,
     RU,
+    ZH_TW,
 }
 
 impl Default for LocaleConfig {
@@ -29,6 +33,7 @@ pub trait LocalizedFaker<V>: Localized {
         match self.locale() {
             LocaleConfig::EN => self.fake(EN {}),
             LocaleConfig::RU => self.fake(RU {}),
+            LocaleConfig::ZH_TW => self.fake(ZH_TW {}),
         }
     }
 }

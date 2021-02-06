@@ -94,7 +94,7 @@ mod tests {
     fn generic_datetime() {
         let dt = GenericDateTime::new(
             GenericDate::from_ymd(2020, 5, 20),
-            chrono::naive::NaiveTime::from_hms(9, 12, 1)
+            chrono::naive::NaiveTime::from_hms(9, 12, 1),
         );
         assert_eq!(GenericDateTime::sql_value(dt), "2020-05-20 09:12:01");
     }
