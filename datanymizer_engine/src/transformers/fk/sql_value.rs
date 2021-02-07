@@ -1,4 +1,4 @@
-pub type GenericFloat = f32;
+pub type GenericFloat = f64;
 pub type GenericInt = isize;
 pub type GenericDate = chrono::naive::NaiveDate;
 pub type GenericDateTime = chrono::naive::NaiveDateTime;

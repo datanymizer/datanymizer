@@ -28,6 +28,7 @@ pub use datetime::RandomDateTimeTransformer;
 
 mod fk;
 pub use fk::*;
+pub use fk::sql_value::AsSqlValue;
 
 macro_rules! define_transformers_enum {
     ( $( ( $ser:literal, $var:ident, $tr:ty ) ),* ) => {
