@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### 🚀 Added
+- Implement the most of fakers from the `fake` crate. Add the option for locale configuration
+  [#23](https://github.com/datanymizer/datanymizer/pull/23) ([@evgeniy-r](https://github.com/evgeniy-r))
 - Separate filtering of data and schema [#22](https://github.com/datanymizer/datanymizer/pull/22)
   ([@evgeniy-r](https://github.com/evgeniy-r))
 - Add installation script [#21](https://github.com/datanymizer/datanymizer/pull/21) ([@mgrachev](https://github.com/mgrachev))
