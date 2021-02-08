@@ -39,10 +39,13 @@ You can easily implement it for other types (refer to the
 ```rust
 use fake::Fake;
 use serde::{Deserialize, Serialize};
+
+// This is not a real faker
 use passport::Passport;
 
-// You must also specify the dependencies from the datanymizer_engine crate, if you implement your transformer
-// in a separate crate.   
+use datanymizer_engine::{
+    FkTransformer, Globals, LocaleConfig, Localized, LocalizedFaker, TransformResult, Transformer,
+};
 
 #[derive(Default, Serialize, Deserialize, PartialEq, Eq, Hash, Debug, Clone)]
 #[serde(default)]
