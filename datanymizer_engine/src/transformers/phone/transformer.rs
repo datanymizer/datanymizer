@@ -1,6 +1,6 @@
 use super::deserialize_phone_format;
 use super::phone_format::PhoneFormat;
-use crate::transformer::{Globals, UniqTransformer, Uniqueness};
+use crate::transformer::{UniqTransformer, Uniqueness, TransformContext};
 use fake::Fake;
 use serde::{Deserialize, Serialize};
 use std::char;
@@ -64,7 +64,7 @@ impl UniqTransformer for PhoneTransformer {
         &self,
         _field_name: &str,
         _field_value: &str,
-        _globals: &Option<Globals>,
+        _ctx: &TransformContext,
     ) -> String {
         let mut rng = rand::thread_rng();
 
@@ -100,6 +100,7 @@ impl UniqTransformer for PhoneTransformer {
 #[cfg(test)]
 mod tests {
     use crate::{transformer::TransformResult, Transformer, Transformers};
+    use crate::transformer::TransformContext;
 
     #[test]
     fn parse_config_to_phone_transformer() {
@@ -122,8 +123,8 @@ mod tests {
 
         let transformer: Transformers = serde_yaml::from_str(config).unwrap();
 
-        let val1 = transformer.transform("field", "value", &None);
-        let val2 = transformer.transform("field", "value", &None);
+        let val1 = transformer.transform("field", "value", &TransformContext::default());
+        let val2 = transformer.transform("field", "value", &TransformContext::default());
 
         assert_ne!(val1, val2);
     }
@@ -140,7 +141,7 @@ mod tests {
 
         let mut phones: Vec<TransformResult> = vec![];
         for _ in 0..5 {
-            phones.push(transformer.transform("field", "value", &None));
+            phones.push(transformer.transform("field", "value", &TransformContext::default()));
         }
 
         assert!(phones.iter().any(|x| x.is_ok()))

@@ -1,5 +1,4 @@
-use super::transformer::{TransformResult, Transformer, TransformerDefaults};
-use crate::transformer::Globals;
+use super::transformer::{TransformContext, TransformResult, Transformer, TransformerDefaults};
 use serde::{Deserialize, Serialize};
 
 pub mod none;
@@ -48,7 +47,6 @@ macro_rules! define_transformers_enum {
                     )*
                 }
             }
-
             fn mut_transformer(&mut self) -> &mut dyn Transformer {
                 match self {
                     $(
@@ -153,10 +151,10 @@ impl Transformer for Transformers {
         &self,
         field_name: &str,
         field_value: &str,
-        globals: &Option<Globals>,
+        ctx: &TransformContext,
     ) -> TransformResult {
         self.transformer()
-            .transform(field_name, field_value, globals)
+            .transform(field_name, field_value, ctx)
     }
 
     fn set_defaults(&mut self, defaults: &TransformerDefaults) {

@@ -1,8 +1,8 @@
-use crate::{ColumnData, Table};
+use crate::Table;
 use anyhow::Result;
-use datanymizer_engine::{Engine, StringValue};
+use datanymizer_engine::Engine;
 use postgres::types::Type;
-use std::char;
+use std::{char, collections::HashMap};
 
 #[derive(Debug)]
 pub struct PgRow<T>
@@ -24,26 +24,22 @@ where
         }
     }
 
-    /// Apply transform engine to every colomn in row
-    /// Returs new StringRecord for store in dump
+    /// Applies the transform engine to every column in the row
+    /// Returns a new StringRecord for store in the dump
     pub fn transform(&self, engine: &Engine) -> Result<String> {
-        let mut result: Vec<String> = Vec::new();
         let split_char: char = char::from_u32(0x0009).unwrap();
-        let cols: Vec<&str> = self.source.split(split_char).collect();
-        for (ind, col) in self.table.get_columns().iter().enumerate() {
-            let pos = ind;
-            let value = cols.get(pos).unwrap_or(&"");
-            let mut dto = StringValue {
-                table_name: self.table.get_name().clone(),
-                field_name: col.name().to_string(),
-                value: value.to_string(),
-            };
-            let _ = engine.process(&mut dto)?;
-
-            dto.update(dto.value.clone());
-
-            result.insert(pos, dto.value);
+        let column_names = self.table.get_columns_names();
+        let mut value_map = HashMap::with_capacity(column_names.len());
+        for (i, v) in self.source.split(split_char).enumerate() {
+            value_map.insert(column_names[i].clone(), v.to_string());
         }
-        Ok(result.join("\t"))
+
+        engine.process_row(self.table.get_name(), &mut value_map)?;
+
+        Ok(column_names
+            .iter()
+            .map(|c| value_map[c].as_str())
+            .collect::<Vec<&str>>()
+            .join("\t"))
     }
 }

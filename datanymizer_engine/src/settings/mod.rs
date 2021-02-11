@@ -25,12 +25,23 @@ impl Connection {
     }
 }
 
+type TransformList = Vec<(String, Transformers)>;
+
 #[derive(Debug, Deserialize, Clone)]
 pub struct Table {
     /// Table name
     pub name: String,
     /// Rule set for columns
     pub rules: Rules,
+}
+
+impl Table {
+    fn transform_list(&self) -> TransformList {
+        self.rules
+            .iter()
+            .map(|(field, ts)| (field.clone(), ts.clone()))
+            .collect()
+    }
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -52,6 +63,8 @@ pub struct Settings {
     /// Global values. Visible in any template.
     /// They may be shadowed by template variables.
     pub globals: Option<HashMap<String, JsonValue>>,
+
+    transform_map: HashMap<String, TransformList>,
 }
 
 impl Settings {
@@ -82,6 +95,10 @@ impl Settings {
         Some(&transformers)
     }
 
+    pub fn transformers_for(&self, table: &str) -> &TransformList {
+        &self.transform_map[table]
+    }
+
     pub fn destination(&self) -> Result<String> {
         self.destination
             .clone()
@@ -95,6 +112,16 @@ impl Settings {
                     rule.set_defaults(defs);
                 }
             }
+
+            self.fill_transform_map();
+        }
+    }
+
+    fn fill_transform_map(&mut self) {
+        self.transform_map = HashMap::with_capacity(self.tables.len());
+        for table in &self.tables {
+            self.transform_map
+                .insert(table.name.clone(), table.transform_list());
         }
     }
 }

@@ -1,4 +1,6 @@
-use crate::{errors::EngineError, value::StringValue, Settings, Transformer};
+use crate::{errors::EngineError, Settings, Transformer};
+use std::collections::HashMap;
+use crate::transformer::TransformContext;
 
 pub struct Engine {
     pub settings: Settings,
@@ -9,19 +11,23 @@ impl Engine {
         Self { settings }
     }
 
-    pub fn process(&self, value: &mut StringValue) -> Result<(), EngineError> {
-        if let Some(tr) = self
-            .settings
-            .lookup_transformers(value.table_name.clone(), value.field_name.clone())
-        {
-            match tr.transform(
-                &format!("{}.{}", value.table_name, value.field_name),
-                value.value.clone().as_ref(),
-                &self.settings.globals,
-            ) {
-                Ok(Some(res)) => value.update(res),
-                Err(e) => return Err(EngineError::TransformFieldError(e)),
-                _ => {}
+    pub fn process_row(
+        &self,
+        table: String,
+        values: &mut HashMap<String, String>,
+    ) -> Result<(), EngineError> {
+        let ctx = TransformContext::new(&self.settings.globals);
+        for (field, tr) in self.settings.transformers_for(&table) {
+            if let Some(value) = values.get_mut(field) {
+                match tr.transform(
+                    &format!("{}.{}", table, field),
+                    value,
+                    &ctx,
+                ) {
+                    Ok(Some(res)) => *value = res,
+                    Err(e) => return Err(EngineError::TransformFieldError(e)),
+                    _ => {}
+                }
             }
         }
         Ok(())

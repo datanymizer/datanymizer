@@ -1,4 +1,4 @@
-use crate::transformer::{Globals, TransformResult, TransformResultHelper, Transformer};
+use crate::transformer::{TransformResult, TransformResultHelper, Transformer, TransformContext};
 use serde::{Deserialize, Serialize};
 
 /// This transformer doing... nothing.
@@ -10,7 +10,7 @@ impl Transformer for NoneTransformer {
         &self,
         _field_name: &str,
         field_value: &str,
-        _globals: &Option<Globals>,
+        _ctx: &TransformContext,
     ) -> TransformResult {
         TransformResult::present(field_value)
     }

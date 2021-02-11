@@ -1,5 +1,5 @@
 use crate::{
-    transformer::{Globals, TransformResult, TransformResultHelper, Transformer},
+    transformer::{TransformResult, TransformResultHelper, Transformer, TransformContext},
     TransformerDefaults, Transformers,
 };
 use serde::{Deserialize, Serialize};
@@ -73,14 +73,14 @@ impl Transformer for TemplateTransformer {
         &self,
         field_name: &str,
         field_value: &str,
-        globals: &Option<Globals>,
+        ctx: &TransformContext,
     ) -> TransformResult {
         let mut rules_names: HashMap<String, Value> = HashMap::new();
         if let Some(rules) = self.rules.clone() {
             for (i, rule) in rules.iter().enumerate() {
                 let key = format!("_{}", i + 1);
                 let transform_result: Option<String> =
-                    rule.transform(field_name, field_value, globals)?;
+                    rule.transform(field_name, field_value, ctx)?;
                 let value = transform_result.unwrap_or_else(|| "".to_string());
                 rules_names.insert(key, Value::String(value));
             }
@@ -88,7 +88,7 @@ impl Transformer for TemplateTransformer {
 
         let mut vars = self.variables.clone().unwrap_or_default();
 
-        if let Some(items) = globals {
+        if let Some(items) = ctx.globals {
             vars.extend(items.clone());
         }
 
@@ -126,6 +126,7 @@ mod tests {
         LocaleConfig, Transformers,
     };
     use serde_json::Value;
+    use crate::transformer::TransformContext;
 
     #[test]
     fn template_interpolation() {
@@ -148,7 +149,7 @@ template:
 
         let transformer: Transformers = serde_yaml::from_str(config).unwrap();
 
-        let res = transformer.transform("", "Mr", &Some(global_values));
+        let res = transformer.transform("", "Mr", &TransformContext::new(&Some(global_values)));
         assert_eq!(res, Ok(Some(expected)));
     }
 
