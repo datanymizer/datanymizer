@@ -7,7 +7,7 @@ pub mod sql_value;
 
 use crate::{
     locale::{LocaleConfig, Localized, LocalizedFaker},
-    transformer::{Globals, TransformResult},
+    transformer::{Globals, TransformResult, TransformerDefaults},
     Transformer,
 };
 use fake::{
@@ -138,7 +138,7 @@ macro_rules! define_fk_struct {
         #[derive(Default, Serialize, Deserialize, PartialEq, Eq, Hash, Debug, Clone)]
         #[serde(default)]
         pub struct $tr {
-            pub locale: LocaleConfig,
+            pub locale: Option<LocaleConfig>,
         }
     };
 
@@ -147,14 +147,14 @@ macro_rules! define_fk_struct {
         #[derive(Serialize, Deserialize, PartialEq, Eq, Hash, Debug, Clone)]
         #[serde(default)]
         pub struct $tr {
-            pub locale: LocaleConfig,
+            pub locale: Option<LocaleConfig>,
             pub ratio: u8,
         }
 
         impl Default for $tr {
             fn default() -> Self {
                 Self {
-                    locale: LocaleConfig::default(),
+                    locale: None,
                     ratio: 50,
                 }
             }
@@ -166,7 +166,7 @@ macro_rules! define_fk_struct {
         #[derive(Serialize, Deserialize, PartialEq, Eq, Hash, Debug, Clone)]
         #[serde(default)]
         pub struct $tr {
-            pub locale: LocaleConfig,
+            pub locale: Option<LocaleConfig>,
             pub min: usize,
             pub max: usize,
         }
@@ -174,7 +174,7 @@ macro_rules! define_fk_struct {
         impl Default for $tr {
             fn default() -> Self {
                 Self {
-                    locale: LocaleConfig::default(),
+                    locale: None,
                     min: 2,
                     max: 5,
                 }
@@ -219,7 +219,7 @@ macro_rules! define_fk_transformer {
 
         impl Localized for $tr {
             fn locale(&self) -> LocaleConfig {
-                self.locale
+                self.locale.unwrap_or_else(|| LocaleConfig::default())
             }
         }
 
@@ -237,6 +237,12 @@ macro_rules! define_fk_transformer {
                 _globals: &Option<Globals>,
             ) -> TransformResult {
                 self.transform_with_faker()
+            }
+
+            fn set_defaults(&mut self, defaults: &TransformerDefaults) {
+                if self.locale.is_none() {
+                    self.locale = Some(defaults.locale);
+                }
             }
         }
     };
@@ -396,7 +402,7 @@ mod tests {
             assert_eq!(
                 t,
                 CityTransformer {
-                    locale: LocaleConfig::EN
+                    locale: Some(LocaleConfig::EN)
                 }
             );
         }
@@ -411,7 +417,7 @@ mod tests {
             assert_eq!(
                 t,
                 BooleanTransformer {
-                    locale: LocaleConfig::EN,
+                    locale: Some(LocaleConfig::EN),
                     ratio: 30
                 }
             );
@@ -428,7 +434,7 @@ mod tests {
             assert_eq!(
                 t,
                 WordsTransformer {
-                    locale: LocaleConfig::EN,
+                    locale: Some(LocaleConfig::EN),
                     min: 2,
                     max: 3
                 }
@@ -442,7 +448,7 @@ mod tests {
             assert_eq!(
                 t,
                 WordsTransformer {
-                    locale: LocaleConfig::EN,
+                    locale: None,
                     min: 2,
                     max: 5
                 }
@@ -453,12 +459,7 @@ mod tests {
         fn default_locale() {
             let cfg = "{}";
             let t: CityTransformer = serde_yaml::from_str(cfg).unwrap();
-            assert_eq!(
-                t,
-                CityTransformer {
-                    locale: LocaleConfig::EN
-                }
-            );
+            assert_eq!(t, CityTransformer { locale: None });
         }
 
         #[test]
@@ -468,7 +469,7 @@ mod tests {
             assert_eq!(
                 t,
                 BooleanTransformer {
-                    locale: LocaleConfig::RU,
+                    locale: Some(LocaleConfig::RU),
                     ratio: 50
                 }
             );
@@ -482,10 +483,34 @@ mod tests {
         }
     }
 
+    mod defaults {
+        use super::*;
+
+        #[test]
+        fn locale_is_none() {
+            let mut t = CityTransformer { locale: None };
+            t.set_defaults(&TransformerDefaults {
+                locale: LocaleConfig::RU,
+            });
+            assert_eq!(t.locale, Some(LocaleConfig::RU));
+        }
+
+        #[test]
+        fn locale_is_some() {
+            let mut t = CityTransformer {
+                locale: Some(LocaleConfig::EN),
+            };
+            t.set_defaults(&TransformerDefaults {
+                locale: LocaleConfig::RU,
+            });
+            assert_eq!(t.locale, Some(LocaleConfig::EN));
+        }
+    }
+
     #[test]
     fn boolean() {
         let t = BooleanTransformer {
-            locale: LocaleConfig::EN,
+            locale: None,
             ratio: 0,
         };
         assert_eq!(
@@ -494,7 +519,7 @@ mod tests {
         );
 
         let t = BooleanTransformer {
-            locale: LocaleConfig::EN,
+            locale: None,
             ratio: 100,
         };
         assert_eq!(
@@ -554,7 +579,7 @@ mod tests {
     #[test]
     fn words() {
         let t = WordsTransformer {
-            locale: LocaleConfig::EN,
+            locale: None,
             min: 5,
             max: 5,
         };
@@ -565,7 +590,7 @@ mod tests {
     #[test]
     fn zh_tw_locale() {
         let t = PersonNameTransformer {
-            locale: LocaleConfig::ZH_TW,
+            locale: Some(LocaleConfig::ZH_TW),
         };
         let value = t.transform("table.field", "t", &None).unwrap().unwrap();
         assert!(!('A'..='Z').contains(&value.chars().next().unwrap()));

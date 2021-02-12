@@ -1,4 +1,4 @@
-use super::transformer::{TransformResult, Transformer};
+use super::transformer::{TransformResult, Transformer, TransformerDefaults};
 use crate::transformer::Globals;
 use serde::{Deserialize, Serialize};
 
@@ -40,18 +40,19 @@ macro_rules! define_transformers_enum {
             )*
         }
 
-        impl Transformer for Transformers {
-            fn transform(
-                &self,
-                field_name: &str,
-                field_value: &str,
-                globals: &Option<Globals>,
-            ) -> TransformResult {
-                use self::Transformers::*;
-
-                match *self {
+        impl Transformers {
+            fn transformer(&self) -> &dyn Transformer {
+                match self {
                     $(
-                        $var(ref t) => t.transform(field_name, field_value, globals),
+                        Self::$var(ref t) => t,
+                    )*
+                }
+            }
+
+            fn mut_transformer(&mut self) -> &mut dyn Transformer {
+                match self {
+                    $(
+                        Self::$var(ref mut t) => t,
                     )*
                 }
             }
@@ -146,3 +147,34 @@ define_transformers_enum![
     ("currency_name", CurrencyName, CurrencyNameTransformer),
     ("currency_symbol", CurrencySymbol, CurrencySymbolTransformer)
 ];
+
+impl Transformer for Transformers {
+    fn transform(
+        &self,
+        field_name: &str,
+        field_value: &str,
+        globals: &Option<Globals>,
+    ) -> TransformResult {
+        self.transformer()
+            .transform(field_name, field_value, globals)
+    }
+
+    fn set_defaults(&mut self, defaults: &TransformerDefaults) {
+        self.mut_transformer().set_defaults(defaults);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::LocaleConfig;
+
+    #[test]
+    fn test() {
+        let mut ts = Transformers::FirstName(FirstNameTransformer::default());
+        let t = ts.mut_transformer();
+        t.set_defaults(&TransformerDefaults {
+            locale: LocaleConfig::RU,
+        });
+    }
+}

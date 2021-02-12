@@ -1,6 +1,6 @@
 mod filter;
 
-use crate::transformers::Transformers;
+use crate::{transformers::Transformers, Transformer, TransformerDefaults};
 use anyhow::{anyhow, Result};
 use config::{Config, ConfigError, File};
 use serde::Deserialize;
@@ -44,6 +44,9 @@ pub struct Settings {
     /// Tables list with transformation rules
     pub tables: Tables,
 
+    /// Default transformers configuration
+    pub default: Option<TransformerDefaults>,
+
     pub filter: Option<Filter>,
 
     /// Global values. Visible in any template.
@@ -57,7 +60,10 @@ impl Settings {
         s.set("source.database_url", database_url)?;
         s.merge(File::with_name(&path))?;
 
-        s.try_into()
+        let mut settings: Self = s.try_into()?;
+        settings.preprocess();
+
+        Ok(settings)
     }
 
     pub fn lookup_transformers<T>(&self, table: T, column: T) -> Option<&Transformers>
@@ -73,5 +79,15 @@ impl Settings {
         self.destination
             .clone()
             .ok_or_else(|| anyhow!("Destination path is empty"))
+    }
+
+    fn preprocess(&mut self) {
+        if let Some(defs) = &self.default {
+            for table in self.tables.iter_mut() {
+                for (_name, rule) in table.rules.iter_mut() {
+                    rule.set_defaults(defs);
+                }
+            }
+        }
     }
 }

@@ -1,4 +1,6 @@
-use crate::transformer::{Globals, TransformResult, TransformResultHelper, Transformer};
+use crate::transformer::{
+    Globals, TransformResult, TransformResultHelper, Transformer, TransformerDefaults,
+};
 use serde::{Deserialize, Serialize};
 use std::iter::Iterator;
 
@@ -51,5 +53,11 @@ where
             });
 
         TransformResult::present(res)
+    }
+
+    fn set_defaults(&mut self, defaults: &TransformerDefaults) {
+        for t in &mut self.pipes {
+            t.set_defaults(defaults);
+        }
     }
 }

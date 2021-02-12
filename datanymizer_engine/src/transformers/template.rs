@@ -1,6 +1,6 @@
 use crate::{
     transformer::{Globals, TransformResult, TransformResultHelper, Transformer},
-    Transformers,
+    TransformerDefaults, Transformers,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -105,6 +105,14 @@ impl Transformer for TemplateTransformer {
         match tera.render(TEMPLATE_NAME, &context) {
             Ok(res) => TransformResult::present(res),
             Err(e) => TransformResult::error(field_name, field_value, &e.to_string()),
+        }
+    }
+
+    fn set_defaults(&mut self, defaults: &TransformerDefaults) {
+        if let Some(ts) = &mut self.rules {
+            for t in ts {
+                t.set_defaults(defaults);
+            }
         }
     }
 }
