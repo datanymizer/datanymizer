@@ -65,3 +65,12 @@ fn transform() {
     let value = t.transform("table.field", "value", &None).unwrap().unwrap();
     assert_eq!(value, "1234567");
 }
+
+#[test]
+fn set_defaults() {
+    let mut t = PassportTransformer::default();
+    assert_eq!(t.locale(), None);
+
+    t.set_defaults(&TransformerDefaults { locale: LocaleConfig::RU });
+    assert_eq!(t.locale(), Some(LocaleConfig::RU));
+}
