@@ -120,8 +120,8 @@ mod tests {
               locale: RU
             "#;
 
-        let s = Settings::from_source(File::from_str(config, FileFormat::Yaml), String::new())
-            .unwrap();
+        let s =
+            Settings::from_source(File::from_str(config, FileFormat::Yaml), String::new()).unwrap();
         let rules = &s.tables.first().unwrap().rules;
 
         assert_eq!(

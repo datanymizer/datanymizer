@@ -71,6 +71,8 @@ fn set_defaults() {
     let mut t = PassportTransformer::default();
     assert_eq!(t.locale(), None);
 
-    t.set_defaults(&TransformerDefaults { locale: LocaleConfig::RU });
+    t.set_defaults(&TransformerDefaults {
+        locale: LocaleConfig::RU,
+    });
     assert_eq!(t.locale(), Some(LocaleConfig::RU));
 }
