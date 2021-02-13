@@ -56,9 +56,16 @@ pub struct Settings {
 
 impl Settings {
     pub fn new(path: String, database_url: String) -> Result<Self, ConfigError> {
+        Self::from_source(File::with_name(&path), database_url)
+    }
+
+    fn from_source<S: 'static>(source: S, database_url: String) -> Result<Self, ConfigError>
+    where
+        S: config::Source + Send + Sync,
+    {
         let mut s = Config::new();
         s.set("source.database_url", database_url)?;
-        s.merge(File::with_name(&path))?;
+        s.merge(source)?;
 
         let mut settings: Self = s.try_into()?;
         settings.preprocess();
@@ -89,5 +96,45 @@ impl Settings {
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{transformers::PersonNameTransformer, LocaleConfig};
+    use config::FileFormat;
+
+    #[test]
+    fn set_defaults() {
+        let config = r#"
+            tables:
+              - name: user
+                rules:
+                  name:
+                    person_name: {}
+                  alias:
+                    person_name:
+                      locale: EN
+            default:
+              locale: RU
+            "#;
+
+        let s = Settings::from_source(File::from_str(config, FileFormat::Yaml), String::new())
+            .unwrap();
+        let rules = &s.tables.first().unwrap().rules;
+
+        assert_eq!(
+            rules["name"],
+            Transformers::PersonName(PersonNameTransformer {
+                locale: Some(LocaleConfig::RU)
+            })
+        );
+        assert_eq!(
+            rules["alias"],
+            Transformers::PersonName(PersonNameTransformer {
+                locale: Some(LocaleConfig::EN)
+            })
+        );
     }
 }

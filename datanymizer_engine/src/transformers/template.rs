@@ -124,7 +124,7 @@ mod test {
     use serde_json::Value;
 
     #[test]
-    fn tempalte_interpolation() {
+    fn template_interpolation() {
         let expected: String = String::from("Hello, ALEX! Any text with replace:Dr, global: test");
         let mut global_values = Globals::new();
         global_values.insert(

@@ -43,6 +43,12 @@ where
     fn transform_with_faker(&self) -> TransformResult {
         Ok(Some(V::sql_value(self.localized_fake())))
     }
+
+    fn set_defaults_for_faker(&mut self, defaults: &TransformerDefaults) {
+        if self.locale().is_none() {
+            self.set_locale(Some(defaults.locale));
+        }
+    }
 }
 
 /// This macro defines a document test for a faker-based transformer.
@@ -218,8 +224,12 @@ macro_rules! define_fk_transformer {
         define_fk_struct! { $tr, $cfg, fk_doc_comment!($desc, $ser, $tr, $cfg) }
 
         impl Localized for $tr {
-            fn locale(&self) -> LocaleConfig {
-                self.locale.unwrap_or_else(|| LocaleConfig::default())
+            fn locale(&self) -> Option<LocaleConfig> {
+                self.locale
+            }
+
+            fn set_locale(&mut self, l: Option<LocaleConfig>) {
+                self.locale = l;
             }
         }
 
@@ -240,9 +250,7 @@ macro_rules! define_fk_transformer {
             }
 
             fn set_defaults(&mut self, defaults: &TransformerDefaults) {
-                if self.locale.is_none() {
-                    self.locale = Some(defaults.locale);
-                }
+                self.set_defaults_for_faker(defaults);
             }
         }
     };

@@ -22,9 +22,10 @@ pub struct TransformError {
     pub reason: String,
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Default, Deserialize, Clone)]
+#[serde(default)]
 pub struct TransformerDefaults {
-    pub(crate) locale: LocaleConfig,
+    pub locale: LocaleConfig,
 }
 
 pub trait TransformResultHelper {

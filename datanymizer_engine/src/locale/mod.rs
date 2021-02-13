@@ -23,14 +23,15 @@ impl Default for LocaleConfig {
 }
 
 pub trait Localized {
-    fn locale(&self) -> LocaleConfig;
+    fn locale(&self) -> Option<LocaleConfig>;
+    fn set_locale(&mut self, _l: Option<LocaleConfig>);
 }
 
 pub trait LocalizedFaker<V>: Localized {
     fn fake<L: Copy + fake::locales::Data>(&self, l: L) -> V;
 
     fn localized_fake(&self) -> V {
-        match self.locale() {
+        match self.locale().unwrap_or_else(LocaleConfig::default) {
             LocaleConfig::EN => self.fake(EN {}),
             LocaleConfig::RU => self.fake(RU {}),
             LocaleConfig::ZH_TW => self.fake(ZH_TW {}),
