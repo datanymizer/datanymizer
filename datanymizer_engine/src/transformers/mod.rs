@@ -170,7 +170,7 @@ mod tests {
     use crate::LocaleConfig;
 
     #[test]
-    fn defaults() {
+    fn set_defaults() {
         let mut ts = Transformers::FirstName(FirstNameTransformer::default());
         ts.set_defaults(&TransformerDefaults {
             locale: LocaleConfig::RU,

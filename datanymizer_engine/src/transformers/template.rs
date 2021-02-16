@@ -153,7 +153,7 @@ template:
     }
 
     #[test]
-    fn defaults() {
+    fn set_defaults() {
         let mut t = TemplateTransformer {
             format: String::new(),
             rules: Some(vec![

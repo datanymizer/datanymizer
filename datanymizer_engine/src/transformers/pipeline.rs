@@ -71,7 +71,7 @@ mod tests {
     };
 
     #[test]
-    fn defaults() {
+    fn set_defaults() {
         let mut t = PipelineTransformer {
             pipes: vec![
                 Transformers::FirstName(FirstNameTransformer::default()),
