@@ -66,7 +66,7 @@ macro_rules! fk_doctest {
             $ser,
             ": {}\";\n",
             "let t: Transformers = serde_yaml::from_str(cfg).unwrap();\n",
-            "let s = t.transform(\"table.field\", \"t\", &None).unwrap().unwrap();\n",
+            "let s = t.transform(\"table.field\", \"t\", None).unwrap().unwrap();\n",
             "println!(\"{}\", s);\n",
             "# assert!(s.len() > 0);\n"
         )
@@ -244,7 +244,7 @@ macro_rules! define_fk_transformer {
                 &self,
                 _field_name: &str,
                 _field_value: &str,
-                _ctx: &TransformContext,
+                _ctx: Option<TransformContext>,
             ) -> TransformResult {
                 self.transform_with_faker()
             }
@@ -499,6 +499,7 @@ mod tests {
             let mut t = CityTransformer { locale: None };
             t.set_defaults(&TransformerDefaults {
                 locale: LocaleConfig::RU,
+                globals: None,
             });
             assert_eq!(t.locale, Some(LocaleConfig::RU));
         }
@@ -510,6 +511,7 @@ mod tests {
             };
             t.set_defaults(&TransformerDefaults {
                 locale: LocaleConfig::RU,
+                globals: None,
             });
             assert_eq!(t.locale, Some(LocaleConfig::EN));
         }
@@ -522,7 +524,7 @@ mod tests {
             ratio: 0,
         };
         assert_eq!(
-            t.transform("table.field", "t", &TransformContext::default()),
+            t.transform("table.field", "t", None),
             Ok(Some(String::from("FALSE")))
         );
 
@@ -531,7 +533,7 @@ mod tests {
             ratio: 100,
         };
         assert_eq!(
-            t.transform("table.field", "t", &TransformContext::default()),
+            t.transform("table.field", "t", None),
             Ok(Some(String::from("TRUE")))
         );
     }
@@ -539,7 +541,7 @@ mod tests {
     #[test]
     fn city() {
         let t = CityTransformer::default();
-        let value = t.transform("table.field", "t", &TransformContext::default()).unwrap().unwrap();
+        let value = t.transform("table.field", "t", None).unwrap().unwrap();
         assert!(value.len() > 1);
         assert!(('A'..='Z').contains(&value.chars().next().unwrap()));
     }
@@ -547,7 +549,7 @@ mod tests {
     #[test]
     fn country_name() {
         let t = CountryNameTransformer::default();
-        let value = t.transform("table.field", "t", &TransformContext::default()).unwrap().unwrap();
+        let value = t.transform("table.field", "t", None).unwrap().unwrap();
         assert!(value.len() > 1);
         assert!(('A'..='Z').contains(&value.chars().next().unwrap()));
     }
@@ -555,7 +557,7 @@ mod tests {
     #[test]
     fn first_name() {
         let t = FirstNameTransformer::default();
-        let value = t.transform("table.field", "t", &TransformContext::default()).unwrap().unwrap();
+        let value = t.transform("table.field", "t", None).unwrap().unwrap();
         assert!(value.len() > 1);
         assert!(('A'..='Z').contains(&value.chars().next().unwrap()));
     }
@@ -563,7 +565,7 @@ mod tests {
     #[test]
     fn last_name() {
         let t = LastNameTransformer::default();
-        let value = t.transform("table.field", "t", &TransformContext::default()).unwrap().unwrap();
+        let value = t.transform("table.field", "t", None).unwrap().unwrap();
         assert!(value.len() > 1);
         assert!(('A'..='Z').contains(&value.chars().next().unwrap()));
     }
@@ -571,7 +573,7 @@ mod tests {
     #[test]
     fn longitude() {
         let t = LongitudeTransformer::default();
-        let value = t.transform("table.field", "t", &TransformContext::default()).unwrap().unwrap();
+        let value = t.transform("table.field", "t", None).unwrap().unwrap();
         let value: f32 = value.parse().unwrap();
         assert!(value < 360.0 && value > -360.0);
     }
@@ -579,7 +581,7 @@ mod tests {
     #[test]
     fn datetime() {
         let t = RawDateTimeTransformer::default();
-        let value = t.transform("table.field", "t", &TransformContext::default()).unwrap().unwrap();
+        let value = t.transform("table.field", "t", None).unwrap().unwrap();
         // yyyy-mm-dd hh:mm:ss
         assert_eq!(value.len(), 19);
     }
@@ -591,7 +593,7 @@ mod tests {
             min: 5,
             max: 5,
         };
-        let value = t.transform("table.field", "t", &TransformContext::default()).unwrap().unwrap();
+        let value = t.transform("table.field", "t", None).unwrap().unwrap();
         assert_eq!(value.split(" ").count(), 5);
     }
 
@@ -600,7 +602,7 @@ mod tests {
         let t = PersonNameTransformer {
             locale: Some(LocaleConfig::ZH_TW),
         };
-        let value = t.transform("table.field", "t", &TransformContext::default()).unwrap().unwrap();
+        let value = t.transform("table.field", "t", None).unwrap().unwrap();
         assert!(!('A'..='Z').contains(&value.chars().next().unwrap()));
     }
 }

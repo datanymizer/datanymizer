@@ -151,10 +151,9 @@ impl Transformer for Transformers {
         &self,
         field_name: &str,
         field_value: &str,
-        ctx: &TransformContext,
+        ctx: Option<TransformContext>,
     ) -> TransformResult {
-        self.transformer()
-            .transform(field_name, field_value, ctx)
+        self.transformer().transform(field_name, field_value, ctx)
     }
 
     fn set_defaults(&mut self, defaults: &TransformerDefaults) {
@@ -172,6 +171,7 @@ mod tests {
         let mut ts = Transformers::FirstName(FirstNameTransformer::default());
         ts.set_defaults(&TransformerDefaults {
             locale: LocaleConfig::RU,
+            globals: None,
         });
 
         assert!(matches!(ts, Transformers::FirstName(t) if t.locale == Some(LocaleConfig::RU)));

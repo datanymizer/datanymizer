@@ -44,7 +44,7 @@ use serde::{Deserialize, Serialize};
 use passport::Passport;
 
 use datanymizer_engine::{
-    FkTransformer, Globals, LocaleConfig, Localized, LocalizedFaker, TransformResult, Transformer,
+    FkTransformer, LocaleConfig, Localized, LocalizedFaker, TransformContext, TransformResult, Transformer,
     TransformerDefaults,
 };
 
@@ -77,7 +77,7 @@ impl Transformer for PassportTransformer {
         &self,
         _field_name: &str,
         _field_value: &str,
-        _globals: &Option<Globals>,
+        _ctx: Option<TransformContext>,
     ) -> TransformResult {
         self.transform_with_faker()
     }

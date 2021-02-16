@@ -1,4 +1,4 @@
-use crate::transformer::{TransformResult, TransformResultHelper, Transformer, TransformContext};
+use crate::transformer::{TransformContext, TransformResult, TransformResultHelper, Transformer};
 use fake::{faker::internet::raw::*, locales::EN, Fake};
 use serde::{Deserialize, Serialize};
 
@@ -66,7 +66,7 @@ impl Transformer for PasswordTransformer {
         &self,
         _field_name: &str,
         _field_value: &str,
-        _ctx: &TransformContext,
+        _ctx: Option<TransformContext>,
     ) -> TransformResult {
         let range = self.min.0..self.max.0;
         let val: String = Password(EN, range).fake();

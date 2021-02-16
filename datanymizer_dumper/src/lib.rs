@@ -131,6 +131,8 @@ pub trait Table<T>: Sized + Send + Clone + Eq + Hash {
     fn get_columns_names(&self) -> Vec<String>;
     /// Get table size
     fn get_size(&self) -> i64;
+    /// Get column name - index map
+    fn get_column_indexes(&self) -> &HashMap<String, usize>;
 }
 
 pub trait ColumnData<T> {

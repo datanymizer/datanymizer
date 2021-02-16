@@ -1,4 +1,4 @@
-use crate::transformer::{TransformResult, TransformResultHelper, Transformer, TransformContext};
+use crate::transformer::{TransformContext, TransformResult, TransformResultHelper, Transformer};
 use serde::{Deserialize, Serialize};
 
 use unicode_segmentation::UnicodeSegmentation;
@@ -33,7 +33,7 @@ impl Transformer for CapitalizeTransformer {
         &self,
         _field_name: &str,
         field_value: &str,
-        _ctx: &TransformContext,
+        _ctx: Option<TransformContext>,
     ) -> TransformResult {
         let result = capitalize(field_value);
         TransformResult::present(&result)
@@ -42,14 +42,14 @@ impl Transformer for CapitalizeTransformer {
 
 #[cfg(test)]
 mod tests {
-    use crate::{Transformer, Transformers, transformer::TransformContext};
+    use crate::{Transformer, Transformers};
 
     #[test]
     fn test_capitalize_word() {
         let config = r#"capitalize: ~"#;
         let transformer: Transformers = serde_yaml::from_str(config).unwrap();
         let expected = String::from("Value");
-        let founded = transformer.transform("field", "value", &TransformContext::default());
+        let founded = transformer.transform("field", "value", None);
 
         assert_eq!(founded, Ok(Some(expected)))
     }

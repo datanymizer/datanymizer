@@ -64,7 +64,7 @@ pub struct Settings {
     /// They may be shadowed by template variables.
     pub globals: Option<HashMap<String, JsonValue>>,
 
-    transform_map: HashMap<String, TransformList>,
+    transform_map: Option<HashMap<String, TransformList>>,
 }
 
 impl Settings {
@@ -96,7 +96,11 @@ impl Settings {
     }
 
     pub fn transformers_for(&self, table: &str) -> &TransformList {
-        &self.transform_map[table]
+        if let Some(m) = &self.transform_map {
+            &m[table]
+        } else {
+            panic!("No transform map");
+        }
     }
 
     pub fn destination(&self) -> Result<String> {
@@ -118,11 +122,12 @@ impl Settings {
     }
 
     fn fill_transform_map(&mut self) {
-        self.transform_map = HashMap::with_capacity(self.tables.len());
+        let mut map = HashMap::with_capacity(self.tables.len());
         for table in &self.tables {
-            self.transform_map
-                .insert(table.name.clone(), table.transform_list());
+            map.insert(table.name.clone(), table.transform_list());
         }
+
+        self.transform_map = Some(map);
     }
 }
 

@@ -1,4 +1,4 @@
-use crate::transformer::{UniqTransformer, Uniqueness, TransformContext};
+use crate::transformer::{TransformContext, UniqTransformer, Uniqueness};
 use rand::distributions::{Distribution, Uniform};
 use serde::{Deserialize, Serialize};
 
@@ -69,7 +69,7 @@ impl UniqTransformer for RandomNumberTransformer {
         &self,
         _field_name: &str,
         _field_value: &str,
-        _ctx: &TransformContext,
+        _ctx: Option<TransformContext>,
     ) -> String {
         let mut rng = rand::thread_rng();
         Uniform::new_inclusive(self.min.0, self.max.0)

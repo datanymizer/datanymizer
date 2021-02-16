@@ -2,7 +2,7 @@ use crate::Table;
 use anyhow::Result;
 use datanymizer_engine::Engine;
 use postgres::types::Type;
-use std::{char, collections::HashMap};
+use std::char;
 
 #[derive(Debug)]
 pub struct PgRow<T>
@@ -28,18 +28,12 @@ where
     /// Returns a new StringRecord for store in the dump
     pub fn transform(&self, engine: &Engine) -> Result<String> {
         let split_char: char = char::from_u32(0x0009).unwrap();
-        let column_names = self.table.get_columns_names();
-        let mut value_map = HashMap::with_capacity(column_names.len());
-        for (i, v) in self.source.split(split_char).enumerate() {
-            value_map.insert(column_names[i].clone(), v.to_string());
-        }
+        let transformed_values = engine.process_row(
+            self.table.get_name(),
+            self.source.split(split_char).collect(),
+            self.table.get_column_indexes(),
+        )?;
 
-        engine.process_row(self.table.get_name(), &mut value_map)?;
-
-        Ok(column_names
-            .iter()
-            .map(|c| value_map[c].as_str())
-            .collect::<Vec<&str>>()
-            .join("\t"))
+        Ok(transformed_values.join("\t"))
     }
 }

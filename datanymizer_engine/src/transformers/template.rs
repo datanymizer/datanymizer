@@ -1,5 +1,5 @@
 use crate::{
-    transformer::{TransformResult, TransformResultHelper, Transformer, TransformContext},
+    transformer::{TransformContext, TransformResult, TransformResultHelper, Transformer},
     TransformerDefaults, Transformers,
 };
 use serde::{Deserialize, Serialize};
@@ -73,24 +73,20 @@ impl Transformer for TemplateTransformer {
         &self,
         field_name: &str,
         field_value: &str,
-        ctx: &TransformContext,
+        ctx: Option<TransformContext>,
     ) -> TransformResult {
         let mut rules_names: HashMap<String, Value> = HashMap::new();
         if let Some(rules) = self.rules.clone() {
             for (i, rule) in rules.iter().enumerate() {
                 let key = format!("_{}", i + 1);
                 let transform_result: Option<String> =
-                    rule.transform(field_name, field_value, ctx)?;
+                    rule.transform(field_name, field_value, ctx.clone())?;
                 let value = transform_result.unwrap_or_else(|| "".to_string());
                 rules_names.insert(key, Value::String(value));
             }
         }
 
         let mut vars = self.variables.clone().unwrap_or_default();
-
-        if let Some(items) = ctx.globals {
-            vars.extend(items.clone());
-        }
 
         vars.extend(rules_names);
         vars.insert("_0".to_string(), Value::String(field_value.to_string()));
@@ -101,6 +97,11 @@ impl Transformer for TemplateTransformer {
         for (k, v) in vars {
             context.insert(k, &v);
         }
+        if let Some(c) = ctx {
+            if let Some(tr_row) = c.row {
+                context.insert("tr_row", tr_row);
+            }
+        }
 
         match tera.render(TEMPLATE_NAME, &context) {
             Ok(res) => TransformResult::present(res),
@@ -109,6 +110,13 @@ impl Transformer for TemplateTransformer {
     }
 
     fn set_defaults(&mut self, defaults: &TransformerDefaults) {
+        if let Some(globals) = defaults.globals.clone() {
+            match self.variables {
+                Some(ref mut vars) => vars.extend(globals),
+                None => self.variables = globals.into(),
+            }
+        }
+
         if let Some(ts) = &mut self.rules {
             for t in ts {
                 t.set_defaults(defaults);
@@ -126,7 +134,6 @@ mod tests {
         LocaleConfig, Transformers,
     };
     use serde_json::Value;
-    use crate::transformer::TransformContext;
 
     #[test]
     fn template_interpolation() {
@@ -147,9 +154,13 @@ template:
         name: Alex
 "#;
 
-        let transformer: Transformers = serde_yaml::from_str(config).unwrap();
+        let mut transformer: Transformers = serde_yaml::from_str(config).unwrap();
+        transformer.set_defaults(&TransformerDefaults {
+            locale: LocaleConfig::EN,
+            globals: Some(global_values),
+        });
 
-        let res = transformer.transform("", "Mr", &TransformContext::new(&Some(global_values)));
+        let res = transformer.transform("", "Mr", Some(TransformContext::default()));
         assert_eq!(res, Ok(Some(expected)));
     }
 

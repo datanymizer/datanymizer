@@ -1,4 +1,4 @@
-use crate::transformer::{TransformResult, TransformResultHelper, Transformer, TransformContext};
+use crate::transformer::{TransformContext, TransformResult, TransformResultHelper, Transformer};
 use chrono::prelude::*;
 use chrono::DateTime;
 use fake::{faker::chrono::raw::*, locales::EN, Fake};
@@ -90,7 +90,7 @@ impl Transformer for RandomDateTimeTransformer {
         &self,
         _field_name: &str,
         _field_value: &str,
-        _ctx: &TransformContext,
+        _ctx: Option<TransformContext>,
     ) -> TransformResult {
         let from_dt = DateTime::parse_from_str(&self.from.0, &self.format.0)?.with_timezone(&Utc);
         let to_dt = DateTime::parse_from_str(&self.to.0, &self.format.0)?.with_timezone(&Utc);

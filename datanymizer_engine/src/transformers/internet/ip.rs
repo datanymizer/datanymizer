@@ -1,4 +1,4 @@
-use crate::transformer::{UniqTransformer, Uniqueness, TransformContext};
+use crate::transformer::{TransformContext, UniqTransformer, Uniqueness};
 use fake::{faker::internet::raw::*, locales::EN, Fake};
 use serde::{Deserialize, Serialize};
 
@@ -58,7 +58,7 @@ impl UniqTransformer for IpTransformer {
         &self,
         _field_name: &str,
         _field_value: &str,
-        _ctx: &TransformContext,
+        _ctx: Option<TransformContext>,
     ) -> String {
         match self.kind {
             Some(IpKind::V6) => IPv6(EN).fake(),

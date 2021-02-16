@@ -1,5 +1,5 @@
 use crate::transformer::{
-    TransformResult, TransformResultHelper, Transformer, TransformerDefaults, TransformContext
+    TransformContext, TransformResult, TransformResultHelper, Transformer, TransformerDefaults,
 };
 use serde::{Deserialize, Serialize};
 use std::iter::Iterator;
@@ -38,13 +38,13 @@ where
         &self,
         field_name: &str,
         field_value: &str,
-        ctx: &TransformContext,
+        ctx: Option<TransformContext>,
     ) -> TransformResult {
         let res: String = self
             .pipes
             .iter()
             .fold(field_value.to_string(), |acc, pipe| {
-                let transformed = pipe.transform(field_name, &acc, ctx);
+                let transformed = pipe.transform(field_name, &acc, ctx.clone());
                 if let Ok(Some(x)) = transformed {
                     x
                 } else {
