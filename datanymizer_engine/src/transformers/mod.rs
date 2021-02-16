@@ -170,11 +170,12 @@ mod tests {
     use crate::LocaleConfig;
 
     #[test]
-    fn test() {
+    fn defaults() {
         let mut ts = Transformers::FirstName(FirstNameTransformer::default());
-        let t = ts.mut_transformer();
-        t.set_defaults(&TransformerDefaults {
+        ts.set_defaults(&TransformerDefaults {
             locale: LocaleConfig::RU,
         });
+
+        assert!(matches!(ts, Transformers::FirstName(t) if t.locale == Some(LocaleConfig::RU)));
     }
 }

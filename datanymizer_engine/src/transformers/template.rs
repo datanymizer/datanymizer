@@ -118,9 +118,13 @@ impl Transformer for TemplateTransformer {
 }
 
 #[cfg(test)]
-mod test {
-    use super::Transformer;
-    use crate::{transformer::Globals, Transformers};
+mod tests {
+    use super::*;
+    use crate::{
+        transformer::Globals,
+        transformers::{CityTransformer, NoneTransformer, PersonNameTransformer},
+        LocaleConfig, Transformers,
+    };
     use serde_json::Value;
 
     #[test]
@@ -146,5 +150,30 @@ template:
 
         let res = transformer.transform("", "Mr", &Some(global_values));
         assert_eq!(res, Ok(Some(expected)));
+    }
+
+    #[test]
+    fn defaults() {
+        let mut t = TemplateTransformer {
+            format: String::new(),
+            rules: Some(vec![
+                Transformers::City(CityTransformer::default()),
+                Transformers::PersonName(PersonNameTransformer {
+                    locale: Some(LocaleConfig::ZH_TW),
+                }),
+                Transformers::None(NoneTransformer),
+            ]),
+            variables: None,
+        };
+        t.set_defaults(&TransformerDefaults {
+            locale: LocaleConfig::RU,
+        });
+
+        let rules = t.rules.unwrap();
+
+        assert!(matches!(&rules[0], Transformers::City(t) if t.locale == Some(LocaleConfig::RU)));
+        assert!(
+            matches!(&rules[1], Transformers::PersonName(t) if t.locale == Some(LocaleConfig::ZH_TW))
+        );
     }
 }
