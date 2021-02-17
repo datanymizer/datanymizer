@@ -1,12 +1,7 @@
 // Test the faker-based transformer implementation from docs/new_fk_transformer.md
 
-use fake::{locales::Data, Dummy, Fake};
+use fake::{locales::Data, Dummy};
 use rand::Rng;
-use serde::{Deserialize, Serialize};
-
-use datanymizer_engine::{
-    FkTransformer, Globals, LocaleConfig, Localized, LocalizedFaker, TransformResult, Transformer,
-};
 
 // Mock faker
 struct Passport<L>(pub L);
@@ -17,15 +12,27 @@ impl<L: Data> Dummy<Passport<L>> for String {
     }
 }
 
+use datanymizer_engine::{
+    FkTransformer, Globals, LocaleConfig, Localized, LocalizedFaker, TransformResult, Transformer,
+    TransformerDefaults,
+};
+use fake::Fake;
+use serde::{Deserialize, Serialize};
+
+// Test transformer
 #[derive(Default, Serialize, Deserialize, PartialEq, Eq, Hash, Debug, Clone)]
 #[serde(default)]
 pub struct PassportTransformer {
-    pub locale: LocaleConfig,
+    pub locale: Option<LocaleConfig>,
 }
 
 impl Localized for PassportTransformer {
-    fn locale(&self) -> LocaleConfig {
+    fn locale(&self) -> Option<LocaleConfig> {
         self.locale
+    }
+
+    fn set_locale(&mut self, l: Option<LocaleConfig>) {
+        self.locale = l;
     }
 }
 
@@ -46,6 +53,10 @@ impl Transformer for PassportTransformer {
     ) -> TransformResult {
         self.transform_with_faker()
     }
+
+    fn set_defaults(&mut self, defaults: &TransformerDefaults) {
+        self.set_defaults_for_faker(defaults);
+    }
 }
 
 #[test]
@@ -53,4 +64,15 @@ fn transform() {
     let t = PassportTransformer::default();
     let value = t.transform("table.field", "value", &None).unwrap().unwrap();
     assert_eq!(value, "1234567");
+}
+
+#[test]
+fn set_defaults() {
+    let mut t = PassportTransformer::default();
+    assert_eq!(t.locale(), None);
+
+    t.set_defaults(&TransformerDefaults {
+        locale: LocaleConfig::RU,
+    });
+    assert_eq!(t.locale(), Some(LocaleConfig::RU));
 }

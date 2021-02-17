@@ -1,6 +1,6 @@
 use crate::{
     transformer::{Globals, TransformResult, TransformResultHelper, Transformer},
-    Transformers,
+    TransformerDefaults, Transformers,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -107,16 +107,28 @@ impl Transformer for TemplateTransformer {
             Err(e) => TransformResult::error(field_name, field_value, &e.to_string()),
         }
     }
+
+    fn set_defaults(&mut self, defaults: &TransformerDefaults) {
+        if let Some(ts) = &mut self.rules {
+            for t in ts {
+                t.set_defaults(defaults);
+            }
+        }
+    }
 }
 
 #[cfg(test)]
-mod test {
-    use super::Transformer;
-    use crate::{transformer::Globals, Transformers};
+mod tests {
+    use super::*;
+    use crate::{
+        transformer::Globals,
+        transformers::{CityTransformer, NoneTransformer, PersonNameTransformer},
+        LocaleConfig, Transformers,
+    };
     use serde_json::Value;
 
     #[test]
-    fn tempalte_interpolation() {
+    fn template_interpolation() {
         let expected: String = String::from("Hello, ALEX! Any text with replace:Dr, global: test");
         let mut global_values = Globals::new();
         global_values.insert(
@@ -138,5 +150,30 @@ template:
 
         let res = transformer.transform("", "Mr", &Some(global_values));
         assert_eq!(res, Ok(Some(expected)));
+    }
+
+    #[test]
+    fn set_defaults() {
+        let mut t = TemplateTransformer {
+            format: String::new(),
+            rules: Some(vec![
+                Transformers::City(CityTransformer::default()),
+                Transformers::PersonName(PersonNameTransformer {
+                    locale: Some(LocaleConfig::ZH_TW),
+                }),
+                Transformers::None(NoneTransformer),
+            ]),
+            variables: None,
+        };
+        t.set_defaults(&TransformerDefaults {
+            locale: LocaleConfig::RU,
+        });
+
+        let rules = t.rules.unwrap();
+
+        assert!(matches!(&rules[0], Transformers::City(t) if t.locale == Some(LocaleConfig::RU)));
+        assert!(
+            matches!(&rules[1], Transformers::PersonName(t) if t.locale == Some(LocaleConfig::ZH_TW))
+        );
     }
 }

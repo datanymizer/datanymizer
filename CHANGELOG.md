@@ -6,8 +6,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### 🚀 Added
+- Add a config-wide default locale (and the method to set defaults for transformers)
+  [#36](https://github.com/datanymizer/datanymizer/pull/36) ([@evgeniy-r](https://github.com/evgeniy-r))
 - Implement the most of fakers from the `fake` crate. Add the option for locale configuration
   [#23](https://github.com/datanymizer/datanymizer/pull/23) ([@evgeniy-r](https://github.com/evgeniy-r))
+
+### ⚙️ Changed
+
+### 🛠 Fixed
+
+## [v0.1.0] - 2021-01-27
+### 🚀 Added
 - Separate filtering of data and schema [#22](https://github.com/datanymizer/datanymizer/pull/22)
   ([@evgeniy-r](https://github.com/evgeniy-r))
 - Add installation script [#21](https://github.com/datanymizer/datanymizer/pull/21) ([@mgrachev](https://github.com/mgrachev))
@@ -19,5 +28,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Automate release process [#17](https://github.com/datanymizer/datanymizer/pull/17) ([@mgrachev](https://github.com/mgrachev))
 - Set up CI [#12](https://github.com/datanymizer/datanymizer/pull/12) ([@mgrachev](https://github.com/mgrachev))
 - Rename `pg_dump_faker` to `pg_datanymizer` [#11](https://github.com/datanymizer/datanymizer/pull/11) ([@mgrachev](https://github.com/mgrachev))
-
-### 🛠 Fixed

@@ -293,14 +293,21 @@ Currently, uniqueness is supported by: `email`, `ip`, `phone`, `random_number`.
 
 ## Locales
 
-You can specify the locale for rules:
+You can specify the locale for individual rules:
 
 ```yaml
 first_name:
   locale: RU
 ```
 
-The default locale is `EN`.
+The default locale is `EN` but you can specify a different default locale:
+
+```yaml
+tables:
+  # ........  
+default:
+  locale: RU
+```
 
 We also support `ZH_TW` (traditional chinese) and `RU` (translation in progress).
 

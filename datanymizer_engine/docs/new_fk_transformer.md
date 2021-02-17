@@ -45,18 +45,23 @@ use passport::Passport;
 
 use datanymizer_engine::{
     FkTransformer, Globals, LocaleConfig, Localized, LocalizedFaker, TransformResult, Transformer,
+    TransformerDefaults,
 };
 
 #[derive(Default, Serialize, Deserialize, PartialEq, Eq, Hash, Debug, Clone)]
 #[serde(default)]
 pub struct PassportTransformer {
-    pub locale: LocaleConfig,
+    pub locale: Option<LocaleConfig>,
 }
 
 impl Localized for PassportTransformer {
-    fn locale(&self) -> LocaleConfig {
+    fn locale(&self) -> Option<LocaleConfig> {
         self.locale
-    }     
+    }
+
+    fn set_locale(&mut self, l: Option<LocaleConfig>) {
+        self.locale = l;
+    }
 }
 
 impl LocalizedFaker<String> for PassportTransformer {
@@ -75,6 +80,10 @@ impl Transformer for PassportTransformer {
         _globals: &Option<Globals>,
     ) -> TransformResult {
         self.transform_with_faker()
+    }
+
+    fn set_defaults(&mut self, defaults: &TransformerDefaults) {
+        self.set_defaults_for_faker(defaults);
     }
 }
 ```

@@ -4,10 +4,13 @@ mod uniqueness;
 pub use uniq_transformer::UniqTransformer;
 pub use uniqueness::Uniqueness;
 
+use serde::Deserialize;
 use serde_json::Value;
 use std::collections::HashMap;
 use std::fmt::{self, Display, Formatter};
 use std::{error, result};
+
+use crate::LocaleConfig;
 
 pub type TransformResult = result::Result<Option<String>, TransformError>;
 pub type Globals = HashMap<String, Value>;
@@ -17,6 +20,12 @@ pub struct TransformError {
     pub field_name: String,
     pub field_value: String,
     pub reason: String,
+}
+
+#[derive(Debug, Default, Deserialize, Clone)]
+#[serde(default)]
+pub struct TransformerDefaults {
+    pub locale: LocaleConfig,
 }
 
 pub trait TransformResultHelper {
@@ -54,6 +63,8 @@ pub trait Transformer {
         field_value: &str,
         globals: &Option<Globals>,
     ) -> TransformResult;
+
+    fn set_defaults(&mut self, _defaults: &TransformerDefaults) {}
 }
 
 impl error::Error for TransformError {
