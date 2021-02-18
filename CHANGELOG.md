@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### ⚙️ Changed
 
 ### 🛠 Fixed
+- Fix config examples in docs
+  [#39](https://github.com/datanymizer/datanymizer/pull/39) ([@evgeniy-r](https://github.com/evgeniy-r))
 
 ## [v0.1.0] - 2021-01-27
 ### 🚀 Added

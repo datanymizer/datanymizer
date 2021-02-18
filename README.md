@@ -88,7 +88,7 @@ tables:
             - email:
                 kind: Safe
       operator_name:
-        first_name: ~
+        first_name: {}
       operator_phone:
         phone:
           format: +###########
@@ -105,9 +105,9 @@ tables:
   - name: users
     rules:
       first_name:
-        first_name: ~
+        first_name: {}
       last_name:
-        last_name: ~
+        last_name: {}
   - name: customers
     rules:
       email:
@@ -125,15 +125,15 @@ tables:
           format: +7##########
           uniq: true
       city:
-        city: ~
+        city: {}
       age:
         random_num:
           min: 10
           max: 99
       first_name:
-        first_name: ~
+        first_name: {}
       last_name:
-        last_name: ~
+        last_name: {}
       birth_date:
         datetime:
           from: 1990-01-01T00:00:00+00:00
