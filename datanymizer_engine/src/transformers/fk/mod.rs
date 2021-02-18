@@ -499,7 +499,6 @@ mod tests {
             let mut t = CityTransformer { locale: None };
             t.set_defaults(&TransformerDefaults {
                 locale: LocaleConfig::RU,
-                globals: None,
             });
             assert_eq!(t.locale, Some(LocaleConfig::RU));
         }
@@ -511,7 +510,6 @@ mod tests {
             };
             t.set_defaults(&TransformerDefaults {
                 locale: LocaleConfig::RU,
-                globals: None,
             });
             assert_eq!(t.locale, Some(LocaleConfig::EN));
         }

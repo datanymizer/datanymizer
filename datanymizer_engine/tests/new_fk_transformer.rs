@@ -73,7 +73,6 @@ fn set_defaults() {
 
     t.set_defaults(&TransformerDefaults {
         locale: LocaleConfig::RU,
-        globals: None,
     });
     assert_eq!(t.locale(), Some(LocaleConfig::RU));
 }

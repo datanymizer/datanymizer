@@ -86,21 +86,27 @@ impl Transformer for TemplateTransformer {
             }
         }
 
+        let mut tera = Tera::default();
+        tera.add_raw_template(TEMPLATE_NAME, &self.format)?;
+        let mut context = Context::new();
+
         let mut vars = self.variables.clone().unwrap_or_default();
+
+        if let Some(c) = ctx {
+            if let Some(items) = c.globals {
+                vars.extend(items.clone());
+            }
+
+            if let Some(row) = c.final_row {
+                context.insert("final", row);
+            }
+        }
 
         vars.extend(rules_names);
         vars.insert("_0".to_string(), Value::String(field_value.to_string()));
 
-        let mut tera = Tera::default();
-        tera.add_raw_template(TEMPLATE_NAME, &self.format)?;
-        let mut context = Context::new();
         for (k, v) in vars {
             context.insert(k, &v);
-        }
-        if let Some(c) = ctx {
-            if let Some(tr_row) = c.row {
-                context.insert("tr_row", tr_row);
-            }
         }
 
         match tera.render(TEMPLATE_NAME, &context) {
@@ -110,13 +116,6 @@ impl Transformer for TemplateTransformer {
     }
 
     fn set_defaults(&mut self, defaults: &TransformerDefaults) {
-        if let Some(globals) = defaults.globals.clone() {
-            match self.variables {
-                Some(ref mut vars) => vars.extend(globals),
-                None => self.variables = globals.into(),
-            }
-        }
-
         if let Some(ts) = &mut self.rules {
             for t in ts {
                 t.set_defaults(defaults);
@@ -154,13 +153,12 @@ template:
         name: Alex
 "#;
 
-        let mut transformer: Transformers = serde_yaml::from_str(config).unwrap();
-        transformer.set_defaults(&TransformerDefaults {
-            locale: LocaleConfig::EN,
-            globals: Some(global_values),
-        });
-
-        let res = transformer.transform("", "Mr", Some(TransformContext::default()));
+        let transformer: Transformers = serde_yaml::from_str(config).unwrap();
+        let res = transformer.transform(
+            "",
+            "Mr",
+            Some(TransformContext::new(&Some(global_values), None)),
+        );
         assert_eq!(res, Ok(Some(expected)));
     }
 
@@ -179,7 +177,6 @@ template:
         };
         t.set_defaults(&TransformerDefaults {
             locale: LocaleConfig::RU,
-            globals: None,
         });
 
         let rules = t.rules.unwrap();

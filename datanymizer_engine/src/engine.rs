@@ -31,7 +31,10 @@ impl Engine {
                     match tr.transform(
                         &format!("{}.{}", table, field),
                         values[i],
-                        Some(TransformContext::new(Some(&transformed_value_map))),
+                        Some(TransformContext::new(
+                            &self.settings.globals,
+                            Some(&transformed_value_map),
+                        )),
                     ) {
                         Ok(Some(res)) => {
                             transformed_value_map.insert(field.to_string(), res.clone());

@@ -171,7 +171,6 @@ mod tests {
         let mut ts = Transformers::FirstName(FirstNameTransformer::default());
         ts.set_defaults(&TransformerDefaults {
             locale: LocaleConfig::RU,
-            globals: None,
         });
 
         assert!(matches!(ts, Transformers::FirstName(t) if t.locale == Some(LocaleConfig::RU)));

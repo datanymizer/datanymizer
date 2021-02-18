@@ -28,7 +28,6 @@ pub struct TransformError {
 #[serde(default)]
 pub struct TransformerDefaults {
     pub locale: LocaleConfig,
-    pub globals: Option<Globals>,
 }
 
 pub trait TransformResultHelper {
