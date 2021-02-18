@@ -83,6 +83,7 @@ mod tests {
         };
         t.set_defaults(&TransformerDefaults {
             locale: LocaleConfig::RU,
+            globals: None,
         });
 
         assert!(

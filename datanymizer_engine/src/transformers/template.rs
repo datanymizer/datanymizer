@@ -179,6 +179,7 @@ template:
         };
         t.set_defaults(&TransformerDefaults {
             locale: LocaleConfig::RU,
+            globals: None,
         });
 
         let rules = t.rules.unwrap();
@@ -187,5 +188,34 @@ template:
         assert!(
             matches!(&rules[1], Transformers::PersonName(t) if t.locale == Some(LocaleConfig::ZH_TW))
         );
+    }
+
+    mod ast {
+        use super::*;
+        use tera::ast::{ExprVal, Node::VariableBlock};
+
+        #[test]
+        fn test() {
+            let tpl = "{{ row.field }}";
+            let mut tera = Tera::default();
+
+            tera.add_raw_template("tpl", tpl).unwrap();
+            let t = &tera.templates["tpl"];
+            for n in &t.ast {
+                println!("{:?}", n);
+                match n {
+                    VariableBlock(_ws, expr) => {
+                        let val = &expr.val;
+                        println!("{:?}", val);
+
+                        match val {
+                            ExprVal::Ident(name) => println!("{}", name),
+                            _ => {}
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        }
     }
 }
