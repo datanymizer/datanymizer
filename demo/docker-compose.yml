@@ -1,10 +1,9 @@
 version: '3.2'
 services:
-
   pg_datanymizer:
     build:
       context: ..
-      dockerfile: demo/Dockerfile.pg_datanynizer
+      dockerfile: demo/Dockerfile.pg_datanymizer
     image: pg_datanymizer
     volumes:
       - ./dvdrental.yml:/dvdrental.yml

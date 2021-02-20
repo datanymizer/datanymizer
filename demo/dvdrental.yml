@@ -5,9 +5,9 @@ tables:
   - name: actor
     rules:
       first_name:
-        first_name: ~
+        first_name: {}
       last_name:
-        last_name: ~
+        last_name: {}
       last_update:
         datetime:
           from: 1990-01-01T00:00:00+00:00
