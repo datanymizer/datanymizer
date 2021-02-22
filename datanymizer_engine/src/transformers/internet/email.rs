@@ -55,7 +55,7 @@ impl UniqTransformer for EmailTransformer {
         &self,
         _field_name: &str,
         _field_value: &str,
-        _ctx: Option<TransformContext>,
+        _ctx: &Option<TransformContext>,
     ) -> String {
         match self.kind {
             Some(EmailKind::FreeProvider) => FreeEmailProvider(EN).fake(),

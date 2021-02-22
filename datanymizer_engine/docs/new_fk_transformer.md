@@ -77,7 +77,7 @@ impl Transformer for PassportTransformer {
         &self,
         _field_name: &str,
         _field_value: &str,
-        _ctx: Option<TransformContext>,
+        _ctx: &Option<TransformContext>,
     ) -> TransformResult {
         self.transform_with_faker()
     }

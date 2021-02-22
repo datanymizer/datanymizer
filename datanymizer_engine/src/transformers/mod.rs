@@ -151,7 +151,7 @@ impl Transformer for Transformers {
         &self,
         field_name: &str,
         field_value: &str,
-        ctx: Option<TransformContext>,
+        ctx: &Option<TransformContext>,
     ) -> TransformResult {
         self.transformer().transform(field_name, field_value, ctx)
     }

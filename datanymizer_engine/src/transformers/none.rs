@@ -10,7 +10,7 @@ impl Transformer for NoneTransformer {
         &self,
         _field_name: &str,
         field_value: &str,
-        _ctx: Option<TransformContext>,
+        _ctx: &Option<TransformContext>,
     ) -> TransformResult {
         TransformResult::present(field_value)
     }

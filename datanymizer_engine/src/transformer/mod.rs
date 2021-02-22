@@ -63,7 +63,7 @@ pub trait Transformer {
         &self,
         field_name: &str,
         field_value: &str,
-        ctx: Option<TransformContext>,
+        ctx: &Option<TransformContext>,
     ) -> TransformResult;
 
     fn set_defaults(&mut self, _defaults: &TransformerDefaults) {}

@@ -64,7 +64,7 @@ impl UniqTransformer for PhoneTransformer {
         &self,
         _field_name: &str,
         _field_value: &str,
-        _ctx: Option<TransformContext>,
+        _ctx: &Option<TransformContext>,
     ) -> String {
         let mut rng = rand::thread_rng();
 
@@ -122,8 +122,8 @@ mod tests {
 
         let transformer: Transformers = serde_yaml::from_str(config).unwrap();
 
-        let val1 = transformer.transform("field", "value", None);
-        let val2 = transformer.transform("field", "value", None);
+        let val1 = transformer.transform("field", "value", &None);
+        let val2 = transformer.transform("field", "value", &None);
 
         assert_ne!(val1, val2);
     }
@@ -140,7 +140,7 @@ mod tests {
 
         let mut phones: Vec<TransformResult> = vec![];
         for _ in 0..5 {
-            phones.push(transformer.transform("field", "value", None));
+            phones.push(transformer.transform("field", "value", &None));
         }
 
         assert!(phones.iter().any(|x| x.is_ok()))

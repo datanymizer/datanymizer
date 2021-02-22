@@ -90,7 +90,7 @@ impl Transformer for RandomDateTimeTransformer {
         &self,
         _field_name: &str,
         _field_value: &str,
-        _ctx: Option<TransformContext>,
+        _ctx: &Option<TransformContext>,
     ) -> TransformResult {
         let from_dt = DateTime::parse_from_str(&self.from.0, &self.format.0)?.with_timezone(&Utc);
         let to_dt = DateTime::parse_from_str(&self.to.0, &self.format.0)?.with_timezone(&Utc);

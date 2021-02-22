@@ -38,13 +38,13 @@ where
         &self,
         field_name: &str,
         field_value: &str,
-        ctx: Option<TransformContext>,
+        ctx: &Option<TransformContext>,
     ) -> TransformResult {
         let res: String = self
             .pipes
             .iter()
             .fold(field_value.to_string(), |acc, pipe| {
-                let transformed = pipe.transform(field_name, &acc, ctx.clone());
+                let transformed = pipe.transform(field_name, &acc, ctx);
                 if let Ok(Some(x)) = transformed {
                     x
                 } else {

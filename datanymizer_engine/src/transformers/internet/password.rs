@@ -66,7 +66,7 @@ impl Transformer for PasswordTransformer {
         &self,
         _field_name: &str,
         _field_value: &str,
-        _ctx: Option<TransformContext>,
+        _ctx: &Option<TransformContext>,
     ) -> TransformResult {
         let range = self.min.0..self.max.0;
         let val: String = Password(EN, range).fake();

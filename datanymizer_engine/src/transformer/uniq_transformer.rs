@@ -7,18 +7,18 @@ pub trait UniqTransformer {
         &self,
         field_name: &str,
         field_value: &str,
-        ctx: Option<TransformContext>,
+        ctx: &Option<TransformContext>,
     ) -> String;
 
     fn transform_with_retry(
         &self,
         field_name: &str,
         field_value: &str,
-        ctx: Option<TransformContext>,
+        ctx: &Option<TransformContext>,
     ) -> Option<String> {
         let mut count = self.try_count();
         while count > 0 {
-            let val = self.do_transform(field_name, field_value, ctx.clone());
+            let val = self.do_transform(field_name, field_value, ctx);
             if uniq_collector::add_to_collector(&field_name, &val) {
                 return Some(val);
             } else {
@@ -57,7 +57,7 @@ where
         &self,
         field_name: &str,
         field_value: &str,
-        ctx: Option<TransformContext>,
+        ctx: &Option<TransformContext>,
     ) -> TransformResult {
         if self.uniq().required {
             match self.transform_with_retry(field_name, field_value, ctx) {
@@ -88,7 +88,7 @@ mod tests {
             &self,
             _field_name: &str,
             _field_value: &str,
-            _ctx: Option<TransformContext>,
+            _ctx: &Option<TransformContext>,
         ) -> String {
             Self::transformed_value()
         }
@@ -137,8 +137,8 @@ mod tests {
         };
         let name = "uniq_transformer.no_uniqueness.name";
 
-        assert_ok_result(transformer.transform(name, "val", None));
-        assert_ok_result(transformer.transform(name, "val", None));
+        assert_ok_result(transformer.transform(name, "val", &None));
+        assert_ok_result(transformer.transform(name, "val", &None));
     }
 
     #[test]
@@ -152,8 +152,8 @@ mod tests {
         };
         let name = "uniq_transformer.uniqueness_no_retries.name";
 
-        assert_ok_result(transformer.transform(name, "val", None));
-        assert_err_limit(transformer.transform(name, "val", None), 1);
+        assert_ok_result(transformer.transform(name, "val", &None));
+        assert_err_limit(transformer.transform(name, "val", &None), 1);
     }
 
     #[test]
@@ -168,8 +168,8 @@ mod tests {
         let name1 = "uniq_transformer.uniqueness_diff_fields.name1";
         let name2 = "uniq_transformer.uniqueness_diff_fields.name2";
 
-        assert_ok_result(transformer.transform(name1, "val", None));
-        assert_ok_result(transformer.transform(name2, "val", None));
+        assert_ok_result(transformer.transform(name1, "val", &None));
+        assert_ok_result(transformer.transform(name2, "val", &None));
     }
 
     #[test]
@@ -183,8 +183,8 @@ mod tests {
         };
         let name = "uniq_transformer.uniqueness_one_retry.name";
 
-        assert_ok_result(transformer.transform(name, "val", None));
-        assert_err_limit(transformer.transform(name, "val", None), 2);
+        assert_ok_result(transformer.transform(name, "val", &None));
+        assert_err_limit(transformer.transform(name, "val", &None), 2);
     }
 
     #[test]
@@ -198,7 +198,7 @@ mod tests {
         };
         let name = "uniq_transformer.uniqueness_zero_limit.name";
 
-        assert_err_limit(transformer.transform(name, "val", None), 0);
+        assert_err_limit(transformer.transform(name, "val", &None), 0);
     }
 
     #[test]
@@ -212,7 +212,7 @@ mod tests {
         };
         let name = "uniq_transformer.limit_from_uniq.name";
 
-        assert_ok_result(transformer.transform(name, "val", None));
-        assert_err_limit(transformer.transform(name, "val", None), 1);
+        assert_ok_result(transformer.transform(name, "val", &None));
+        assert_err_limit(transformer.transform(name, "val", &None), 1);
     }
 }

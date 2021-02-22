@@ -58,7 +58,7 @@ impl UniqTransformer for IpTransformer {
         &self,
         _field_name: &str,
         _field_value: &str,
-        _ctx: Option<TransformContext>,
+        _ctx: &Option<TransformContext>,
     ) -> String {
         match self.kind {
             Some(IpKind::V6) => IPv6(EN).fake(),

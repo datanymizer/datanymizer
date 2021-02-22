@@ -2,7 +2,7 @@ mod filter;
 
 use crate::{transformers::Transformers, Transformer, TransformerDefaults};
 use anyhow::{anyhow, Result};
-use config::{Config, ConfigError, File};
+use config::{Config, ConfigError, File, FileFormat};
 use serde::Deserialize;
 use serde_json::Value as JsonValue;
 use std::collections::HashMap;
@@ -33,14 +33,22 @@ pub struct Table {
     pub name: String,
     /// Rule set for columns
     pub rules: Rules,
+    /// Order of applying rules
+    pub rule_order: Option<Vec<String>>,
 }
 
 impl Table {
     fn transform_list(&self) -> TransformList {
-        self.rules
+        let explicit_rule_order = self.rule_order.clone().unwrap_or_default();
+        let mut transform_list: TransformList = self
+            .rules
             .iter()
-            .map(|(field, ts)| (field.clone(), ts.clone()))
-            .collect()
+            .map(|(key, ts)| (key.clone(), ts.clone()))
+            .collect();
+        transform_list
+            .sort_by_cached_key(|(key, _)| explicit_rule_order.iter().position(|i| i == key));
+
+        transform_list
     }
 }
 
@@ -72,6 +80,10 @@ impl Settings {
         Self::from_source(File::with_name(&path), database_url)
     }
 
+    pub fn from_yaml(config: &str, database_url: String) -> Result<Self, ConfigError> {
+        Self::from_source(File::from_str(config, FileFormat::Yaml), database_url)
+    }
+
     fn from_source<S: 'static>(source: S, database_url: String) -> Result<Self, ConfigError>
     where
         S: config::Source + Send + Sync,
@@ -84,15 +96,6 @@ impl Settings {
         settings.preprocess();
 
         Ok(settings)
-    }
-
-    pub fn lookup_transformers<T>(&self, table: T, column: T) -> Option<&Transformers>
-    where
-        T: ToString,
-    {
-        let table = self.tables.iter().find(|t| t.name == table.to_string())?;
-        let transformers = table.rules.get(&column.to_string())?;
-        Some(&transformers)
     }
 
     pub fn transformers_for(&self, table: &str) -> &TransformList {
@@ -116,9 +119,9 @@ impl Settings {
                     rule.set_defaults(defs);
                 }
             }
-
-            self.fill_transform_map();
         }
+
+        self.fill_transform_map();
     }
 
     fn fill_transform_map(&mut self) {
@@ -135,7 +138,6 @@ impl Settings {
 mod tests {
     use super::*;
     use crate::{transformers::PersonNameTransformer, LocaleConfig};
-    use config::FileFormat;
 
     #[test]
     fn set_defaults() {
@@ -152,8 +154,7 @@ mod tests {
               locale: RU
             "#;
 
-        let s =
-            Settings::from_source(File::from_str(config, FileFormat::Yaml), String::new()).unwrap();
+        let s = Settings::from_yaml(config, String::new()).unwrap();
         let rules = &s.tables.first().unwrap().rules;
 
         assert_eq!(
