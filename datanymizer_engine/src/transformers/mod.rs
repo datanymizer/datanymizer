@@ -29,9 +29,14 @@ mod fk;
 pub use fk::sql_value::AsSqlValue;
 pub use fk::*;
 
+// The TemplateTransformer is much larger then others (about 350 bytes), so we add
+// #[allow(clippy::large_enum_variant)].
+// We can box TemplateTransformer.renderer, but reducing memory usage even by several hundred
+// kilobytes is insignificant.
 macro_rules! define_transformers_enum {
     ( $( ( $ser:literal, $var:ident, $tr:ty ) ),* ) => {
         #[derive(Serialize, Deserialize, PartialEq, Eq, Hash, Clone, Debug)]
+        #[allow(clippy::large_enum_variant)]
         pub enum Transformers {
             $(
                 #[serde(rename = $ser)]
@@ -47,6 +52,7 @@ macro_rules! define_transformers_enum {
                     )*
                 }
             }
+
             fn mut_transformer(&mut self) -> &mut dyn Transformer {
                 match self {
                     $(

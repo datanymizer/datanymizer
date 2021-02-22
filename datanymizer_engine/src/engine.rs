@@ -17,7 +17,7 @@ impl Engine {
         &self,
         table: String,
         column_indexes: &HashMap<String, usize>,
-        values: &'a Vec<&str>,
+        values: &'a [&str],
     ) -> Result<Vec<Cow<'a, str>>, EngineError> {
         let ts = self.settings.transformers_for(&table);
 

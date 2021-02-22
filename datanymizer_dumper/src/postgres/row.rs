@@ -28,7 +28,7 @@ where
     /// Returns a new StringRecord for store in the dump
     pub fn transform(&self, engine: &Engine) -> Result<String> {
         let split_char: char = char::from_u32(0x0009).unwrap();
-        let values = self.source.split(split_char).collect();
+        let values: Vec<_> = self.source.split(split_char).collect();
         let transformed_values = engine.process_row(
             self.table.get_name(),
             self.table.get_column_indexes(),

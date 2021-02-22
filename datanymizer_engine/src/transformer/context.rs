@@ -26,11 +26,8 @@ impl<'a> TransformContext<'a> {
             if let Some(column_indexes) = self.column_indexes {
                 let mut row_map = HashMap::with_capacity(row.len());
                 for (k, &i) in column_indexes.iter() {
-                    match row[i] {
-                        Cow::Owned(ref already_transformed) => {
-                            row_map.insert(k, already_transformed);
-                        }
-                        _ => {}
+                    if let Cow::Owned(ref already_transformed) = row[i] {
+                        row_map.insert(k, already_transformed);
                     }
                 }
 

@@ -115,7 +115,7 @@ impl Transformer for TemplateTransformer {
             }
         }
 
-        let mut context = Context::new();
+        let mut render_context = Context::new();
         let mut vars = self.variables.clone().unwrap_or_default();
 
         if let Some(c) = ctx {
@@ -124,7 +124,7 @@ impl Transformer for TemplateTransformer {
             }
 
             if let Some(row_map) = c.final_row_map() {
-                context.insert(FINAL_ROW_KEY, &row_map);
+                render_context.insert(FINAL_ROW_KEY, &row_map);
             }
         }
 
@@ -132,10 +132,10 @@ impl Transformer for TemplateTransformer {
         vars.insert("_0".to_string(), Value::String(field_value.to_string()));
 
         for (k, v) in vars {
-            context.insert(k, &v);
+            render_context.insert(k, &v);
         }
 
-        match self.render(&context) {
+        match self.render(&render_context) {
             Ok(res) => TransformResult::present(res),
             Err(e) => TransformResult::error(field_name, field_value, &e.to_string()),
         }
