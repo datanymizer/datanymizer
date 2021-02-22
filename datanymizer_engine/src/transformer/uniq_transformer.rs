@@ -1,5 +1,4 @@
-use super::{TransformResult, TransformResultHelper, Transformer, Uniqueness};
-use crate::transformer::context::TransformContext;
+use super::{TransformContext, TransformResult, TransformResultHelper, Transformer, Uniqueness};
 use crate::uniq_collector;
 
 pub trait UniqTransformer {
