@@ -1,6 +1,5 @@
 use super::Globals;
-use std::borrow::Cow;
-use std::collections::HashMap;
+use std::{borrow::Cow, collections::HashMap};
 
 #[derive(Clone)]
 pub struct TransformContext<'a> {
