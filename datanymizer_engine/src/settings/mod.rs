@@ -33,7 +33,7 @@ pub struct Table {
     pub name: String,
     /// Rule set for columns
     pub rules: Rules,
-    /// Order of applying rules
+    /// Order of applying rules. All rules not listed are placed at the beginning
     pub rule_order: Option<Vec<String>>,
 }
 
