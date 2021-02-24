@@ -98,9 +98,9 @@ impl Settings {
         Ok(settings)
     }
 
-    pub fn transformers_for(&self, table: &str) -> &TransformList {
+    pub fn transformers_for(&self, table: &str) -> Option<&TransformList> {
         if let Some(m) = &self.transform_map {
-            &m[table]
+            m.get(table)
         } else {
             panic!("No transform map");
         }

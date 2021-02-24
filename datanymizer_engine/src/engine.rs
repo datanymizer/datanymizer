@@ -26,27 +26,29 @@ impl Engine {
             transformed_values.push(Cow::from(v));
         }
 
-        for (field, tr) in ts {
-            if let Some(&i) = column_indexes.get(field) {
-                match tr.transform(
-                    &format!("{}.{}", table, field),
-                    values[i],
-                    &Some(TransformContext::new(
-                        &self.settings.globals,
-                        Some(column_indexes),
-                        Some(&transformed_values),
-                    )),
-                ) {
-                    Ok(Some(res)) => {
-                        transformed_values[i] = Cow::Owned(res);
+        if let Some(ts) = ts {
+            for (field, tr) in ts {
+                if let Some(&i) = column_indexes.get(field) {
+                    match tr.transform(
+                        &format!("{}.{}", table, field),
+                        values[i],
+                        &Some(TransformContext::new(
+                            &self.settings.globals,
+                            Some(column_indexes),
+                            Some(&transformed_values),
+                        )),
+                    ) {
+                        Ok(Some(res)) => {
+                            transformed_values[i] = Cow::Owned(res);
+                        }
+                        Err(e) => return Err(EngineError::TransformFieldError(e)),
+                        _ => {}
                     }
-                    Err(e) => return Err(EngineError::TransformFieldError(e)),
-                    _ => {}
+                } else {
+                    return Err(EngineError::UnknownColumnError(UnknownColumnError {
+                        field_name: field.clone(),
+                    }));
                 }
-            } else {
-                return Err(EngineError::UnknownColumnError(UnknownColumnError {
-                    field_name: field.clone(),
-                }));
             }
         }
 
