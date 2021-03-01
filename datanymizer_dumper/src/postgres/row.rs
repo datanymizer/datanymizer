@@ -38,3 +38,56 @@ where
         Ok(transformed_values.join("\t"))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::postgres::{column::PgColumn, table::PgTable};
+    use datanymizer_engine::Settings;
+
+    #[test]
+    fn transform() {
+        let config = r#"
+          source: {}
+          tables:
+            - name: table_name
+              rules:
+                first_name:
+                  capitalize: ~
+                middle_name:
+                  capitalize: ~
+                last_name:
+                  capitalize: ~
+        "#;
+        let settings = Settings::from_yaml(config, String::new()).unwrap();
+
+        let mut table = PgTable::new("table_name".to_string(), None);
+
+        let col1 = PgColumn {
+            position: 1,
+            name: String::from("first_name"),
+            data_type: String::new(),
+            inner_type: Some(0),
+        };
+        let col2 = PgColumn {
+            position: 2,
+            name: String::from("middle_name"),
+            data_type: String::new(),
+            inner_type: Some(0),
+        };
+        let col3 = PgColumn {
+            position: 3,
+            name: String::from("last_name"),
+            data_type: String::new(),
+            inner_type: Some(0),
+        };
+
+        table.set_columns(vec![col1, col2, col3]);
+        let row = PgRow::from_string_row("first\tmiddle\tlast".to_string(), table);
+
+        assert_eq!(
+            row.transform(&Engine::new(settings)).unwrap(),
+            "First\tMiddle\tLast"
+        );
+    }
+}
