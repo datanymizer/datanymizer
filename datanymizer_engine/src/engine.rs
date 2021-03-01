@@ -232,10 +232,7 @@ mod tests {
         assert_ne!(tr_values[0], "");
         assert_ne!(tr_values[1], "");
         assert_eq!(tr_values[2], "");
-        assert_eq!(
-            tr_values[3],
-            format!("dear orig_name {}", tr_values[1])
-        );
+        assert_eq!(tr_values[3], format!("dear orig_name {}", tr_values[1]));
         assert_eq!(tr_values[4], format!("{{greeting: \"{}\"}}", tr_values[3]));
     }
 }
