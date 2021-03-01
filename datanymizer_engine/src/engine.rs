@@ -35,6 +35,7 @@ impl Engine {
                         &Some(TransformContext::new(
                             &self.settings.globals,
                             Some(column_indexes),
+                            Some(values),
                             Some(&transformed_values),
                         )),
                     ) {
@@ -188,6 +189,52 @@ mod tests {
         assert_eq!(
             tr_values[3],
             format!("Dear {} {}", tr_values[0], tr_values[1])
+        );
+        assert_eq!(tr_values[4], format!("{{greeting: \"{}\"}}", tr_values[3]));
+    }
+
+    #[test]
+    fn prev_and_final_row() {
+        let config = r#"
+          source: {}
+          tables:
+            - name: some_table
+              rule_order:
+                - greeting
+                - options
+              rules:
+                first_name:
+                  first_name: {}
+                last_name:
+                  last_name: {}
+                greeting:
+                  template:
+                    format: "dear {{ prev.first_name }} {{ final.last_name }}"
+                options:
+                  template:
+                    format: "{greeting: \"{{ final.greeting }}\"}"
+        "#;
+        let settings = Settings::from_yaml(config, String::new()).unwrap();
+
+        let table = String::from("some_table");
+        let values = vec!["orig_name", "", "", "", ""];
+
+        let mut column_indexes = HashMap::new();
+        column_indexes.insert(String::from("first_name"), 0);
+        column_indexes.insert(String::from("last_name"), 1);
+        column_indexes.insert(String::from("greeting"), 3);
+        column_indexes.insert(String::from("options"), 4);
+
+        let tr_values = Engine::new(settings)
+            .process_row(table, &column_indexes, &values)
+            .unwrap();
+
+        assert_ne!(tr_values[0], "");
+        assert_ne!(tr_values[1], "");
+        assert_eq!(tr_values[2], "");
+        assert_eq!(
+            tr_values[3],
+            format!("dear orig_name {}", tr_values[1])
         );
         assert_eq!(tr_values[4], format!("{{greeting: \"{}\"}}", tr_values[3]));
     }

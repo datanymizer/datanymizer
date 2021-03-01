@@ -12,6 +12,7 @@ use tera::{Context, Tera};
 
 const TEMPLATE_NAME: &str = "TemplateTransformerTemplate";
 const FINAL_ROW_KEY: &str = "final";
+const PREV_ROW_KEY: &str = "prev";
 
 /// Using a templating engine to generate or transform values.
 /// [Tera](https://tera.netlify.app/) is used as a template engine in this transformer.
@@ -126,6 +127,10 @@ impl Transformer for TemplateTransformer {
             if let Some(row_map) = c.final_row_map() {
                 render_context.insert(FINAL_ROW_KEY, &row_map);
             }
+
+            if let Some(row_map) = c.prev_row_map() {
+                render_context.insert(PREV_ROW_KEY, &row_map);
+            }
         }
 
         vars.extend(rules_names);
@@ -198,7 +203,12 @@ mod tests {
         let res = transformer.transform(
             "",
             "Mr",
-            &Some(TransformContext::new(&Some(global_values), None, None)),
+            &Some(TransformContext::new(
+                &Some(global_values),
+                None,
+                None,
+                None,
+            )),
         );
         assert_eq!(res, Ok(Some(expected)));
     }
@@ -228,16 +238,8 @@ mod tests {
         );
     }
 
-    mod final_row {
+    mod row_refs {
         use super::*;
-
-        fn transformer() -> Transformers {
-            let config = r#"
-                                 template:
-                                   format: "Hello, {{ final.first_name }} {{ final.last_name }}!"
-                              "#;
-            serde_yaml::from_str(config).unwrap()
-        }
 
         fn column_indexes() -> HashMap<String, usize> {
             let mut column_indexes = HashMap::new();
@@ -246,87 +248,172 @@ mod tests {
             column_indexes
         }
 
-        #[test]
-        fn interpolation() {
-            let expected: String = String::from("Hello, FIRST LAST!");
+        mod prev_row {
+            use super::*;
 
-            let final_row = vec![
-                Cow::Owned(String::from("FIRST")),
-                Cow::Borrowed("untransformed"),
-                Cow::Owned(String::from("LAST")),
-            ];
+            fn transformer() -> Transformers {
+                let config = r#"
+                                     template:
+                                       format: "Hello, {{ prev.first_name }} {{ prev.last_name }}!"
+                                  "#;
+                serde_yaml::from_str(config).unwrap()
+            }
 
-            let res = transformer().transform(
-                "",
-                "Sensitive",
-                &Some(TransformContext::new(
-                    &None,
-                    Some(&column_indexes()),
-                    Some(&final_row),
-                )),
-            );
+            #[test]
+            fn interpolation() {
+                let expected: String = String::from("Hello, FIRST LAST!");
 
-            assert_eq!(res, Ok(Some(expected)));
+                let prev_row = vec!["FIRST", "MIDDLE", "LAST"];
+
+                let res = transformer().transform(
+                    "",
+                    "Sensitive",
+                    &Some(TransformContext::new(
+                        &None,
+                        Some(&column_indexes()),
+                        Some(&prev_row),
+                        None,
+                    )),
+                );
+
+                assert_eq!(res, Ok(Some(expected)));
+            }
         }
 
-        #[test]
-        fn nested_interpolation() {
-            let expected: String = String::from("Hello, FIRST LAST!");
+        mod final_row {
+            use super::*;
 
-            let final_row = vec![
-                Cow::Owned(String::from("FIRST")),
-                Cow::Borrowed("untransformed"),
-                Cow::Owned(String::from("LAST")),
-            ];
+            fn transformer() -> Transformers {
+                let config = r#"
+                                 template:
+                                   format: "Hello, {{ final.first_name }} {{ final.last_name }}!"
+                              "#;
+                serde_yaml::from_str(config).unwrap()
+            }
 
-            let config = r#"
+            #[test]
+            fn interpolation() {
+                let expected: String = String::from("Hello, FIRST LAST!");
+
+                let final_row = vec![
+                    Cow::Owned(String::from("FIRST")),
+                    Cow::Borrowed("untransformed"),
+                    Cow::Owned(String::from("LAST")),
+                ];
+
+                let res = transformer().transform(
+                    "",
+                    "Sensitive",
+                    &Some(TransformContext::new(
+                        &None,
+                        Some(&column_indexes()),
+                        None,
+                        Some(&final_row),
+                    )),
+                );
+
+                assert_eq!(res, Ok(Some(expected)));
+            }
+
+            #[test]
+            fn nested_interpolation() {
+                let expected: String = String::from("Hello, FIRST LAST!");
+
+                let final_row = vec![
+                    Cow::Owned(String::from("FIRST")),
+                    Cow::Borrowed("untransformed"),
+                    Cow::Owned(String::from("LAST")),
+                ];
+
+                let config = r#"
                                  template:
                                    format: "Hello, {{ final.first_name }} {{ _1 }}!"
                                    rules:
                                      - template:
                                          format: "{{ final.last_name }}"
                               "#;
-            let t: Transformers = serde_yaml::from_str(config).unwrap();
+                let t: Transformers = serde_yaml::from_str(config).unwrap();
 
-            let res = t.transform(
-                "",
-                "Sensitive",
-                &Some(TransformContext::new(
-                    &None,
-                    Some(&column_indexes()),
-                    Some(&final_row),
-                )),
-            );
+                let res = t.transform(
+                    "",
+                    "Sensitive",
+                    &Some(TransformContext::new(
+                        &None,
+                        Some(&column_indexes()),
+                        None,
+                        Some(&final_row),
+                    )),
+                );
 
-            assert_eq!(res, Ok(Some(expected)));
+                assert_eq!(res, Ok(Some(expected)));
+            }
+
+            #[test]
+            fn ref_to_untransformed_value() {
+                let final_row = vec![
+                    Cow::Owned(String::from("FIRST")),
+                    Cow::Borrowed("untransformed"),
+                    Cow::Borrowed("untransformed"),
+                ];
+
+                let res = transformer().transform(
+                    "",
+                    "Sensitive",
+                    &Some(TransformContext::new(
+                        &None,
+                        Some(&column_indexes()),
+                        None,
+                        Some(&final_row),
+                    )),
+                );
+
+                assert_eq!(
+                    res,
+                    Err(TransformError {
+                        field_name: String::from(""),
+                        field_value: String::from("Sensitive"),
+                        reason: String::from("Failed to render \'TemplateTransformerTemplate\'")
+                    })
+                );
+            }
         }
 
-        #[test]
-        fn ref_to_untransformed_value() {
-            let final_row = vec![
-                Cow::Owned(String::from("FIRST")),
-                Cow::Borrowed("untransformed"),
-                Cow::Borrowed("untransformed"),
-            ];
+        mod both_rows {
+            use super::*;
 
-            let res = transformer().transform(
-                "",
-                "Sensitive",
-                &Some(TransformContext::new(
-                    &None,
-                    Some(&column_indexes()),
-                    Some(&final_row),
-                )),
-            );
+            fn transformer() -> Transformers {
+                let config = r#"
+                                     template:
+                                       format: "Hello, {{ prev.first_name }} {{ final.last_name }}!"
+                                  "#;
+                serde_yaml::from_str(config).unwrap()
+            }
 
-            assert_eq!(
-                res,
-                Err(TransformError {
-                    field_name: String::from(""),
-                    field_value: String::from("Sensitive"),
-                    reason: String::from("Failed to render \'TemplateTransformerTemplate\'")
-                })
-            );
+            #[test]
+            fn interpolation() {
+                let expected: String = String::from("Hello, FIRST tLAST!");
+
+                let prev_row = vec!["FIRST", "MIDDLE", "LAST"];
+
+                let final_row = vec![
+                    Cow::Owned(String::from("tFIRST")),
+                    Cow::Borrowed("untransformed"),
+                    Cow::Owned(String::from("tLAST")),
+                ];
+
+                let res = transformer().transform(
+                    "",
+                    "Sensitive",
+                    &Some(TransformContext::new(
+                        &None,
+                        Some(&column_indexes()),
+                        Some(&prev_row),
+                        Some(&final_row),
+                    )),
+                );
+
+                assert_eq!(res, Ok(Some(expected)));
+            }
         }
     }
 }
