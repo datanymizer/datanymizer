@@ -170,4 +170,59 @@ mod tests {
             })
         );
     }
+
+    mod transformers_for {
+        use super::*;
+
+        fn rule_names(s: &Settings, t: &str) -> Vec<String> {
+            s.transformers_for(t)
+                .unwrap()
+                .iter()
+                .map(|(name, _)| name.to_string())
+                .collect()
+        }
+
+        #[test]
+        fn order() {
+            let config = r#"
+                tables:
+                  - name: table1
+                    rule_order:
+                      - greeting
+                      - options
+                    rules:
+                      options:
+                        template:
+                          format: "{greeting: \"{{ final.greeting }}\"}"
+                      greeting:
+                        template:
+                          format: "dear {{ final.first_name }} {{ final.last_name }}"
+                      first_name:
+                        first_name: {}
+                      last_name:
+                        last_name: {}
+                  - name: table2
+                    rules:
+                      first_name:
+                        first_name: {}
+                      last_name:
+                        last_name: {}
+                "#;
+            let s = Settings::from_yaml(config, String::new()).unwrap();
+
+            let names = rule_names(&s, "table1");
+            assert_eq!(names.len(), 4);
+            assert!(names.contains(&"first_name".to_string()));
+            assert!(names.contains(&"last_name".to_string()));
+            assert_eq!(names[2], "greeting");
+            assert_eq!(names[3], "options");
+
+            let names = rule_names(&s, "table2");
+            assert_eq!(names.len(), 2);
+            assert!(names.contains(&"first_name".to_string()));
+            assert!(names.contains(&"last_name".to_string()));
+
+            assert_eq!(s.transformers_for("table3"), None);
+        }
+    }
 }

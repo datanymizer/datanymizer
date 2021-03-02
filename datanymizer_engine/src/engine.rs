@@ -85,6 +85,8 @@ mod tests {
         let mut column_indexes = HashMap::new();
         column_indexes.insert(String::from("first_name"), 0);
         column_indexes.insert(String::from("last_name"), 1);
+        column_indexes.insert(String::from("other_column"), 2);
+        column_indexes.insert(String::from("one_more_column"), 3);
         column_indexes.insert(String::from("last_update"), 4);
 
         let tr_values = Engine::new(settings)
@@ -98,141 +100,146 @@ mod tests {
         assert_ne!(tr_values[4], "");
     }
 
-    #[test]
-    fn final_row() {
-        let config = r#"
-          source: {}
-          tables:
-            - name: some_table
-              rule_order:
-                - greeting
-                - options
-              rules:
-                first_name:
-                  first_name: {}
-                last_name:
-                  last_name: {}
-                greeting:
-                  template:
-                    format: "Hello, {{ final.first_name }} {{ final.last_name }}!"
-                options:
-                  template:
-                    format: "{greeting: \"{{ final.greeting }}\"}"
-        "#;
-        let settings = Settings::from_yaml(config, String::new()).unwrap();
+    mod row_refs {
+        use super::*;
+        use crate::transformers::CapitalizeTransformer;
 
-        let table = String::from("some_table");
-        let values = vec!["", "", "", "", ""];
+        fn column_indexes() -> HashMap<String, usize> {
+            let mut column_indexes = HashMap::new();
+            column_indexes.insert(String::from("first_name"), 0);
+            column_indexes.insert(String::from("middle_name"), 1);
+            column_indexes.insert(String::from("last_name"), 2);
+            column_indexes.insert(String::from("greeting"), 3);
+            column_indexes.insert(String::from("options"), 4);
 
-        let mut column_indexes = HashMap::new();
-        column_indexes.insert(String::from("first_name"), 0);
-        column_indexes.insert(String::from("last_name"), 1);
-        column_indexes.insert(String::from("greeting"), 3);
-        column_indexes.insert(String::from("options"), 4);
+            column_indexes
+        }
 
-        let tr_values = Engine::new(settings)
-            .process_row(table, &column_indexes, &values)
-            .unwrap();
+        #[test]
+        fn final_row() {
+            let config = r#"
+              source: {}
+              tables:
+                - name: some_table
+                  rule_order:
+                    - greeting
+                    - options
+                  rules:
+                    first_name:
+                      first_name: {}
+                    last_name:
+                      last_name: {}
+                    greeting:
+                      template:
+                        format: "Hello, {{ final.first_name }} {{ final.last_name }}!"
+                    options:
+                      template:
+                        format: "{greeting: \"{{ final.greeting }}\"}"
+            "#;
+            let settings = Settings::from_yaml(config, String::new()).unwrap();
 
-        assert_ne!(tr_values[0], "");
-        assert_ne!(tr_values[1], "");
-        assert_eq!(tr_values[2], "");
-        assert_eq!(
-            tr_values[3],
-            format!("Hello, {} {}!", tr_values[0], tr_values[1])
-        );
-        assert_eq!(tr_values[4], format!("{{greeting: \"{}\"}}", tr_values[3]));
-    }
+            let table = String::from("some_table");
+            let values = vec!["", "", "", "", ""];
 
-    #[test]
-    fn pipeline_and_final_row() {
-        let config = r#"
-          source: {}
-          tables:
-            - name: some_table
-              rule_order:
-                - greeting
-                - options
-              rules:
-                first_name:
-                  first_name: {}
-                last_name:
-                  last_name: {}
-                greeting:
-                  pipeline:
-                    pipes:
-                      - template:
-                          format: "dear {{ final.first_name }} {{ final.last_name }}"
-                      - capitalize: ~
-                options:
-                  template:
-                    format: "{greeting: \"{{ final.greeting }}\"}"
-        "#;
-        let settings = Settings::from_yaml(config, String::new()).unwrap();
+            let tr_values = Engine::new(settings)
+                .process_row(table, &column_indexes(), &values)
+                .unwrap();
 
-        let table = String::from("some_table");
-        let values = vec!["", "", "", "", ""];
+            assert_ne!(tr_values[0], "");
+            assert_eq!(tr_values[1], "");
+            assert_ne!(tr_values[2], "");
+            assert_eq!(
+                tr_values[3],
+                format!("Hello, {} {}!", tr_values[0], tr_values[2])
+            );
+            assert_eq!(tr_values[4], format!("{{greeting: \"{}\"}}", tr_values[3]));
+        }
 
-        let mut column_indexes = HashMap::new();
-        column_indexes.insert(String::from("first_name"), 0);
-        column_indexes.insert(String::from("last_name"), 1);
-        column_indexes.insert(String::from("greeting"), 3);
-        column_indexes.insert(String::from("options"), 4);
+        #[test]
+        fn pipeline_and_final_row() {
+            let config = r#"
+              source: {}
+              tables:
+                - name: some_table
+                  rule_order:
+                    - greeting
+                    - options
+                  rules:
+                    first_name:
+                      first_name: {}
+                    last_name:
+                      last_name: {}
+                    greeting:
+                      pipeline:
+                        pipes:
+                          - template:
+                              format: "dear {{ final.first_name }} {{ final.last_name }}"
+                          - capitalize: ~
+                    options:
+                      template:
+                        format: "{greeting: \"{{ final.greeting }}\"}"
+            "#;
+            let settings = Settings::from_yaml(config, String::new()).unwrap();
 
-        let tr_values = Engine::new(settings)
-            .process_row(table, &column_indexes, &values)
-            .unwrap();
+            let table = String::from("some_table");
+            let values = vec!["", "", "", "", ""];
 
-        assert_ne!(tr_values[0], "");
-        assert_ne!(tr_values[1], "");
-        assert_eq!(tr_values[2], "");
-        assert_eq!(
-            tr_values[3],
-            format!("Dear {} {}", tr_values[0], tr_values[1])
-        );
-        assert_eq!(tr_values[4], format!("{{greeting: \"{}\"}}", tr_values[3]));
-    }
+            let tr_values = Engine::new(settings)
+                .process_row(table, &column_indexes(), &values)
+                .unwrap();
 
-    #[test]
-    fn prev_and_final_row() {
-        let config = r#"
-          source: {}
-          tables:
-            - name: some_table
-              rule_order:
-                - greeting
-                - options
-              rules:
-                first_name:
-                  first_name: {}
-                last_name:
-                  last_name: {}
-                greeting:
-                  template:
-                    format: "dear {{ prev.first_name }} {{ final.last_name }}"
-                options:
-                  template:
-                    format: "{greeting: \"{{ final.greeting }}\"}"
-        "#;
-        let settings = Settings::from_yaml(config, String::new()).unwrap();
+            assert_ne!(tr_values[0], "");
+            assert_eq!(tr_values[1], "");
+            assert_ne!(tr_values[2], "");
+            assert_eq!(
+                tr_values[3],
+                format!(
+                    "Dear {} {}",
+                    CapitalizeTransformer::capitalize(tr_values[0].as_ref()),
+                    CapitalizeTransformer::capitalize(tr_values[2].as_ref())
+                )
+            );
+            assert_eq!(tr_values[4], format!("{{greeting: \"{}\"}}", tr_values[3]));
+        }
 
-        let table = String::from("some_table");
-        let values = vec!["orig_name", "", "", "", ""];
+        #[test]
+        fn prev_and_final_row() {
+            let config = r#"
+              source: {}
+              tables:
+                - name: some_table
+                  rule_order:
+                    - greeting
+                    - options
+                  rules:
+                    first_name:
+                      first_name: {}
+                    last_name:
+                      last_name: {}
+                    greeting:
+                      template:
+                        format: "dear {{ prev.first_name }} {{ prev.middle_name }} {{ final.last_name }}"
+                    options:
+                      template:
+                        format: "{greeting: \"{{ final.greeting }}\"}"
+            "#;
+            let settings = Settings::from_yaml(config, String::new()).unwrap();
 
-        let mut column_indexes = HashMap::new();
-        column_indexes.insert(String::from("first_name"), 0);
-        column_indexes.insert(String::from("last_name"), 1);
-        column_indexes.insert(String::from("greeting"), 3);
-        column_indexes.insert(String::from("options"), 4);
+            let table = String::from("some_table");
+            let values = vec!["orig_name", "orig_middle_name", "", "", ""];
 
-        let tr_values = Engine::new(settings)
-            .process_row(table, &column_indexes, &values)
-            .unwrap();
+            let tr_values = Engine::new(settings)
+                .process_row(table, &column_indexes(), &values)
+                .unwrap();
 
-        assert_ne!(tr_values[0], "");
-        assert_ne!(tr_values[1], "");
-        assert_eq!(tr_values[2], "");
-        assert_eq!(tr_values[3], format!("dear orig_name {}", tr_values[1]));
-        assert_eq!(tr_values[4], format!("{{greeting: \"{}\"}}", tr_values[3]));
+            assert_ne!(tr_values[0], "orig_name");
+            assert_eq!(tr_values[1], "orig_middle_name");
+            assert_ne!(tr_values[2], "");
+            assert_eq!(
+                tr_values[3],
+                format!("dear orig_name orig_middle_name {}", tr_values[2])
+            );
+            assert_eq!(tr_values[4], format!("{{greeting: \"{}\"}}", tr_values[3]));
+        }
     }
 }

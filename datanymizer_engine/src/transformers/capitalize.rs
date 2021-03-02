@@ -3,30 +3,32 @@ use serde::{Deserialize, Serialize};
 
 use unicode_segmentation::UnicodeSegmentation;
 
-pub(crate) fn capitalize(string: &str) -> String {
-    string
-        .unicode_words()
-        .map(capitalize_word)
-        .collect::<Vec<String>>()
-        .join(" ")
-}
-
-fn capitalize_word(word: &str) -> String {
-    word.chars()
-        .enumerate()
-        .map(|(i, c)| {
-            if i == 0 {
-                c.to_uppercase().collect::<String>()
-            } else {
-                c.to_lowercase().collect()
-            }
-        })
-        .collect()
-}
-
 /// Capitalize inner value (from database or previews value in pipeline)
 #[derive(Serialize, Deserialize, PartialEq, Eq, Hash, Clone, Debug, Default)]
 pub struct CapitalizeTransformer;
+
+impl CapitalizeTransformer {
+    pub(crate) fn capitalize(string: &str) -> String {
+        string
+            .unicode_words()
+            .map(Self::capitalize_word)
+            .collect::<Vec<String>>()
+            .join(" ")
+    }
+
+    fn capitalize_word(word: &str) -> String {
+        word.chars()
+            .enumerate()
+            .map(|(i, c)| {
+                if i == 0 {
+                    c.to_uppercase().collect::<String>()
+                } else {
+                    c.to_lowercase().collect()
+                }
+            })
+            .collect()
+    }
+}
 
 impl Transformer for CapitalizeTransformer {
     fn transform(
@@ -35,7 +37,7 @@ impl Transformer for CapitalizeTransformer {
         field_value: &str,
         _ctx: &Option<TransformContext>,
     ) -> TransformResult {
-        let result = capitalize(field_value);
+        let result = Self::capitalize(field_value);
         TransformResult::present(&result)
     }
 }
