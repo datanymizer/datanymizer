@@ -330,10 +330,10 @@ tables:
         template:
           # Keeping the first name, but anonymizing the last name   
           format: "Hello, {{ prev.first_name }} {{ final.last_name }}!"
-    options:
-      template:
-        # Using the anonymized value again   
-        format: "{greeting: \"{{ final.greeting }}\"}"
+      options:
+        template:
+          # Using the anonymized value again   
+          format: "{greeting: \"{{ final.greeting }}\"}"
 ```
 
 You must specify the order of rule execution when using `final` with `rule_order`.
