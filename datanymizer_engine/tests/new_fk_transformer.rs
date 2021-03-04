@@ -13,8 +13,8 @@ impl<L: Data> Dummy<Passport<L>> for String {
 }
 
 use datanymizer_engine::{
-    FkTransformer, Globals, LocaleConfig, Localized, LocalizedFaker, TransformResult, Transformer,
-    TransformerDefaults,
+    FkTransformer, LocaleConfig, Localized, LocalizedFaker, TransformContext, TransformResult,
+    Transformer, TransformerDefaults,
 };
 use fake::Fake;
 use serde::{Deserialize, Serialize};
@@ -49,7 +49,7 @@ impl Transformer for PassportTransformer {
         &self,
         _field_name: &str,
         _field_value: &str,
-        _globals: &Option<Globals>,
+        _ctx: &Option<TransformContext>,
     ) -> TransformResult {
         self.transform_with_faker()
     }

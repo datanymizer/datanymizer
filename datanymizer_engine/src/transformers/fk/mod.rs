@@ -7,7 +7,7 @@ pub mod sql_value;
 
 use crate::{
     locale::{LocaleConfig, Localized, LocalizedFaker},
-    transformer::{Globals, TransformResult, TransformerDefaults},
+    transformer::{TransformContext, TransformResult, TransformerDefaults},
     Transformer,
 };
 use fake::{
@@ -244,7 +244,7 @@ macro_rules! define_fk_transformer {
                 &self,
                 _field_name: &str,
                 _field_value: &str,
-                _globals: &Option<Globals>,
+                _ctx: &Option<TransformContext>,
             ) -> TransformResult {
                 self.transform_with_faker()
             }

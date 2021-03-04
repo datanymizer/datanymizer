@@ -1,4 +1,4 @@
-use super::{Globals, TransformResult, TransformResultHelper, Transformer, Uniqueness};
+use super::{TransformContext, TransformResult, TransformResultHelper, Transformer, Uniqueness};
 use crate::uniq_collector;
 
 pub trait UniqTransformer {
@@ -6,18 +6,18 @@ pub trait UniqTransformer {
         &self,
         field_name: &str,
         field_value: &str,
-        globals: &Option<Globals>,
+        ctx: &Option<TransformContext>,
     ) -> String;
 
     fn transform_with_retry(
         &self,
         field_name: &str,
         field_value: &str,
-        globals: &Option<Globals>,
+        ctx: &Option<TransformContext>,
     ) -> Option<String> {
         let mut count = self.try_count();
         while count > 0 {
-            let val = self.do_transform(field_name, field_value, globals);
+            let val = self.do_transform(field_name, field_value, ctx);
             if uniq_collector::add_to_collector(&field_name, &val) {
                 return Some(val);
             } else {
@@ -56,10 +56,10 @@ where
         &self,
         field_name: &str,
         field_value: &str,
-        globals: &Option<Globals>,
+        ctx: &Option<TransformContext>,
     ) -> TransformResult {
         if self.uniq().required {
-            match self.transform_with_retry(field_name, field_value, globals) {
+            match self.transform_with_retry(field_name, field_value, ctx) {
                 Some(val) => TransformResult::present(val),
                 None => TransformResult::error(
                     field_name,
@@ -68,7 +68,7 @@ where
                 ),
             }
         } else {
-            TransformResult::present(self.do_transform(field_name, field_value, globals))
+            TransformResult::present(self.do_transform(field_name, field_value, ctx))
         }
     }
 }
@@ -87,7 +87,7 @@ mod tests {
             &self,
             _field_name: &str,
             _field_value: &str,
-            _globals: &Option<Globals>,
+            _ctx: &Option<TransformContext>,
         ) -> String {
             Self::transformed_value()
         }

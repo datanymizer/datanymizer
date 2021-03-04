@@ -1,6 +1,8 @@
+mod context;
 mod uniq_transformer;
 mod uniqueness;
 
+pub use context::TransformContext;
 pub use uniq_transformer::UniqTransformer;
 pub use uniqueness::Uniqueness;
 
@@ -61,7 +63,7 @@ pub trait Transformer {
         &self,
         field_name: &str,
         field_value: &str,
-        globals: &Option<Globals>,
+        ctx: &Option<TransformContext>,
     ) -> TransformResult;
 
     fn set_defaults(&mut self, _defaults: &TransformerDefaults) {}

@@ -2,7 +2,7 @@ mod filter;
 
 use crate::{transformers::Transformers, Transformer, TransformerDefaults};
 use anyhow::{anyhow, Result};
-use config::{Config, ConfigError, File};
+use config::{Config, ConfigError, File, FileFormat};
 use serde::Deserialize;
 use serde_json::Value as JsonValue;
 use std::collections::HashMap;
@@ -25,12 +25,31 @@ impl Connection {
     }
 }
 
+type TransformList = Vec<(String, Transformers)>;
+
 #[derive(Debug, Deserialize, Clone)]
 pub struct Table {
     /// Table name
     pub name: String,
     /// Rule set for columns
     pub rules: Rules,
+    /// Order of applying rules. All rules not listed are placed at the beginning
+    pub rule_order: Option<Vec<String>>,
+}
+
+impl Table {
+    fn transform_list(&self) -> TransformList {
+        let explicit_rule_order = self.rule_order.clone().unwrap_or_default();
+        let mut transform_list: TransformList = self
+            .rules
+            .iter()
+            .map(|(key, ts)| (key.clone(), ts.clone()))
+            .collect();
+        transform_list
+            .sort_by_cached_key(|(key, _)| explicit_rule_order.iter().position(|i| i == key));
+
+        transform_list
+    }
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -52,11 +71,17 @@ pub struct Settings {
     /// Global values. Visible in any template.
     /// They may be shadowed by template variables.
     pub globals: Option<HashMap<String, JsonValue>>,
+
+    transform_map: Option<HashMap<String, TransformList>>,
 }
 
 impl Settings {
     pub fn new(path: String, database_url: String) -> Result<Self, ConfigError> {
         Self::from_source(File::with_name(&path), database_url)
+    }
+
+    pub fn from_yaml(config: &str, database_url: String) -> Result<Self, ConfigError> {
+        Self::from_source(File::from_str(config, FileFormat::Yaml), database_url)
     }
 
     fn from_source<S: 'static>(source: S, database_url: String) -> Result<Self, ConfigError>
@@ -73,13 +98,12 @@ impl Settings {
         Ok(settings)
     }
 
-    pub fn lookup_transformers<T>(&self, table: T, column: T) -> Option<&Transformers>
-    where
-        T: ToString,
-    {
-        let table = self.tables.iter().find(|t| t.name == table.to_string())?;
-        let transformers = table.rules.get(&column.to_string())?;
-        Some(&transformers)
+    pub fn transformers_for(&self, table: &str) -> Option<&TransformList> {
+        if let Some(m) = &self.transform_map {
+            m.get(table)
+        } else {
+            panic!("No transform map");
+        }
     }
 
     pub fn destination(&self) -> Result<String> {
@@ -96,6 +120,17 @@ impl Settings {
                 }
             }
         }
+
+        self.fill_transform_map();
+    }
+
+    fn fill_transform_map(&mut self) {
+        let mut map = HashMap::with_capacity(self.tables.len());
+        for table in &self.tables {
+            map.insert(table.name.clone(), table.transform_list());
+        }
+
+        self.transform_map = Some(map);
     }
 }
 
@@ -103,7 +138,6 @@ impl Settings {
 mod tests {
     use super::*;
     use crate::{transformers::PersonNameTransformer, LocaleConfig};
-    use config::FileFormat;
 
     #[test]
     fn set_defaults() {
@@ -120,8 +154,7 @@ mod tests {
               locale: RU
             "#;
 
-        let s =
-            Settings::from_source(File::from_str(config, FileFormat::Yaml), String::new()).unwrap();
+        let s = Settings::from_yaml(config, String::new()).unwrap();
         let rules = &s.tables.first().unwrap().rules;
 
         assert_eq!(
@@ -136,5 +169,60 @@ mod tests {
                 locale: Some(LocaleConfig::EN)
             })
         );
+    }
+
+    mod transformers_for {
+        use super::*;
+
+        fn rule_names(s: &Settings, t: &str) -> Vec<String> {
+            s.transformers_for(t)
+                .unwrap()
+                .iter()
+                .map(|(name, _)| name.to_string())
+                .collect()
+        }
+
+        #[test]
+        fn order() {
+            let config = r#"
+                tables:
+                  - name: table1
+                    rule_order:
+                      - greeting
+                      - options
+                    rules:
+                      options:
+                        template:
+                          format: "{greeting: \"{{ final.greeting }}\"}"
+                      greeting:
+                        template:
+                          format: "dear {{ final.first_name }} {{ final.last_name }}"
+                      first_name:
+                        first_name: {}
+                      last_name:
+                        last_name: {}
+                  - name: table2
+                    rules:
+                      first_name:
+                        first_name: {}
+                      last_name:
+                        last_name: {}
+                "#;
+            let s = Settings::from_yaml(config, String::new()).unwrap();
+
+            let names = rule_names(&s, "table1");
+            assert_eq!(names.len(), 4);
+            assert!(names.contains(&"first_name".to_string()));
+            assert!(names.contains(&"last_name".to_string()));
+            assert_eq!(names[2], "greeting");
+            assert_eq!(names[3], "options");
+
+            let names = rule_names(&s, "table2");
+            assert_eq!(names.len(), 2);
+            assert!(names.contains(&"first_name".to_string()));
+            assert!(names.contains(&"last_name".to_string()));
+
+            assert_eq!(s.transformers_for("table3"), None);
+        }
     }
 }

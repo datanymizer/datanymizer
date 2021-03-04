@@ -311,6 +311,34 @@ default:
 
 We also support `ZH_TW` (traditional chinese) and `RU` (translation in progress).
 
+## Referencing row values from templates
+
+You can reference values of other row fields in templates.
+Use `prev` for original values and `final` - for anonymized:
+
+```yaml
+tables:
+  - name: some_table
+    # You must specify the order of rule execution when using `final`
+    rule_order:
+      - greeting
+      - options
+    rules:
+      first_name:
+        first_name: {}
+      greeting:
+        template:
+          # Keeping the first name, but anonymizing the last name   
+          format: "Hello, {{ prev.first_name }} {{ final.last_name }}!"
+    options:
+      template:
+        # Using the anonymized value again   
+        format: "{greeting: \"{{ final.greeting }}\"}"
+```
+
+You must specify the order of rule execution when using `final` with `rule_order`.
+All rules not listed will be placed at the beginning (i.e. you must list only rules with `final`).
+
 ## Supported databases
 
 - [x] Postgresql

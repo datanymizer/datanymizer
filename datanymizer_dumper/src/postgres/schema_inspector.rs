@@ -13,15 +13,15 @@ const PG_CATALOG_SCHEMA: &str = "SELECT tablename, schemaname
                                  AND schemaname != 'information_schema'";
 
 const TABLE_FOREIGN_KEYS: &str = "SELECT
-                                    tc.table_schema, 
-                                    tc.constraint_name, 
-                                    tc.table_name, 
-                                    kcu.column_name, 
+                                    tc.table_schema,
+                                    tc.constraint_name,
+                                    tc.table_name,
+                                    kcu.column_name,
                                     ccu.table_schema AS foreign_table_schema,
                                     ccu.table_name AS foreign_table_name,
-                                    ccu.column_name AS foreign_column_name 
-                                FROM 
-                                    information_schema.table_constraints AS tc 
+                                    ccu.column_name AS foreign_column_name
+                                FROM
+                                    information_schema.table_constraints AS tc
                                     JOIN information_schema.key_column_usage AS kcu
                                     ON tc.constraint_name = kcu.constraint_name
                                     AND tc.table_schema = kcu.table_schema
@@ -58,7 +58,7 @@ impl SchemaInspector for PgSchemaInspector {
             .map(|row| row.into())
             .map(|mut table| {
                 if let Ok(columns) = self.get_columns(connection, &table) {
-                    table.columns = columns;
+                    table.set_columns(columns);
                 };
 
                 match self.get_table_size(connection, table.get_name()) {
@@ -110,16 +110,11 @@ impl SchemaInspector for PgSchemaInspector {
         let tables: Vec<Self::Table> = fkeys
             .into_iter()
             // Table from foreign key
-            .map(|fkey| PgTable {
-                tablename: fkey.foreign_table_name,
-                schemaname: Some(fkey.foreign_table_schema),
-                columns: vec![],
-                size: 0,
-            })
+            .map(|fkey| PgTable::new(fkey.foreign_table_name, Some(fkey.foreign_table_schema)))
             // Columns for table
             .map(|mut table| {
                 if let Ok(columns) = self.get_columns(connection, &table) {
-                    table.columns = columns;
+                    table.set_columns(columns);
                 };
 
                 match self.get_table_size(connection, table.get_name()) {

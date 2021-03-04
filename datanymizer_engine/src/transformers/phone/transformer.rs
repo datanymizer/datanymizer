@@ -1,6 +1,6 @@
 use super::deserialize_phone_format;
 use super::phone_format::PhoneFormat;
-use crate::transformer::{Globals, UniqTransformer, Uniqueness};
+use crate::transformer::{TransformContext, UniqTransformer, Uniqueness};
 use fake::Fake;
 use serde::{Deserialize, Serialize};
 use std::char;
@@ -64,7 +64,7 @@ impl UniqTransformer for PhoneTransformer {
         &self,
         _field_name: &str,
         _field_value: &str,
-        _globals: &Option<Globals>,
+        _ctx: &Option<TransformContext>,
     ) -> String {
         let mut rng = rand::thread_rng();
 

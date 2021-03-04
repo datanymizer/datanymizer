@@ -1,4 +1,4 @@
-use crate::transformer::{Globals, UniqTransformer, Uniqueness};
+use crate::transformer::{TransformContext, UniqTransformer, Uniqueness};
 use fake::faker::internet::raw::*;
 use fake::locales::EN;
 use fake::Fake;
@@ -55,7 +55,7 @@ impl UniqTransformer for EmailTransformer {
         &self,
         _field_name: &str,
         _field_value: &str,
-        _globals: &Option<Globals>,
+        _ctx: &Option<TransformContext>,
     ) -> String {
         match self.kind {
             Some(EmailKind::FreeProvider) => FreeEmailProvider(EN).fake(),

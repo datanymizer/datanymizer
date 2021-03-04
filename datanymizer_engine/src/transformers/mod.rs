@@ -1,5 +1,4 @@
-use super::transformer::{TransformResult, Transformer, TransformerDefaults};
-use crate::transformer::Globals;
+use super::transformer::{TransformContext, TransformResult, Transformer, TransformerDefaults};
 use serde::{Deserialize, Serialize};
 
 pub mod none;
@@ -30,9 +29,14 @@ mod fk;
 pub use fk::sql_value::AsSqlValue;
 pub use fk::*;
 
+// The TemplateTransformer is much larger then others (about 350 bytes), so we add
+// #[allow(clippy::large_enum_variant)].
+// We can box TemplateTransformer.renderer, but reducing memory usage even by several hundred
+// kilobytes is insignificant.
 macro_rules! define_transformers_enum {
     ( $( ( $ser:literal, $var:ident, $tr:ty ) ),* ) => {
         #[derive(Serialize, Deserialize, PartialEq, Eq, Hash, Clone, Debug)]
+        #[allow(clippy::large_enum_variant)]
         pub enum Transformers {
             $(
                 #[serde(rename = $ser)]
@@ -153,10 +157,9 @@ impl Transformer for Transformers {
         &self,
         field_name: &str,
         field_value: &str,
-        globals: &Option<Globals>,
+        ctx: &Option<TransformContext>,
     ) -> TransformResult {
-        self.transformer()
-            .transform(field_name, field_value, globals)
+        self.transformer().transform(field_name, field_value, ctx)
     }
 
     fn set_defaults(&mut self, defaults: &TransformerDefaults) {
