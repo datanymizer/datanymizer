@@ -10,10 +10,10 @@ pub struct CapitalizeTransformer;
 impl CapitalizeTransformer {
     pub(crate) fn capitalize(string: &str) -> String {
         string
-            .unicode_words()
+            .split_word_bounds()
             .map(Self::capitalize_word)
             .collect::<Vec<String>>()
-            .join(" ")
+            .concat()
     }
 
     fn capitalize_word(word: &str) -> String {
@@ -44,26 +44,29 @@ impl Transformer for CapitalizeTransformer {
 
 #[cfg(test)]
 mod tests {
-    use crate::{Transformer, Transformers};
+    use crate::{Transformer, Transformers, TransformResult};
 
-    #[test]
-    fn test_capitalize_word() {
+    fn transform(value: &str) -> TransformResult {
         let config = r#"capitalize: ~"#;
         let transformer: Transformers = serde_yaml::from_str(config).unwrap();
-        let expected = String::from("Value");
-        let founded = transformer.transform("field", "value", &None);
-
-        assert_eq!(founded, Ok(Some(expected)))
+        transformer.transform("field", value, &None)
     }
 
-    // TODO: this does not work
-    // #[test]
-    // fn non_letter_symbols() {
-    //     let config = r#"capitalize: ~"#;
-    //     let transformer: Transformers = serde_yaml::from_str(config).unwrap();
-    //     let expected = String::from("Hi, Frank!");
-    //     let founded = transformer.transform("field", "hi, frank!", &None);
-    //
-    //     assert_eq!(founded, Ok(Some(expected)))
-    // }
+    #[test]
+    fn word() {
+        let expected = String::from("Value");
+        assert_eq!(transform("value"), Ok(Some(expected)));
+    }
+
+    #[test]
+    fn sentence() {
+        let expected = String::from("Hello All People");
+        assert_eq!(transform("Hello all people"), Ok(Some(expected)));
+    }
+
+    #[test]
+    fn non_letter_chars() {
+        let expected = String::from("Hi, Frank!");
+        assert_eq!(transform("hi, frank!"), Ok(Some(expected)));
+    }
 }
