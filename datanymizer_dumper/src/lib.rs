@@ -6,6 +6,7 @@ use solvent::DepGraph;
 use std::{collections::HashMap, hash::Hash, time::Instant};
 
 pub mod postgres;
+pub mod mssql;
 
 // Dumper makes dump with same stages
 pub trait Dumper: 'static + Sized + Send {
