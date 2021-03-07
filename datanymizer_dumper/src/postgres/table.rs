@@ -1,5 +1,6 @@
 use super::{column::PgColumn, dumper::PgDumper, row::PgRow};
 use crate::Table;
+use datanymizer_engine::Table as TableCfg;
 use postgres::{types::Type, Row as PostgresRow};
 use std::{
     collections::HashMap,
@@ -38,7 +39,7 @@ impl Table<Type> for PgTable {
         self.tablename.clone()
     }
 
-    // Returns table name with schema or other prefix, based on database type
+    // Returns table name with the schema or other prefix, based on database type
     fn get_full_name(&self) -> String {
         let mut full_name = String::from("");
         if let Some(schema) = self.schemaname.clone() {
@@ -77,12 +78,21 @@ impl PgTable {
         }
     }
 
-    pub fn query_to(&self) -> String {
-        format!(
-            "COPY {}({}) TO STDOUT",
-            self.get_full_name(),
-            self.quoted_columns().join(", "),
-        )
+    pub fn transformed_query_to(&self, cfg: Option<&TableCfg>) -> Option<String> {
+        cfg.map(|c| {
+            c.query.as_ref().map_or_else(
+                || self.default_query(),
+                |q| self.query_with_select(&q.dump_condition, q.limit),
+            )
+        })
+    }
+
+    pub fn untransformed_query_to(&self, cfg: Option<&TableCfg>) -> Option<String> {
+        if cfg.is_none() {
+            Some(self.default_query())
+        } else {
+            None
+        }
     }
 
     pub fn query_from(&self) -> String {
@@ -91,6 +101,29 @@ impl PgTable {
             self.get_full_name(),
             self.quoted_columns().join(", "),
         )
+    }
+
+    fn default_query(&self) -> String {
+        format!(
+            "COPY {}({}) TO STDOUT",
+            self.get_full_name(),
+            self.quoted_columns().join(", ")
+        )
+    }
+
+    fn query_with_select(&self, cs: &Option<String>, limit: Option<usize>) -> String {
+        format!(
+            "COPY (SELECT * FROM {}{}{}) TO STDOUT",
+            self.get_full_name(),
+            Self::sql_conditions(cs),
+            limit.map_or(String::new(), |limit| format!(" LIMIT {}", limit)),
+        )
+    }
+
+    fn sql_conditions(cs: &Option<String>) -> String {
+        cs.as_ref().map_or(String::new(), |conditions| {
+            format!(" WHERE ({})", conditions)
+        })
     }
 
     fn quoted_columns(&self) -> Vec<String> {
@@ -119,7 +152,7 @@ impl From<PostgresRow> for PgTable {
 
 #[cfg(test)]
 mod tests {
-    use super::PgTable;
+    use super::*;
     use crate::{postgres::column::PgColumn, Table};
 
     #[test]
@@ -167,5 +200,93 @@ mod tests {
         assert_eq!(table.column_indexes["col1"], 0);
         assert_eq!(table.column_indexes["col2"], 1);
         assert_eq!(table.column_indexes["col3"], 2);
+    }
+
+    mod query_to {
+        use super::*;
+        use datanymizer_engine::Query;
+
+        fn table_name() -> String {
+            "some_table".to_string()
+        }
+
+        fn columns() -> Vec<PgColumn> {
+            let col1 = PgColumn {
+                position: 1,
+                name: String::from("col1"),
+                data_type: String::new(),
+                inner_type: Some(0),
+            };
+            let col2 = PgColumn {
+                position: 2,
+                name: String::from("col2"),
+                data_type: String::new(),
+                inner_type: Some(0),
+            };
+            vec![col1, col2]
+        }
+
+        fn table() -> PgTable {
+            let mut table = PgTable::new(table_name(), None);
+            table.set_columns(columns());
+            table
+        }
+
+        fn cfg(query: Option<Query>) -> TableCfg {
+            TableCfg {
+                name: table_name(),
+                rules: HashMap::new(),
+                rule_order: None,
+                query,
+            }
+        }
+
+        #[test]
+        fn no_table() {
+            assert_eq!(table().transformed_query_to(None), None);
+            assert_eq!(
+                table().untransformed_query_to(None).unwrap(),
+                "COPY some_table(\"col1\", \"col2\") TO STDOUT"
+            );
+        }
+
+        #[test]
+        fn no_query() {
+            let cfg = cfg(None);
+
+            assert_eq!(
+                table().transformed_query_to(Some(&cfg)).unwrap(),
+                "COPY some_table(\"col1\", \"col2\") TO STDOUT"
+            );
+            assert_eq!(table().untransformed_query_to(Some(&cfg)), None);
+        }
+
+        #[test]
+        fn only_limit() {
+            let cfg = cfg(Some(Query {
+                limit: Some(100),
+                dump_condition: None,
+            }));
+
+            assert_eq!(
+                table().transformed_query_to(Some(&cfg)).unwrap(),
+                "COPY (SELECT * FROM some_table LIMIT 100) TO STDOUT"
+            );
+            assert_eq!(table().untransformed_query_to(Some(&cfg)), None);
+        }
+
+        #[test]
+        fn dump_condition() {
+            let cfg = cfg(Some(Query {
+                limit: None,
+                dump_condition: Some("col1 = 'value'".to_string()),
+            }));
+
+            assert_eq!(
+                table().transformed_query_to(Some(&cfg)).unwrap(),
+                "COPY (SELECT * FROM some_table WHERE (col1 = 'value')) TO STDOUT"
+            );
+            assert_eq!(table().untransformed_query_to(Some(&cfg)), None);
+        }
     }
 }

@@ -6,7 +6,7 @@ use crate::{Dumper, SchemaInspector, Table};
 use anyhow::Result;
 use datanymizer_engine::{Engine, Filter, Settings, TableList};
 use indicatif::{HumanDuration, ProgressBar, ProgressStyle};
-use postgres::Client;
+use postgres::{Client, Transaction};
 use std::{io::prelude::*, process::Command, time::Instant};
 
 pub struct PgDumper {
@@ -66,16 +66,66 @@ impl PgDumper {
 
         Vec::new()
     }
+
+    fn dump_table(&mut self, table: &PgTable, tr: &mut Transaction) -> Result<()> {
+        let settings = self.settings();
+        let started = Instant::now();
+
+        self.write_log(format!("Dump table: {}", &table.get_full_name()))?;
+
+        self.init_progress_bar(table.get_size() as u64, &table.get_full_name());
+
+        self.dump_writer.write_all(b"\n")?;
+        self.dump_writer.write_all(&table.query_from().as_bytes())?;
+        self.dump_writer.write_all(b"\n")?;
+
+        let cfg = settings.get_table(table.get_name().as_str());
+
+        if let Some(untransformed_query) = table.untransformed_query_to(cfg) {
+            let reader = tr.copy_out(untransformed_query.as_str())?;
+            for line in reader.lines() {
+                // Tick for bar
+                self.progress_bar.inc(1);
+
+                self.dump_writer.write_all(line?.as_bytes())?;
+                self.dump_writer.write_all(b"\n")?;
+            }
+        }
+
+        if let Some(transformed_query) = table.transformed_query_to(cfg) {
+            let reader = tr.copy_out(transformed_query.as_str())?;
+            for line in reader.lines() {
+                // Tick for bar
+                self.progress_bar.inc(1);
+
+                let row = PgRow::from_string_row(line?, table.clone());
+                let transformed = row.transform(&self.engine)?;
+                // Writer::from_writer(&self.dump_writer).write_record(&transformed_row)?;
+                self.dump_writer.write_all(transformed.as_bytes())?;
+                self.dump_writer.write_all(b"\n")?;
+            }
+        }
+
+        self.dump_writer.write_all(b"\\.\n")?;
+
+        self.progress_bar.finish();
+        self.progress_bar.reset();
+
+        let finished = started.elapsed();
+        self.debug(format!(
+            "[Dumping: {}] Finished in {}",
+            table.get_full_name(),
+            HumanDuration(finished),
+        ));
+
+        Ok(())
+    }
 }
 
 impl Dumper for PgDumper {
+    type Table = PgTable;
     type Connection = Client;
     type SchemaInspector = PgSchemaInspector;
-    type Table = PgTable;
-
-    fn schema_inspector(&self) -> Self::SchemaInspector {
-        self.schema_inspector.clone()
-    }
 
     // Stage before dumping data. It makes dump schema with any options
     fn pre_data(&mut self, _connection: &mut Self::Connection) -> Result<()> {
@@ -99,6 +149,7 @@ impl Dumper for PgDumper {
         let mut tables = self.schema_inspector().ordered_tables(connection);
         tables.sort_by(|a, b| b.1.cmp(&a.1));
         let all_tables_count = tables.len();
+
         // In transaction
         let mut tr = connection.transaction()?;
         for (ind, (table, _weidth)) in tables.iter().enumerate() {
@@ -108,40 +159,9 @@ impl Dumper for PgDumper {
                 all_tables_count,
                 table.get_full_name(),
             ));
+
             if self.filter_table(table.get_full_name(), &settings.filter) {
-                let started = Instant::now();
-
-                self.init_progress_bar(table.get_size() as u64, &table.get_full_name());
-
-                let qt = table.query_to();
-                let reader = tr.copy_out(qt.as_str())?;
-
-                self.write_log(format!("Dump table: {}", &table.get_full_name()))?;
-
-                self.dump_writer.write_all(b"\n")?;
-                self.dump_writer.write_all(&table.query_from().as_bytes())?;
-                self.dump_writer.write_all(b"\n")?;
-                for line in reader.lines() {
-                    // Tick for bar
-                    self.progress_bar.inc(1);
-
-                    let l = line?;
-                    let row = PgRow::from_string_row(l.to_string(), table.clone());
-                    let transformed = row.transform(&self.engine)?;
-                    // Writer::from_writer(&self.dump_writer).write_record(&transformed_row)?;
-                    self.dump_writer.write_all(transformed.as_bytes())?;
-                    self.dump_writer.write_all(b"\n")?;
-                }
-                self.dump_writer.write_all(b"\\.\n")?;
-                self.progress_bar.finish();
-                self.progress_bar.reset();
-
-                let finished = started.elapsed();
-                self.debug(format!(
-                    "[Dumping: {}] Finished in {}",
-                    table.get_full_name(),
-                    HumanDuration(finished),
-                ));
+                self.dump_table(table, &mut tr)?;
             } else {
                 self.debug(format!("[Dumping: {}] --- SKIP ---", table.get_full_name()));
             }
@@ -163,6 +183,10 @@ impl Dumper for PgDumper {
         self.dump_writer
             .write_all(&dump_output.stdout)
             .map_err(|e| e)
+    }
+
+    fn schema_inspector(&self) -> Self::SchemaInspector {
+        self.schema_inspector.clone()
     }
 
     fn settings(&mut self) -> Settings {
