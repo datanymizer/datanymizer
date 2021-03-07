@@ -1,19 +1,18 @@
 [package]
-name = "datanymizer_dumper"
-version = "0.5.0"
+name = "pg_datanymizer_dumper"
+version = "0.1.0"
 authors = ["Aleksandr Kirillov <saratovsource@gmail.com>", "Evgeniy Rashchepkin <e.a.rashchepkin@gmail.com>"]
-edition = "2021"
+edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-datanymizer_engine = { path= "../datanymizer_engine" }
+datanymizer_dumper = { path= "../datanymizer_dumper" }
+datanymizer_engine = { path= "../../datanymizer_engine" }
 anyhow = "1.0"
-indicatif = "0.15.0"
 native-tls = "0.2.7"
 postgres = "0.19.1"
 postgres-native-tls = "0.5.0"
-solvent = "0.8.2"
 url = "2.2"
 
 [features]

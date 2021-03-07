@@ -1,16 +1,13 @@
 use super::helpers;
 
-use datanymizer_dumper::{
-    indicator::SilentIndicator,
-    postgres::{connector::Connection, dumper::PgDumper},
-    Dumper,
-};
+use datanymizer_dumper::{indicator::SilentIndicator, Dumper};
 use datanymizer_engine::{Engine, Settings};
+use pg_datanymizer_dumper::{connector::Connection, dumper::PgDumper};
 
 fn dump(name: &str) {
     let mut dst = helpers::dst_wrapper(name);
 
-    let cfg_filename = format!("tests/postgres/configs/{}.yml", name);
+    let cfg_filename = format!("tests/configs/{}.yml", name);
     let settings = Settings::new(cfg_filename).unwrap();
     let engine = Engine::new(settings);
     let mut dumper = PgDumper::new(

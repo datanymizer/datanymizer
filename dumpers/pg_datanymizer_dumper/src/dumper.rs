@@ -2,8 +2,8 @@ use super::{
     connector, query_wrapper::QueryWrapper, row::PgRow, schema_inspector::PgSchemaInspector,
     table::PgTable,
 };
-use crate::{indicator::Indicator, Dumper, SchemaInspector, Table};
 use anyhow::Result;
+use datanymizer_dumper::{indicator::Indicator, Dumper, SchemaInspector, Table};
 use datanymizer_engine::{Engine, Filter, Settings, TableList};
 use postgres::IsolationLevel;
 use std::{

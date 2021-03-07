@@ -6,7 +6,6 @@ use solvent::DepGraph;
 use std::{collections::HashMap, hash::Hash, time::Instant};
 
 pub mod indicator;
-pub mod postgres;
 
 // Dumper makes dump with same stages
 pub trait Dumper: 'static + Sized + Send {
@@ -44,7 +43,7 @@ pub trait Dumper: 'static + Sized + Send {
 
     fn data(&mut self, connection: &mut Self::Connection) -> Result<()>;
 
-    /// This stage makes dump foreign keys, indices and other...
+    /// Stage after dumping data (e.g. in Postgres this stage makes dump foreign keys, indices...)
     fn post_data(&mut self, _connection: &mut Self::Connection) -> Result<()>;
 
     fn filter_table(&self, table: String) -> bool {

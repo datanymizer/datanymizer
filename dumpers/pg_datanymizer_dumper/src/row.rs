@@ -1,6 +1,6 @@
 use super::escaper;
-use crate::Table;
 use anyhow::Result;
+use datanymizer_dumper::Table;
 use datanymizer_engine::Engine;
 use postgres::types::Type;
 use std::{borrow::Cow, char};
@@ -48,7 +48,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::postgres::{column::PgColumn, table::PgTable};
+    use crate::{column::PgColumn, table::PgTable};
     use datanymizer_engine::Settings;
 
     #[test]

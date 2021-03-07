@@ -37,7 +37,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: clean
-          args: --package pg_datanymizer
+          args: --package pg_datanymizer --package mssql_datanymizer
         if: steps.cache-target.outputs.cache-hit != 'true'
 
   fmt:
@@ -84,7 +84,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: clean
-          args: --package pg_datanymizer
+          args: --package pg_datanymizer --package mssql_datanymizer
         if: steps.cache-target.outputs.cache-hit != 'true'
 
   test:
@@ -138,7 +138,7 @@ jobs:
           DATANYMIZER_TEST_PG_DB: |
             postgres://postgres:${{ env.postgres_password }}@localhost:${{ env.postgres_port }}/datanymizer_test
           RUSTFLAGS: |
-            -Zprofile -Zpanic_abort_tests -Ccodegen-units=1 -Clink-dead-code -Coverflow-checks=off
+            -Zprofile -Zpanic_abort_tests -Ccodegen-units=1 -Clink-dead-code
       - uses: actions-rs/grcov@v0.1
       - uses: codecov/codecov-action@v1
         with:
@@ -147,7 +147,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: clean
-          args: --package pg_datanymizer
+          args: --package pg_datanymizer --package mssql_datanymizer
         if: steps.cache-target.outputs.cache-hit != 'true'
 
   test_demo:
@@ -194,7 +194,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: clean
-          args: --package pg_datanymizer
+          args: --package pg_datanymizer --package mssql_datanymizer
         if: steps.cache-target.outputs.cache-hit != 'true'
 
   windows_build:
@@ -222,7 +222,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: clean
-          args: --package pg_datanymizer
+          args: --package pg_datanymizer --package mssql_datanymizer
         if: steps.cache-target.outputs.cache-hit != 'true'
 
   docker_build:

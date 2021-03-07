@@ -1,6 +1,6 @@
 use super::{column::PgColumn, foreign_key::PgForeignKey, row::PgRow, sequence::PgSequence};
-use crate::Table;
 use anyhow::{anyhow, Result};
+use datanymizer_dumper::Table;
 use datanymizer_engine::{Query as QueryCfg, Table as TableCfg};
 use postgres::{types::Type, Row as PostgresRow};
 use std::{
@@ -247,7 +247,8 @@ impl From<PostgresRow> for PgTable {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{postgres::column::PgColumn, Table};
+    use crate::column::PgColumn;
+    use datanymizer_dumper::Table;
 
     #[test]
     fn table_full_name() {

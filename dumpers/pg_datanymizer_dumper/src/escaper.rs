@@ -66,7 +66,7 @@ pub fn replace_chars(s: &mut String) {
 
 #[cfg(test)]
 mod tests {
-    use crate::postgres::escaper::replace_chars;
+    use crate::escaper::replace_chars;
 
     #[test]
     fn replace() {

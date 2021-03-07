@@ -1,8 +1,8 @@
 use super::helpers;
 
-use datanymizer_dumper::{
-    postgres::{connector::Connection, schema_inspector::PgSchemaInspector, table::PgTable},
-    SchemaInspector, Table,
+use datanymizer_dumper::{SchemaInspector, Table};
+use pg_datanymizer_dumper::{
+    connector::Connection, schema_inspector::PgSchemaInspector, table::PgTable,
 };
 
 fn find_table<'a>(tables: &'a [PgTable], full_name: &str) -> &'a PgTable {

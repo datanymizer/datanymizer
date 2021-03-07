@@ -1,4 +1,4 @@
-use crate::SchemaInspector;
+use datanymizer_dumper::SchemaInspector;
 
 pub mod column;
 pub mod connector;
