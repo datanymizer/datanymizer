@@ -1,0 +1,25 @@
+[package]
+name = "mssql_datanymizer"
+version = "0.1.0"
+authors = ["Evgeniy Rashchepkin <e.a.rashchepkin@gmail.com>", "Aleksandr Kirillov <saratovsource@gmail.com>"]
+edition = "2018"
+description = "Powerful database anonymizer with flexible rules"
+homepage = "https://github.com/datanymizer/datanymizer"
+license = "MIT"
+readme = "README.md"
+keywords = ["anonymizer", "data", "database", "microsoft sql server", "mssql-scripter", "faker"]
+categories = ["command-line-utilities"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0"
+datanymizer_dumper = {path = "../../datanymizer_dumper"}
+datanymizer_engine = {path = "../../datanymizer_engine"}
+structopt = "0.3.20"
+
+[profile.release]
+opt-level = 'z'  # Optimize for size
+lto = true
+codegen-units = 1
+panic = 'abort'

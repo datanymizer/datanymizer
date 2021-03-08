@@ -2,5 +2,6 @@
 members = [
     "datanymizer_engine",
     "datanymizer_dumper",
+    "cli/mssql_datanymizer",
     "cli/pg_datanymizer",
 ]

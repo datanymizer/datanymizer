@@ -726,6 +726,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "mssql_datanymizer"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "datanymizer_dumper",
+ "datanymizer_engine",
+ "structopt",
+]
+
+[[package]]
 name = "nom"
 version = "5.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
