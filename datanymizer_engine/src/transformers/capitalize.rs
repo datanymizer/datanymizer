@@ -44,7 +44,7 @@ impl Transformer for CapitalizeTransformer {
 
 #[cfg(test)]
 mod tests {
-    use crate::{Transformer, Transformers, TransformResult};
+    use crate::{TransformResult, Transformer, Transformers};
 
     fn transform(value: &str) -> TransformResult {
         let config = r#"capitalize: ~"#;
