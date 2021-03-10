@@ -69,4 +69,10 @@ mod tests {
         let expected = String::from("Hi, Frank!");
         assert_eq!(transform("hi, frank!"), Ok(Some(expected)));
     }
+
+    #[test]
+    fn cyrillic() {
+        let expected = String::from("Добрый Вечер, Ребята!");
+        assert_eq!(transform("добрый вечер, ребята!"), Ok(Some(expected)));
+    }
 }
