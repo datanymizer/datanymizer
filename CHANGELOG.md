@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### ⚙️ Changed
 
 ### 🛠 Fixed
+- Fix CapitalizeTransformer
+  [#44](https://github.com/datanymizer/datanymizer/pull/44) ([@evgeniy-r](https://github.com/evgeniy-r))
 - Fix config examples in docs
   [#39](https://github.com/datanymizer/datanymizer/pull/39) ([@evgeniy-r](https://github.com/evgeniy-r))
 
