@@ -1,5 +1,3 @@
-// use std::io::{BufRead, Cursor};
-
 const DB_OBJECT_SIGNATURE: &[u8] = b"/****** Object:  ";
 const TABLE_SIGNATURE: &[u8] = b"Table ";
 
