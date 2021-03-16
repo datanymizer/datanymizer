@@ -23,10 +23,8 @@ fn end_of_table_section(data: &Vec<u8>) -> usize {
             if let LineKind::OtherObject = kind {
                 break;
             }
-        } else {
-            if let LineKind::Table = kind {
-                table_section_started = true;
-            }
+        } else if let LineKind::Table = kind {
+            table_section_started = true;
         }
 
         index += line.len() + 1;
