@@ -27,7 +27,8 @@ impl Dumper for MsSqlDumper {
             .args(&[
                 "--connection-string",
                 self.engine.settings.source.get_database_url().as_str(),
-            ]).stdin() output()?;
+            ])
+            .output()?;
 
         self.dump_writer
             .write_all(&dump_output.stdout)

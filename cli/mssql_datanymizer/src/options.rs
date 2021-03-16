@@ -38,11 +38,7 @@ pub struct Options {
     )]
     pub host: String,
 
-    #[structopt(
-      short = "p",
-      long = "port",
-      help = "database server port"
-    )]
+    #[structopt(short = "p", long = "port", help = "database server port")]
     pub port: Option<u16>,
 
     #[structopt(
@@ -52,11 +48,7 @@ pub struct Options {
     )]
     pub username: Option<String>,
 
-    #[structopt(
-        short = "W",
-        long = "password",
-        help = "Password"
-    )]
+    #[structopt(short = "W", long = "password", help = "Password")]
     pub password: Option<String>,
 
     #[structopt(
