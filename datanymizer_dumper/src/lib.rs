@@ -33,9 +33,7 @@ pub trait Dumper: 'static + Sized + Send {
     fn data(&mut self, connection: &mut Self::Connection) -> Result<()>;
 
     /// Stage after dumping data (e.g. in Postgres this stage makes dump foreign keys, indices...)
-    fn post_data(&mut self, _connection: &mut Self::Connection) -> Result<()> {
-        Ok(())
-    }
+    fn post_data(&mut self, _connection: &mut Self::Connection) -> Result<()>;
 
     fn filter_table(&mut self, table: String, filter: &Option<Filter>) -> bool {
         if let Some(f) = filter {
