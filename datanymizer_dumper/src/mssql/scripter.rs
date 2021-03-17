@@ -4,37 +4,49 @@ const TABLE_SIGNATURE: &[u8] = b"Table ";
 const DB_OBJECT_SIGNATURE_LEN: usize = DB_OBJECT_SIGNATURE.len();
 const TABLE_SIGNATURE_LEN: usize = DB_OBJECT_SIGNATURE_LEN + TABLE_SIGNATURE.len();
 
-pub fn pre_data(data: &Vec<u8>) -> &[u8] {
-    &data[..end_of_table_section(&data)]
+pub struct SchemaDump {
+    data: Vec<u8>,
+    pre_bound: usize,
 }
 
-pub fn post_data(data: &Vec<u8>) -> &[u8] {
-    &data[end_of_table_section(&data)..]
-}
+impl SchemaDump {
+    pub fn new(data: Vec<u8>) -> Self {
+        let pre_bound = Self::end_of_table_section(&data);
+        Self { data, pre_bound }
+    }
 
-fn end_of_table_section(data: &Vec<u8>) -> usize {
-    let mut index = 0;
-    let mut table_section_started = false;
-    let mut iter = data.split(|&i| i == b'\n');
+    pub fn pre_data(&self) -> &[u8] {
+        &self.data[..self.pre_bound]
+    }
 
-    while let Some(line) = iter.next() {
-        let kind = LineKind::kind_of(line);
-        if table_section_started {
-            if let LineKind::OtherObject = kind {
-                break;
+    pub fn post_data(&self) -> &[u8] {
+        &self.data[self.pre_bound..]
+    }
+
+    fn end_of_table_section(data: &Vec<u8>) -> usize {
+        let mut index = 0;
+        let mut table_section_started = false;
+        let mut iter = data.split(|&i| i == b'\n');
+
+        while let Some(line) = iter.next() {
+            let kind = LineKind::kind_of(line);
+            if table_section_started {
+                if let LineKind::OtherObject = kind {
+                    break;
+                }
+            } else if let LineKind::Table = kind {
+                table_section_started = true;
             }
-        } else if let LineKind::Table = kind {
-            table_section_started = true;
+
+            index += line.len() + 1;
         }
 
-        index += line.len() + 1;
-    }
+        if index > data.len() {
+            index = data.len();
+        }
 
-    if index > data.len() {
-        index = data.len();
+        index
     }
-
-    index
 }
 
 enum LineKind {

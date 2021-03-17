@@ -1,12 +1,9 @@
-use super::{schema_inspector::MsSqlSchemaInspector, scripter, table::MsSqlTable};
+use super::{schema_inspector::MsSqlSchemaInspector, scripter::SchemaDump, table::MsSqlTable};
 use crate::{writer::DumpWriter, Dumper};
 use anyhow::Result;
 use datanymizer_engine::{Engine, Settings};
 use indicatif::ProgressBar;
-use std::{
-    io,
-    process::{Command, Output},
-};
+use std::process::Command;
 
 pub struct MsSqlClient;
 
@@ -16,6 +13,7 @@ pub struct MsSqlDumper {
     dump_writer: DumpWriter,
     mssql_scripter_location: String,
     progress_bar: ProgressBar,
+    schema_dump: Option<SchemaDump>,
 }
 
 impl Dumper for MsSqlDumper {
@@ -25,10 +23,18 @@ impl Dumper for MsSqlDumper {
 
     fn pre_data(&mut self, _connection: &mut Self::Connection) -> Result<()> {
         self.debug("Prepare data scheme...".into());
-        let dump_output = self.run_scripter()?;
+
+        if self.schema_dump.is_none() {
+            self.load_schema_dump()?;
+        }
 
         self.dump_writer
-            .write_all(&scripter::pre_data(&dump_output.stdout))
+            .write_all(
+                self.schema_dump
+                    .as_ref()
+                    .expect("missed schema dump")
+                    .pre_data(),
+            )
             .map_err(|e| e)
     }
 
@@ -40,10 +46,18 @@ impl Dumper for MsSqlDumper {
 
     fn post_data(&mut self, _connection: &mut Self::Connection) -> Result<()> {
         self.debug("Finishing dump...".into());
-        let dump_output = self.run_scripter()?;
+
+        if self.schema_dump.is_none() {
+            self.load_schema_dump()?;
+        }
 
         self.dump_writer
-            .write_all(&scripter::post_data(&dump_output.stdout))
+            .write_all(
+                self.schema_dump
+                    .as_ref()
+                    .expect("missed schema dump")
+                    .post_data(),
+            )
             .map_err(|e| e)
     }
 
@@ -86,17 +100,22 @@ impl MsSqlDumper {
             mssql_scripter_location,
             schema_inspector: MsSqlSchemaInspector,
             progress_bar: pb,
+            schema_dump: None,
         })
     }
 
-    fn run_scripter(&self) -> io::Result<Output> {
-        Command::new(&self.mssql_scripter_location)
+    fn load_schema_dump(&mut self) -> Result<()> {
+        let dump_output = Command::new(&self.mssql_scripter_location)
             // .args(Self::table_args(&self.engine.settings.filter))
             .args(&[
                 "--connection-string",
                 self.engine.settings.source.get_database_url().as_str(),
             ])
-            .output()
+            .output()?;
+
+        self.schema_dump = Some(SchemaDump::new(dump_output.stdout));
+
+        Ok(())
     }
 }
 
