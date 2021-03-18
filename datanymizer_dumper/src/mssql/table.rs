@@ -14,6 +14,18 @@ pub struct MsSqlTable {
     pub size: i64,
 }
 
+impl MsSqlTable {
+    pub fn new<T: ToString>(name: T) -> Self {
+        Self {
+            tablename: name.to_string(),
+            schemaname: None,
+            columns: vec![],
+            column_indexes: HashMap::new(),
+            size: 0,
+        }
+    }
+}
+
 impl PartialEq for MsSqlTable {
     fn eq(&self, other: &MsSqlTable) -> bool {
         self.get_full_name() == other.get_full_name()
