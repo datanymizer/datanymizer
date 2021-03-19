@@ -1,4 +1,5 @@
-use crate::{mssql::MsSqlType, Table};
+use super::MsSqlType;
+use crate::Table;
 
 #[derive(Debug)]
 pub struct MsSqlRow<T>

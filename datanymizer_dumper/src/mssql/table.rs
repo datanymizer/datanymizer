@@ -15,10 +15,10 @@ pub struct MsSqlTable {
 }
 
 impl MsSqlTable {
-    pub fn new<T: ToString>(name: T) -> Self {
+    pub fn new<T: ToString>(name: T, schema: Option<T>) -> Self {
         Self {
             tablename: name.to_string(),
-            schemaname: None,
+            schemaname: schema.map(|s| s.to_string()),
             columns: vec![],
             column_indexes: HashMap::new(),
             size: 0,

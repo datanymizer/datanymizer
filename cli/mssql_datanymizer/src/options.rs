@@ -60,7 +60,7 @@ pub struct Options {
 }
 
 impl Options {
-    pub fn database_url(&self) -> Result<String> {
+    pub fn connection_string(&self) -> Result<String> {
         Ok(self.database.clone())
     }
 }

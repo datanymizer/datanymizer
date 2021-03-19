@@ -1,11 +1,11 @@
 use super::{schema_inspector::MsSqlSchemaInspector, scripter::SchemaDump, table::MsSqlTable};
 use crate::{writer::DumpWriter, Dumper, SchemaInspector, Table};
 use anyhow::Result;
-use async_std::net::TcpStream;
+use async_std::{net::TcpStream, task};
 use datanymizer_engine::{Engine, Settings};
 use indicatif::ProgressBar;
 use std::process::Command;
-use tiberius::Client;
+use tiberius::{Client, Row};
 
 pub struct MsSqlDumper {
     schema_inspector: MsSqlSchemaInspector,
@@ -41,15 +41,17 @@ impl Dumper for MsSqlDumper {
     fn data(&mut self, connection: &mut Self::Connection) -> Result<()> {
         let inspector = self.schema_inspector();
         let w = &mut self.dump_writer;
-        w.write_all(b"/************** DATA BEGIN ****************/\n")?;
+        w.write_all(b"/****** DATA SECTION BEGIN ******/\n")?;
 
         for table in inspector.get_tables(connection)?.iter() {
-            w.write_all(table.get_full_name().as_bytes())?;
-            w.write_all(b"\n")?;
+            w.write_all(format!("Table: {}\n", table.get_full_name()).as_bytes())?;
+            for column in inspector.get_columns(connection, table)?.iter() {
+                w.write_all(format!("{}\n", column.name).as_bytes())?;
+            }
         }
 
         self.dump_writer
-            .write_all(b"/************** DATA END ****************/\n")?;
+            .write_all(b"/****** DATA SECTION END ******/\n")?;
 
         Ok(())
     }
@@ -112,6 +114,11 @@ impl MsSqlDumper {
             progress_bar: pb,
             schema_dump: None,
         })
+    }
+
+    pub fn query(c: &mut <Self as Dumper>::Connection, q: &str) -> Result<Vec<Row>> {
+        task::block_on(async { c.simple_query(q).await?.into_first_result().await })
+            .map_err(|e| anyhow::Error::from(e))
     }
 
     fn load_schema_dump(&mut self) -> Result<()> {

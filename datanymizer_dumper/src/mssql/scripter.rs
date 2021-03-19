@@ -4,7 +4,7 @@ const TABLE_SIGNATURE: &[u8] = b"Table ";
 const DB_OBJECT_SIGNATURE_LEN: usize = DB_OBJECT_SIGNATURE.len();
 const TABLE_SIGNATURE_LEN: usize = DB_OBJECT_SIGNATURE_LEN + TABLE_SIGNATURE.len();
 
-pub struct SchemaDump {
+pub(crate) struct SchemaDump {
     data: Vec<u8>,
     pre_bound: usize,
 }
@@ -59,12 +59,12 @@ impl LineKind {
     fn kind_of(line: &[u8]) -> Self {
         if line.len() > TABLE_SIGNATURE_LEN && line.starts_with(DB_OBJECT_SIGNATURE) {
             if line[DB_OBJECT_SIGNATURE_LEN..TABLE_SIGNATURE_LEN] == *TABLE_SIGNATURE {
-                LineKind::Table
+                Self::Table
             } else {
-                LineKind::OtherObject
+                Self::OtherObject
             }
         } else {
-            LineKind::Regular
+            Self::Regular
         }
     }
 }

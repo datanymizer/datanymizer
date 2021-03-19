@@ -12,7 +12,7 @@ use options::Options;
 async fn main() -> Result<()> {
     let cfg = Options::from_args();
 
-    let connection_string = cfg.database_url()?;
+    let connection_string = cfg.connection_string()?;
     let s = Settings::new(
         cfg.clone()
             .config

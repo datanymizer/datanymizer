@@ -1,6 +1,7 @@
-use super::MsSqlType;
+use super::{value::Value, MsSqlType};
 use crate::ColumnData;
 use std::cmp::Ordering;
+use tiberius::Row;
 
 #[derive(Debug, Clone, Eq)]
 pub struct MsSqlColumn {
@@ -8,6 +9,8 @@ pub struct MsSqlColumn {
     pub position: i32,
     /// Column name
     pub name: String,
+    /// Column type
+    pub data_type: MsSqlType,
 }
 
 impl PartialEq for MsSqlColumn {
@@ -38,7 +41,30 @@ impl ColumnData<MsSqlType> for MsSqlColumn {
     }
 
     fn inner_kind(&self) -> Option<MsSqlType> {
-        None
+        Some(self.data_type.clone())
+    }
+}
+
+impl From<&Row> for MsSqlColumn {
+    fn from(row: &Row) -> Self {
+        let name = row
+            .get::<&str, _>("COLUMN_NAME")
+            .expect("table name column is missed")
+            .to_string();
+        let position = row
+            .get::<i32, _>("ORDINAL_POSITION")
+            .expect("position column is missed");
+        let data_type = MsSqlType(
+            row.get::<&str, _>("DATA_TYPE")
+                .expect("type column is missed")
+                .to_string(),
+        );
+
+        Self {
+            position,
+            name,
+            data_type,
+        }
     }
 }
 

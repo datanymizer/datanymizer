@@ -1,7 +1,6 @@
 use super::{column::MsSqlColumn, dumper::MsSqlDumper, table::MsSqlTable, MsSqlType};
-use crate::{Dumper, SchemaInspector};
+use crate::{Dumper, SchemaInspector, Table};
 use anyhow::Result;
-use async_std::task;
 
 #[derive(Clone)]
 pub struct MsSqlSchemaInspector;
@@ -12,23 +11,20 @@ impl SchemaInspector for MsSqlSchemaInspector {
     type Table = MsSqlTable;
     type Column = MsSqlColumn;
 
-    fn get_tables(
-        &self,
-        connection: &mut <Self::Dumper as Dumper>::Connection,
-    ) -> Result<Vec<Self::Table>> {
-        task::block_on(async {
-            let tables = connection
-                .simple_query(
-                    "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE='BASE TABLE'",
-                )
-                .await?
-                .into_first_result()
-                .await?
-                .iter()
-                .map(|row| MsSqlTable::new(row.get::<&str, _>(0).unwrap()))
-                .collect();
-            Ok(tables)
+    fn get_tables(&self, c: &mut <Self::Dumper as Dumper>::Connection) -> Result<Vec<Self::Table>> {
+        let tables = Self::Dumper::query(
+            c,
+            "SELECT TABLE_NAME, TABLE_SCHEMA FROM INFORMATION_SCHEMA.TABLES \
+            WHERE TABLE_TYPE='BASE TABLE'",
+        )?
+        .iter()
+        .map(|row| {
+            let name = row.get::<&str, _>(0).expect("table name column is missed");
+            let schema = row.get::<&str, _>(1).expect("schema name column is missed");
+            MsSqlTable::new(name, Some(schema))
         })
+        .collect();
+        Ok(tables)
     }
 
     /// Get table size
@@ -51,9 +47,22 @@ impl SchemaInspector for MsSqlSchemaInspector {
     /// Get columns for table
     fn get_columns(
         &self,
-        _connection: &mut <Self::Dumper as Dumper>::Connection,
-        _table: &Self::Table,
+        c: &mut <Self::Dumper as Dumper>::Connection,
+        table: &Self::Table,
     ) -> Result<Vec<Self::Column>> {
-        Ok(vec![])
+        let columns = Self::Dumper::query(
+            c,
+            format!(
+                "SELECT COLUMN_NAME, ORDINAL_POSITION, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS \
+                WHERE TABLE_NAME=N'{}'",
+                table.get_name()
+            )
+            .as_str(),
+        )?
+        .iter()
+        .map(|row| Self::Column::from(row))
+        .collect();
+
+        Ok(columns)
     }
 }
