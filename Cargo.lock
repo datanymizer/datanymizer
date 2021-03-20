@@ -540,6 +540,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-std",
+ "chrono",
  "datanymizer_engine",
  "indicatif",
  "postgres",
@@ -2109,6 +2110,7 @@ dependencies = [
  "asynchronous-codec",
  "byteorder",
  "bytes 1.0.1",
+ "chrono",
  "connection-string",
  "encoding",
  "enumflags2",

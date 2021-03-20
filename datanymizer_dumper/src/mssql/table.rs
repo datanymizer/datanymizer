@@ -24,6 +24,26 @@ impl MsSqlTable {
             size: 0,
         }
     }
+
+    pub(crate) fn query_from(&self) -> String {
+        format!("SELECT * FROM {}", self.full_escaped_name())
+    }
+
+    pub(crate) fn identity_insert_on(&self) -> String {
+        format!("SET IDENTITY_INSERT {} ON", self.full_escaped_name())
+    }
+
+    pub(crate) fn identity_insert_off(&self) -> String {
+        format!("SET IDENTITY_INSERT {} OFF", self.full_escaped_name())
+    }
+
+    fn full_escaped_name(&self) -> String {
+        vec![Some(self.tablename.clone()), self.schemaname.clone()]
+            .iter()
+            .filter_map(|i| i.as_ref().map(|s| format!("[{}]", s)))
+            .collect::<Vec<_>>()
+            .join(".")
+    }
 }
 
 impl PartialEq for MsSqlTable {
