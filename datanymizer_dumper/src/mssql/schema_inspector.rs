@@ -1,4 +1,4 @@
-use super::{column::MsSqlColumn, dumper::MsSqlDumper, table::MsSqlTable, MsSqlType};
+use super::{column::MsSqlColumn, dumper::MsSqlDumper, sql_type::MsSqlType, table::MsSqlTable};
 use crate::{Dumper, SchemaInspector, Table};
 use anyhow::Result;
 
@@ -21,7 +21,13 @@ impl SchemaInspector for MsSqlSchemaInspector {
         .map(|row| {
             let name = row.get::<&str, _>(0).expect("table name column is missed");
             let schema = row.get::<&str, _>(1).expect("schema name column is missed");
-            MsSqlTable::new(name, Some(schema))
+            let mut table = MsSqlTable::new(name, Some(schema));
+
+            if let Ok(columns) = self.get_columns(c, &table) {
+                table.set_columns(columns);
+            };
+
+            table
         })
         .collect();
         Ok(tables)
@@ -54,13 +60,13 @@ impl SchemaInspector for MsSqlSchemaInspector {
             c,
             format!(
                 "SELECT COLUMN_NAME, ORDINAL_POSITION, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS \
-                WHERE TABLE_NAME=N'{}'",
+                WHERE TABLE_NAME=N'{}' ORDER BY ORDINAL_POSITION",
                 table.get_name()
             )
             .as_str(),
         )?
         .iter()
-        .map(|row| Self::Column::from(row))
+        .map(Self::Column::from)
         .collect();
 
         Ok(columns)

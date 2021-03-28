@@ -1,4 +1,4 @@
-use super::MsSqlType;
+use super::sql_type::MsSqlType;
 use crate::Table;
 
 #[derive(Debug)]

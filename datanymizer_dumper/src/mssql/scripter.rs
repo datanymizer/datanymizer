@@ -23,29 +23,26 @@ impl SchemaDump {
         &self.data[self.pre_bound..]
     }
 
-    fn end_of_table_section(data: &Vec<u8>) -> usize {
+    fn end_of_table_section(data: &[u8]) -> usize {
         let mut index = 0;
-        let mut table_section_started = false;
-        let mut iter = data.split(|&i| i == b'\n');
+        let mut end_of_table_section = 0;
+        let mut prev_obj_was_table = false;
 
-        while let Some(line) = iter.next() {
+        for line in data.split(|&i| i == b'\n') {
             let kind = LineKind::kind_of(line);
-            if table_section_started {
+            if prev_obj_was_table {
                 if let LineKind::OtherObject = kind {
-                    break;
+                    prev_obj_was_table = false;
+                    end_of_table_section = index;
                 }
             } else if let LineKind::Table = kind {
-                table_section_started = true;
+                prev_obj_was_table = true;
             }
 
             index += line.len() + 1;
         }
 
-        if index > data.len() {
-            index = data.len();
-        }
-
-        index
+        end_of_table_section
     }
 }
 
@@ -58,6 +55,7 @@ enum LineKind {
 impl LineKind {
     fn kind_of(line: &[u8]) -> Self {
         if line.len() > TABLE_SIGNATURE_LEN && line.starts_with(DB_OBJECT_SIGNATURE) {
+            // eprintln!("{}", std::str::from_utf8(line).unwrap());
             if line[DB_OBJECT_SIGNATURE_LEN..TABLE_SIGNATURE_LEN] == *TABLE_SIGNATURE {
                 Self::Table
             } else {

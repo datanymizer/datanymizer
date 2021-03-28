@@ -44,16 +44,16 @@ impl Dumper for MsSqlDumper {
     }
 
     fn data(&mut self, c: &mut Self::Connection) -> Result<()> {
+        self.debug("Dumping data...".into());
+
         let inspector = self.schema_inspector();
-        self.dump_writer
-            .write_all(b"/****** DATA SECTION BEGIN ******/\n")?;
+        self.write_log("DATA SECTION BEGIN".into())?;
 
         for table in inspector.get_tables(c)?.iter() {
             self.dump_table(c, table)?;
         }
 
-        self.dump_writer
-            .write_all(b"/****** DATA SECTION END ******/\n")?;
+        self.write_log("DATA SECTION END".into())?;
 
         Ok(())
     }
@@ -85,7 +85,7 @@ impl Dumper for MsSqlDumper {
 
     fn write_log(&mut self, message: String) -> Result<()> {
         self.dump_writer
-            .write_all(format!("\n---\n--- {}\n---\n", message).as_bytes())
+            .write_all(format!("/****** {} ******/\r\n", message).as_bytes())
             .map_err(|e| e)
     }
 
@@ -120,7 +120,7 @@ impl MsSqlDumper {
 
     pub fn query(c: &mut <Self as Dumper>::Connection, q: &str) -> Result<Vec<Row>> {
         task::block_on(async { c.simple_query(q).await?.into_first_result().await })
-            .map_err(|e| anyhow::Error::from(e))
+            .map_err(anyhow::Error::from)
     }
 
     fn load_schema_dump(&mut self) -> Result<()> {
@@ -142,20 +142,19 @@ impl MsSqlDumper {
         c: &mut <Self as Dumper>::Connection,
         table: &MsSqlTable,
     ) -> Result<()> {
-        //for column in inspector.get_columns(connection, table)?.iter() {
-        //     w.write_all(format!("{}\n", column.name).as_bytes())?;
-        // }
+        self.debug(format!("Dumping {}...", table.get_full_name()));
+        self.write_log(format!("Data for {}", table.get_full_name()))?;
+        self.dump_writer
+            .write_all(format!("PRINT N'Restoring {}...'\r\n", table.get_full_name()).as_bytes())?;
 
         let settings = self.settings();
-        self.write_log(format!("Dump table: {}", &table.get_full_name()))?;
-
         let cfg = settings.get_table(table.get_full_name().as_str());
         let query_from = table.query_from();
 
         task::block_on(async {
             self.dump_writer
                 .write_all(table.identity_insert_on().as_bytes())?;
-            self.dump_writer.write_all(b"\n")?;
+            self.dump_writer.write_all(b"\r\nGO\r\n")?;
 
             let mut count = 0;
 
@@ -163,23 +162,39 @@ impl MsSqlDumper {
             while let Some(Ok(row)) = reader.next().await {
                 if count % BATCH_SIZE == 0 {
                     if count > 0 {
-                        self.dump_writer.write_all(b"GO\n")?;
+                        self.dump_writer.write_all(b"\r\nGO\r\n")?;
                     }
-                    // INSERT .... VALUES
-                    count = 0;
+                    self.dump_writer
+                        .write_all(table.insert_statement().as_bytes())?;
+                } else {
+                    self.dump_writer.write_all(b",")?;
                 }
-                count += 1;
+                self.dump_writer.write_all(b"\r\n")?;
 
                 let values: Vec<Value> = row.into_iter().map(|field| field.into()).collect();
                 if cfg.is_none() {
-                    // VALUES
+                    self.dump_writer.write_all(
+                        format!(
+                            "({})",
+                            values
+                                .into_iter()
+                                .map(|v| v.into_dump_string())
+                                .collect::<Vec<_>>()
+                                .join(", ")
+                        )
+                        .as_bytes(),
+                    )?
+                } else {
+                    // Transform
                 }
+
+                count += 1;
             }
 
-            self.dump_writer.write_all(b"GO\n")?;
+            self.dump_writer.write_all(b"\r\nGO\r\n")?;
             self.dump_writer
                 .write_all(table.identity_insert_off().as_bytes())?;
-            self.dump_writer.write_all(b"\n")?;
+            self.dump_writer.write_all(b"\r\nGO\r\n")?;
 
             Ok(())
         })

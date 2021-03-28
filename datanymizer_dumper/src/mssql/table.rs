@@ -1,4 +1,4 @@
-use crate::mssql::{column::MsSqlColumn, dumper::MsSqlDumper, row::MsSqlRow, MsSqlType};
+use crate::mssql::{column::MsSqlColumn, dumper::MsSqlDumper, row::MsSqlRow, sql_type::MsSqlType};
 use crate::Table;
 use std::{
     collections::HashMap,
@@ -25,8 +25,26 @@ impl MsSqlTable {
         }
     }
 
+    pub fn set_columns(&mut self, columns: Vec<MsSqlColumn>) {
+        let mut map: HashMap<String, usize> = HashMap::with_capacity(columns.len());
+        for column in &columns {
+            map.insert(column.name.clone(), (column.position - 1) as usize);
+        }
+
+        self.column_indexes = map;
+        self.columns = columns;
+    }
+
     pub(crate) fn query_from(&self) -> String {
-        format!("SELECT * FROM {}", self.full_escaped_name())
+        format!(
+            "SELECT {} FROM {}",
+            self.columns
+                .iter()
+                .map(|c| c.expression_for_query_from())
+                .collect::<Vec<_>>()
+                .join(", "),
+            self.full_escaped_name()
+        )
     }
 
     pub(crate) fn identity_insert_on(&self) -> String {
@@ -37,12 +55,27 @@ impl MsSqlTable {
         format!("SET IDENTITY_INSERT {} OFF", self.full_escaped_name())
     }
 
+    pub(crate) fn insert_statement(&self) -> String {
+        format!(
+            "INSERT INTO {} ({}) VALUES",
+            self.full_escaped_name(),
+            self.escaped_columns().join(", ")
+        )
+    }
+
     fn full_escaped_name(&self) -> String {
-        vec![Some(self.tablename.clone()), self.schemaname.clone()]
+        vec![self.schemaname.clone(), Some(self.tablename.clone())]
             .iter()
             .filter_map(|i| i.as_ref().map(|s| format!("[{}]", s)))
             .collect::<Vec<_>>()
             .join(".")
+    }
+
+    fn escaped_columns(&self) -> Vec<String> {
+        self.get_columns_names()
+            .into_iter()
+            .map(|x| format!("[{}]", x))
+            .collect()
     }
 }
 

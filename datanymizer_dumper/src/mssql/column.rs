@@ -1,4 +1,4 @@
-use super::{value::Value, MsSqlType};
+use super::sql_type::MsSqlType;
 use crate::ColumnData;
 use std::cmp::Ordering;
 use tiberius::Row;
@@ -11,6 +11,16 @@ pub struct MsSqlColumn {
     pub name: String,
     /// Column type
     pub data_type: MsSqlType,
+}
+
+impl MsSqlColumn {
+    pub fn expression_for_query_from(&self) -> String {
+        if self.data_type.has_supported_type() {
+            format!("[{}]", self.name)
+        } else {
+            format!("CAST([{}] AS varbinary)", self.name)
+        }
+    }
 }
 
 impl PartialEq for MsSqlColumn {

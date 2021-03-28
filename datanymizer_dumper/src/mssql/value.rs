@@ -20,7 +20,7 @@ impl Value {
         match self.format {
             DumpFormat::Raw => self.str,
             DumpFormat::Quote => format!("N'{}'", self.str.replace("'", "''")),
-            DumpFormat::Null => "Null".to_string(),
+            DumpFormat::Null => "NULL".to_string(),
         }
     }
 
@@ -38,7 +38,9 @@ impl<'a> From<ColumnData<'a>> for Value {
             ColumnData::I64(v) => Self::from_option(v, DumpFormat::Raw),
             ColumnData::F32(v) => Self::from_option(v, DumpFormat::Raw),
             ColumnData::F64(v) => Self::from_option(v, DumpFormat::Raw),
-            ColumnData::Bit(v) => Self::from_option(v, DumpFormat::Raw),
+            ColumnData::Bit(v) => {
+                Self::from_option(v.map(|v| if v { "1" } else { "0" }), DumpFormat::Raw)
+            }
             ColumnData::String(v) => Self::from_option(v, DumpFormat::Quote),
             ColumnData::Guid(v) => Self::from_option(v, DumpFormat::Quote),
             ColumnData::Binary(v) => Self::from_option(
@@ -93,7 +95,7 @@ impl<'a> From<ColumnData<'a>> for Value {
                     .expect("invalid sql date")
                     .map(|date| date.to_rfc3339_opts(SecondsFormat::Nanos, false)),
                 DumpFormat::Quote,
-            )
+            ),
         }
     }
 }
