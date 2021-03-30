@@ -172,21 +172,31 @@ impl MsSqlDumper {
                 self.dump_writer.write_all(b"\r\n")?;
 
                 let values: Vec<Value> = row.into_iter().map(|field| field.into()).collect();
-                if cfg.is_none() {
-                    self.dump_writer.write_all(
-                        format!(
-                            "({})",
-                            values
-                                .into_iter()
-                                .map(|v| v.into_dump_string())
-                                .collect::<Vec<_>>()
-                                .join(", ")
-                        )
-                        .as_bytes(),
-                    )?
+                let values_str = if cfg.is_none() {
+                    values
+                        .into_iter()
+                        .map(|v| v.into_dump_string())
+                        .collect::<Vec<_>>()
+                        .join(", ")
                 } else {
-                    // Transform
-                }
+                    self.engine
+                        .process_row(
+                            table.get_full_name(),
+                            table.get_column_indexes(),
+                            &values
+                                .iter()
+                                .map(|v| v.str.as_str())
+                                .collect::<Vec<_>>()
+                                .as_slice(),
+                        )?
+                        .iter()
+                        .enumerate()
+                        .map(|(i, v)| Value::dump_string(values[i].format, v))
+                        .collect::<Vec<_>>()
+                        .join(", ")
+                };
+                self.dump_writer
+                    .write_all(format!("({})", values_str).as_bytes())?;
 
                 count += 1;
             }

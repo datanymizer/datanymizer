@@ -5,7 +5,7 @@ use tiberius::{ColumnData, FromSqlOwned};
 #[derive(Default)]
 pub(crate) struct Value {
     pub str: String,
-    format: DumpFormat,
+    pub format: DumpFormat,
 }
 
 impl Value {
@@ -16,12 +16,16 @@ impl Value {
         }
     }
 
-    pub fn into_dump_string(self) -> String {
-        match self.format {
-            DumpFormat::Raw => self.str,
-            DumpFormat::Quote => format!("N'{}'", self.str.replace("'", "''")),
+    pub fn dump_string<S: ToString>(f: DumpFormat, s: S) -> String {
+        match f {
+            DumpFormat::Raw => s.to_string(),
+            DumpFormat::Quote => format!("N'{}'", s.to_string().replace("'", "''")),
             DumpFormat::Null => "NULL".to_string(),
         }
+    }
+
+    pub fn into_dump_string(self) -> String {
+        Self::dump_string(self.format, self.str)
     }
 
     fn from_option<S: ToString + Display>(v: Option<S>, f: DumpFormat) -> Self {
@@ -106,7 +110,8 @@ impl Display for Value {
     }
 }
 
-enum DumpFormat {
+#[derive(Copy, Clone)]
+pub enum DumpFormat {
     Raw,
     Quote,
     Null,
