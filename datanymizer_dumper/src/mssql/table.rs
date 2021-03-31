@@ -27,8 +27,8 @@ impl MsSqlTable {
 
     pub fn set_columns(&mut self, columns: Vec<MsSqlColumn>) {
         let mut map: HashMap<String, usize> = HashMap::with_capacity(columns.len());
-        for column in &columns {
-            map.insert(column.name.clone(), (column.position - 1) as usize);
+        for (i, column) in columns.iter().enumerate() {
+            map.insert(column.name.clone(), i);
         }
 
         self.column_indexes = map;

@@ -1,6 +1,7 @@
 use super::{column::MsSqlColumn, dumper::MsSqlDumper, sql_type::MsSqlType, table::MsSqlTable};
 use crate::{Dumper, SchemaInspector, Table};
 use anyhow::Result;
+use std::collections::HashMap;
 
 #[derive(Clone)]
 pub struct MsSqlSchemaInspector;
@@ -12,6 +13,9 @@ impl SchemaInspector for MsSqlSchemaInspector {
     type Column = MsSqlColumn;
 
     fn get_tables(&self, c: &mut <Self::Dumper as Dumper>::Connection) -> Result<Vec<Self::Table>> {
+        let schema_ids = self.get_schema_ids(c)?;
+        let computed_columns = self.get_computed_columns(c)?;
+
         let tables = Self::Dumper::query(
             c,
             "SELECT TABLE_NAME, TABLE_SCHEMA FROM INFORMATION_SCHEMA.TABLES \
@@ -21,9 +25,22 @@ impl SchemaInspector for MsSqlSchemaInspector {
         .map(|row| {
             let name = row.get::<&str, _>(0).expect("table name column is missed");
             let schema = row.get::<&str, _>(1).expect("schema name column is missed");
+            let schema_id = schema_ids[schema];
+            let table_id = self
+                .get_table_id(c, name, schema_id)
+                .expect("missing table id");
+            let table_computed_columns = computed_columns.get(&table_id);
+
             let mut table = MsSqlTable::new(name, Some(schema));
 
             if let Ok(columns) = self.get_columns(c, &table) {
+                let columns = columns
+                    .into_iter()
+                    .filter(|c| match table_computed_columns {
+                        Some(cols) => !cols.contains(&c.name),
+                        None => true
+                    })
+                    .collect();
                 table.set_columns(columns);
             };
 
@@ -70,5 +87,73 @@ impl SchemaInspector for MsSqlSchemaInspector {
         .collect();
 
         Ok(columns)
+    }
+}
+
+impl MsSqlSchemaInspector {
+    fn get_computed_columns(
+        &self,
+        c: &mut <<MsSqlSchemaInspector as SchemaInspector>::Dumper as Dumper>::Connection,
+    ) -> Result<HashMap<i32, Vec<String>>> {
+        let mut columns = HashMap::new();
+        for row in <MsSqlSchemaInspector as SchemaInspector>::Dumper::query(
+            c,
+            "SELECT name, object_id FROM sys.computed_columns",
+        )?
+        .iter()
+        {
+            let column_name = row
+                .get::<&str, _>("name")
+                .expect("column name is missed")
+                .to_string();
+            let table_id = row.get::<i32, _>("object_id").expect("table id is missed");
+            columns.entry(table_id).or_insert(vec![]);
+            columns.get_mut(&table_id).unwrap().push(column_name);
+        }
+
+        Ok(columns)
+    }
+
+    fn get_schema_ids(
+        &self,
+        c: &mut <<MsSqlSchemaInspector as SchemaInspector>::Dumper as Dumper>::Connection,
+    ) -> Result<HashMap<String, i32>> {
+        let mut schema_ids = HashMap::new();
+        for row in <MsSqlSchemaInspector as SchemaInspector>::Dumper::query(
+            c,
+            "SELECT name, schema_id FROM sys.schemas",
+        )?
+        .iter()
+        {
+            let name = row
+                .get::<&str, _>("name")
+                .expect("schema name is missed")
+                .to_string();
+            let id = row.get::<i32, _>("schema_id").expect("schema id is missed");
+            schema_ids.insert(name, id);
+        }
+
+        Ok(schema_ids)
+    }
+
+    fn get_table_id(
+        &self,
+        c: &mut <<MsSqlSchemaInspector as SchemaInspector>::Dumper as Dumper>::Connection,
+        table: &str,
+        schema_id: i32,
+    ) -> Result<i32> {
+        let id = <MsSqlSchemaInspector as SchemaInspector>::Dumper::query(
+            c,
+            format!(
+                "SELECT object_id FROM sys.tables WHERE schema_id = {} AND name = '{}'",
+                schema_id, table
+            )
+            .as_str(),
+        )?
+        .first()
+        .expect("missing table")
+        .get::<i32, _>(0)
+        .expect("missing object_id for table");
+        Ok(id)
     }
 }
