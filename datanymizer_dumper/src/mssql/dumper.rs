@@ -152,9 +152,11 @@ impl MsSqlDumper {
         let query_from = table.query_from();
 
         task::block_on(async {
-            self.dump_writer
-                .write_all(table.identity_insert_on().as_bytes())?;
-            self.dump_writer.write_all(b"\r\nGO\r\n")?;
+            if table.has_identity_column() {
+                self.dump_writer
+                    .write_all(table.identity_insert_on().as_bytes())?;
+                self.dump_writer.write_all(b"\r\n")?;
+            }
 
             let mut count = 0;
 
@@ -200,11 +202,14 @@ impl MsSqlDumper {
 
                 count += 1;
             }
+            self.dump_writer.write_all(b"\r\n")?;
 
-            self.dump_writer.write_all(b"\r\nGO\r\n")?;
-            self.dump_writer
-                .write_all(table.identity_insert_off().as_bytes())?;
-            self.dump_writer.write_all(b"\r\nGO\r\n")?;
+            if table.has_identity_column() {
+                self.dump_writer
+                    .write_all(table.identity_insert_off().as_bytes())?;
+                self.dump_writer.write_all(b"\r\n")?;
+            }
+            self.dump_writer.write_all(b"GO\r\n")?;
 
             Ok(())
         })

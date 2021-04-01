@@ -30,15 +30,18 @@ impl SchemaInspector for MsSqlSchemaInspector {
                 .get_table_id(c, name, schema_id)
                 .expect("missing table id");
             let table_computed_columns = computed_columns.get(&table_id);
+            let has_identity_column = self
+                .has_identity_column(c, table_id)
+                .expect("missing PK info");
 
-            let mut table = MsSqlTable::new(name, Some(schema));
+            let mut table = MsSqlTable::new(name, Some(schema), has_identity_column);
 
             if let Ok(columns) = self.get_columns(c, &table) {
                 let columns = columns
                     .into_iter()
                     .filter(|c| match table_computed_columns {
                         Some(cols) => !cols.contains(&c.name),
-                        None => true
+                        None => true,
                     })
                     .collect();
                 table.set_columns(columns);
@@ -145,7 +148,7 @@ impl MsSqlSchemaInspector {
         let id = <MsSqlSchemaInspector as SchemaInspector>::Dumper::query(
             c,
             format!(
-                "SELECT object_id FROM sys.tables WHERE schema_id = {} AND name = '{}'",
+                "SELECT object_id FROM sys.tables WHERE schema_id = {} AND name = N'{}'",
                 schema_id, table
             )
             .as_str(),
@@ -154,6 +157,25 @@ impl MsSqlSchemaInspector {
         .expect("missing table")
         .get::<i32, _>(0)
         .expect("missing object_id for table");
+
         Ok(id)
+    }
+
+    fn has_identity_column(
+        &self,
+        c: &mut <<MsSqlSchemaInspector as SchemaInspector>::Dumper as Dumper>::Connection,
+        table_id: i32,
+    ) -> Result<bool> {
+        let has_identity_column = !<MsSqlSchemaInspector as SchemaInspector>::Dumper::query(
+            c,
+            format!(
+                "SELECT name FROM sys.identity_columns WHERE object_id = {}",
+                table_id
+            )
+            .as_str(),
+        )?
+        .is_empty();
+
+        Ok(has_identity_column)
     }
 }

@@ -11,16 +11,18 @@ pub struct MsSqlTable {
     pub schemaname: Option<String>,
     pub columns: Vec<MsSqlColumn>,
     column_indexes: HashMap<String, usize>,
+    has_identity_column: bool,
     pub size: i64,
 }
 
 impl MsSqlTable {
-    pub fn new<T: ToString>(name: T, schema: Option<T>) -> Self {
+    pub fn new<T: ToString>(name: T, schema: Option<T>, has_identity_column: bool) -> Self {
         Self {
             tablename: name.to_string(),
             schemaname: schema.map(|s| s.to_string()),
             columns: vec![],
             column_indexes: HashMap::new(),
+            has_identity_column,
             size: 0,
         }
     }
@@ -33,6 +35,10 @@ impl MsSqlTable {
 
         self.column_indexes = map;
         self.columns = columns;
+    }
+
+    pub fn has_identity_column(&self) -> bool {
+        self.has_identity_column
     }
 
     pub(crate) fn query_from(&self) -> String {
