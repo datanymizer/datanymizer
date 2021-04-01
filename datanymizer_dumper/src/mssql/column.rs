@@ -15,7 +15,7 @@ pub struct MsSqlColumn {
 
 impl MsSqlColumn {
     pub fn expression_for_query_from(&self) -> String {
-        if self.data_type.has_supported_type() {
+        if self.data_type.is_supported() {
             format!("[{}]", self.name)
         } else {
             format!("CAST([{}] AS varbinary)", self.name)
@@ -64,7 +64,7 @@ impl From<&Row> for MsSqlColumn {
         let position = row
             .get::<i32, _>("ORDINAL_POSITION")
             .expect("position column is missed");
-        let data_type = MsSqlType(
+        let data_type = MsSqlType::new(
             row.get::<&str, _>("DATA_TYPE")
                 .expect("type column is missed")
                 .to_string(),

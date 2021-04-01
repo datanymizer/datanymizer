@@ -1,10 +1,47 @@
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct MsSqlType(pub String);
+pub struct MsSqlType {
+    name: String,
+    supported: bool,
+}
 
-const UNSUPPORTED_TYPES: [&str; 2] = ["hierarchyid", "geography"];
+const SUPPORTED_TYPES: [&str; 28] = [
+    "bigint",
+    "binary",
+    "bit",
+    "char",
+    "date",
+    "datetime",
+    "datetime2",
+    "datetimeoffset",
+    "decimal",
+    "float",
+    "image",
+    "int",
+    "money",
+    "nchar",
+    "ntext",
+    "numeric",
+    "nvarchar",
+    "real",
+    "smalldatetime",
+    "smallint",
+    "smallmoney",
+    "text",
+    "time",
+    "tinyint",
+    "uniqueidentifier",
+    "varbinary",
+    "varchar",
+    "xml",
+];
 
 impl MsSqlType {
-    pub fn has_supported_type(&self) -> bool {
-        !UNSUPPORTED_TYPES.contains(&self.0.as_str())
+    pub fn new(name: String) -> Self {
+        let supported = SUPPORTED_TYPES.contains(&name.as_str());
+        Self { name, supported }
+    }
+
+    pub fn is_supported(&self) -> bool {
+        self.supported
     }
 }
