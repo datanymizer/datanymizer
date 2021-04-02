@@ -66,7 +66,7 @@ impl SchemaInspector for MsSqlSchemaInspector {
     ) -> Result<i64> {
         let count = <MsSqlSchemaInspector as SchemaInspector>::Dumper::query(
             c,
-            format!("SELECT COUNT(*) FROM {}", table_name).as_str(),
+            format!("SELECT CAST(COUNT(*) AS bigint) FROM {}", table_name).as_str(),
         )?
         .first()
         .expect("missing table")
