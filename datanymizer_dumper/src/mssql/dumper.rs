@@ -64,7 +64,6 @@ impl MsSqlDumper {
         c: &mut <Self as Dumper>::Connection,
         table: &MsSqlTable,
     ) -> Result<()> {
-        self.debug(format!("Dumping {}...", table.get_full_name()));
         self.write_log(format!("Data for {}", table.get_full_name()))?;
         self.dump_writer
             .write_all(format!("PRINT N'Restoring {}...'\r\n", table.get_full_name()).as_bytes())?;

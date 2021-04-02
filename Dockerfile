@@ -13,6 +13,7 @@ COPY . .
 ARG OPENSSL_DIR=/usr/lib/ssl
 ARG OPENSSL_LIB_DIR=/usr
 ARG OPENSSL_INCLUDE_DIR=/usr/include
+RUN cp /usr/include/x86_64-linux-gnu/openssl/opensslconf.h /usr/include/openssl
 RUN cargo build --target x86_64-unknown-linux-musl --release
 
 FROM scratch
