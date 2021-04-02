@@ -12,7 +12,7 @@ WORKDIR /usr/src/
 COPY . .
 ARG OPENSSL_DIR=/usr/lib/ssl
 ARG OPENSSL_LIB_DIR=/usr
-ARG OPENSSL_INCLUDE_DIR=/usr/include/openssl
+ARG OPENSSL_INCLUDE_DIR=/usr/include
 RUN cargo build --target x86_64-unknown-linux-musl --release
 
 FROM scratch
