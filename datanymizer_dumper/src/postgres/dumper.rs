@@ -1,11 +1,10 @@
 use super::row::PgRow;
 use super::schema_inspector::PgSchemaInspector;
 use super::table::PgTable;
-use crate::writer::DumpWriter;
-use crate::{Dumper, SchemaInspector, Table};
+use crate::{progress_bar::DumpProgressBar, writer::DumpWriter, Dumper, SchemaInspector, Table};
 use anyhow::Result;
 use datanymizer_engine::{Engine, Filter, Settings, TableList};
-use indicatif::{HumanDuration, ProgressBar, ProgressStyle};
+use indicatif::{HumanDuration, ProgressBar};
 use postgres::Client;
 use std::{io::prelude::*, process::Command, time::Instant};
 
@@ -20,32 +19,15 @@ pub struct PgDumper {
 impl PgDumper {
     pub fn new(engine: Engine, pg_dump_location: String, target: Option<String>) -> Result<Self> {
         let dump_writer = DumpWriter::new(target)?;
-        let pb: ProgressBar = if dump_writer.can_log_to_stdout() {
-            ProgressBar::new(0)
-        } else {
-            ProgressBar::hidden()
-        };
+        let progress_bar = Self::new_progress_bar(dump_writer.can_log_to_stdout());
+
         Ok(Self {
             engine,
             dump_writer,
             pg_dump_location,
             schema_inspector: PgSchemaInspector {},
-            progress_bar: pb,
+            progress_bar,
         })
-    }
-
-    fn init_progress_bar(&self, tsize: u64, prefix: &str) {
-        let delta = tsize / 100;
-        self.progress_bar.set_length(tsize);
-        self.progress_bar.set_draw_delta(delta);
-        self.progress_bar.set_prefix(prefix);
-        self.progress_bar.set_style(
-            ProgressStyle::default_bar()
-                .template(
-                    "[Dumping: {prefix}] [|{bar:50}|] {pos} of {len} rows [{percent}%] ({eta})",
-                )
-                .progress_chars("#>-"),
-        );
     }
 
     fn table_args(filter: &Option<Filter>) -> Vec<String> {
@@ -122,8 +104,7 @@ impl Dumper for PgDumper {
                 self.dump_writer.write_all(&table.query_from().as_bytes())?;
                 self.dump_writer.write_all(b"\n")?;
                 for line in reader.lines() {
-                    // Tick for bar
-                    self.progress_bar.inc(1);
+                    self.inc_progress_bar();
 
                     let l = line?;
                     let row = PgRow::from_string_row(l.to_string(), table.clone());
@@ -133,8 +114,8 @@ impl Dumper for PgDumper {
                     self.dump_writer.write_all(b"\n")?;
                 }
                 self.dump_writer.write_all(b"\\.\n")?;
-                self.progress_bar.finish();
-                self.progress_bar.reset();
+
+                self.finish_progress_bar();
 
                 let finished = started.elapsed();
                 self.debug(format!(
@@ -179,6 +160,12 @@ impl Dumper for PgDumper {
         if self.dump_writer.can_log_to_stdout() {
             println!("{}", message)
         }
+    }
+}
+
+impl DumpProgressBar for PgDumper {
+    fn progress_bar(&self) -> &ProgressBar {
+        &self.progress_bar
     }
 }
 

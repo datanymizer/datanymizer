@@ -47,6 +47,11 @@ impl SchemaInspector for MsSqlSchemaInspector {
                 table.set_columns(columns);
             };
 
+            match self.get_table_size(c, table.full_escaped_name()) {
+                Ok(size) => table.size = size as i64,
+                Err(e) => panic!("ERR: {}", e),
+            }
+
             table
         })
         .collect();
@@ -56,10 +61,19 @@ impl SchemaInspector for MsSqlSchemaInspector {
     /// Get table size
     fn get_table_size(
         &self,
-        _connection: &mut <Self::Dumper as Dumper>::Connection,
-        _table_name: String,
+        c: &mut <Self::Dumper as Dumper>::Connection,
+        table_name: String,
     ) -> Result<i64> {
-        Ok(100)
+        let count = <MsSqlSchemaInspector as SchemaInspector>::Dumper::query(
+            c,
+            format!("SELECT COUNT(*) FROM {}", table_name).as_str(),
+        )?
+        .first()
+        .expect("missing table")
+        .get::<i64, _>(0)
+        .expect("missing count for table");
+
+        Ok(count)
     }
 
     fn get_dependencies(
@@ -110,7 +124,7 @@ impl MsSqlSchemaInspector {
                 .expect("column name is missed")
                 .to_string();
             let table_id = row.get::<i32, _>("object_id").expect("table id is missed");
-            columns.entry(table_id).or_insert(vec![]);
+            columns.entry(table_id).or_insert_with(Vec::new);
             columns.get_mut(&table_id).unwrap().push(column_name);
         }
 

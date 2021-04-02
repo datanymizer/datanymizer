@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use structopt::StructOpt;
 
 #[derive(StructOpt, Debug, Clone)]
@@ -21,35 +21,6 @@ pub struct Options {
         help = "Path to dump file, example: /tmp/dump.sql"
     )]
     pub file: Option<String>,
-
-    #[structopt(
-        short = "d",
-        long = "dbname",
-        help = "database to dump",
-        default_value = "master"
-    )]
-    pub db_name: String,
-
-    #[structopt(
-        short = "h",
-        long = "host",
-        help = "database server host",
-        default_value = "localhost"
-    )]
-    pub host: String,
-
-    #[structopt(short = "p", long = "port", help = "database server port")]
-    pub port: Option<u16>,
-
-    #[structopt(
-        short = "U",
-        long = "username",
-        help = "connect as specified database user"
-    )]
-    pub username: Option<String>,
-
-    #[structopt(short = "W", long = "password", help = "Password")]
-    pub password: Option<String>,
 
     #[structopt(
         long = "mssql_scripter",

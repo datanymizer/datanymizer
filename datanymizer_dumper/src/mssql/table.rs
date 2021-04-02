@@ -41,6 +41,14 @@ impl MsSqlTable {
         self.has_identity_column
     }
 
+    pub fn full_escaped_name(&self) -> String {
+        vec![self.schemaname.clone(), Some(self.tablename.clone())]
+            .iter()
+            .filter_map(|i| i.as_ref().map(|s| format!("[{}]", s)))
+            .collect::<Vec<_>>()
+            .join(".")
+    }
+
     pub(crate) fn query_from(&self) -> String {
         format!(
             "SELECT {} FROM {}",
@@ -67,14 +75,6 @@ impl MsSqlTable {
             self.full_escaped_name(),
             self.escaped_columns().join(", ")
         )
-    }
-
-    fn full_escaped_name(&self) -> String {
-        vec![self.schemaname.clone(), Some(self.tablename.clone())]
-            .iter()
-            .filter_map(|i| i.as_ref().map(|s| format!("[{}]", s)))
-            .collect::<Vec<_>>()
-            .join(".")
     }
 
     fn escaped_columns(&self) -> Vec<String> {

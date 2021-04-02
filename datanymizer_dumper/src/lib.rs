@@ -7,6 +7,7 @@ use std::{collections::HashMap, hash::Hash, time::Instant};
 
 pub mod mssql;
 pub mod postgres;
+pub mod progress_bar;
 pub mod writer;
 
 // Dumper makes dump with same stages

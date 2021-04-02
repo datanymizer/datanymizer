@@ -79,6 +79,4 @@ impl From<&Row> for MsSqlColumn {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-}
+mod tests {}
