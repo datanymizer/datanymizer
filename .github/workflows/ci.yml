@@ -37,7 +37,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: clean
-          args: --package pg_datanymizer
+          args: --package pg_datanymizer --package mssql_datanymizer
         if: steps.cache-target.outputs.cache-hit != 'true'
 
   fmt:
@@ -84,7 +84,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: clean
-          args: --package pg_datanymizer
+          args: --package pg_datanymizer --package mssql_datanymizer
         if: steps.cache-target.outputs.cache-hit != 'true'
 
   test:
@@ -96,7 +96,7 @@ jobs:
         id: toolchain
         with:
           profile: minimal
-          toolchain: stable
+          toolchain: nightly
           override: true
       - name: Chown cargo registry because of caching
         run: sudo chown -R runner ~/.cargo/registry
@@ -124,6 +124,10 @@ jobs:
         with:
           command: test
           args: --all-features --no-fail-fast
+        env:
+          CARGO_INCREMENTAL: '0'
+          RUSTFLAGS: |
+            -Zprofile -Zpanic_abort_tests -Ccodegen-units=1 -Clink-dead-code -Coverflow-checks=off
       - uses: actions-rs/grcov@v0.1
       - uses: codecov/codecov-action@v1
         with:
@@ -132,7 +136,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: clean
-          args: --package pg_datanymizer
+          args: --package pg_datanymizer --package mssql_datanymizer
         if: steps.cache-target.outputs.cache-hit != 'true'
 
   linux_build:
@@ -162,7 +166,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: clean
-          args: --package pg_datanymizer
+          args: --package pg_datanymizer --package mssql_datanymizer
         if: steps.cache-target.outputs.cache-hit != 'true'
 
   windows_build:
@@ -190,7 +194,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: clean
-          args: --package pg_datanymizer
+          args: --package pg_datanymizer --package mssql_datanymizer
         if: steps.cache-target.outputs.cache-hit != 'true'
 
   docker_build:
