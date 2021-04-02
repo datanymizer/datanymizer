@@ -10,10 +10,8 @@ WORKDIR /usr/src/
 # COPY Cargo.toml Cargo.lock ./
 
 COPY . .
-ARG OPENSSL_DIR=/usr/lib/ssl
+ARG OPENSSL_DIR=/usr/local/ssl
 RUN echo $OPENSSL_DIR
-RUN pkg-config --libs openssl
-RUN openssl version -d
 RUN cargo build --target x86_64-unknown-linux-musl --release
 
 FROM scratch

@@ -96,7 +96,7 @@ jobs:
         id: toolchain
         with:
           profile: minimal
-          toolchain: nightly
+          toolchain: stable
           override: true
       - name: Chown cargo registry because of caching
         run: sudo chown -R runner ~/.cargo/registry
