@@ -10,9 +10,9 @@ WORKDIR /usr/src/
 # COPY Cargo.toml Cargo.lock ./
 
 COPY . .
-ARG OPENSSL_DIR=/usr
-RUN echo $OPENSSL_DIR
-RUN ls /usr
+ARG OPENSSL_DIR=/usr/lib/ssl
+ARG OPENSSL_LIB_DIR=/usr
+ARG OPENSSL_INCLUDE_DIR=/usr/include/openssl
 RUN cargo build --target x86_64-unknown-linux-musl --release
 
 FROM scratch
