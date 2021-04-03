@@ -6,7 +6,7 @@ use async_std::{net::TcpStream, stream::StreamExt, task};
 use datanymizer_dumper::{
     progress_bar::DumpProgressBar, writer::DumpWriter, Dumper, SchemaInspector, Table,
 };
-use datanymizer_engine::{Engine, Settings};
+use datanymizer_engine::{Engine, Filter, Settings, TableList};
 use indicatif::ProgressBar;
 use std::process::Command;
 use tiberius::{Client, Row};
@@ -49,7 +49,7 @@ impl MsSqlDumper {
 
     fn load_schema_dump(&mut self) -> Result<()> {
         let dump_output = Command::new(&self.mssql_scripter_location)
-            // .args(Self::table_args(&self.engine.settings.filter))
+            .args(Self::table_args(&self.engine.settings.filter))
             .args(&[
                 "--connection-string",
                 self.engine.settings.source.get_database_url().as_str(),
@@ -139,6 +139,25 @@ impl MsSqlDumper {
             Ok(())
         })
     }
+
+    fn table_args(filter: &Option<Filter>) -> Vec<String> {
+        if let Some(f) = filter {
+            if let Some(list) = &f.schema {
+                let flag = match list {
+                    TableList::Only(_) => "--include-objects",
+                    TableList::Except(_) => "--exclude-objects",
+                };
+
+                return list
+                    .tables()
+                    .iter()
+                    .flat_map(|table| vec![String::from(flag), table.clone()])
+                    .collect();
+            }
+        }
+
+        Vec::new()
+    }
 }
 
 impl Dumper for MsSqlDumper {
@@ -167,12 +186,18 @@ impl Dumper for MsSqlDumper {
         self.debug("Dumping data...".into());
 
         let inspector = self.schema_inspector();
+        let settings = self.settings();
+
         self.write_log("DATA SECTION BEGIN".into())?;
 
         for table in inspector.get_tables(c)?.iter() {
-            self.init_progress_bar(table.get_size() as u64, &table.get_full_name());
-            self.dump_table(c, table)?;
-            self.finish_progress_bar();
+            if self.filter_table(table.get_full_name(), &settings.filter) {
+                self.init_progress_bar(table.get_size() as u64, &table.get_full_name());
+                self.dump_table(c, table)?;
+                self.finish_progress_bar();
+            } else {
+                self.debug(format!("[Dumping: {}] --- SKIP ---", table.get_full_name()));
+            }
         }
 
         self.write_log("DATA SECTION END".into())?;

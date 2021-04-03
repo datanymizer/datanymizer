@@ -17,7 +17,7 @@ impl DumpWriter {
     pub fn new(target: Option<String>) -> Result<Self> {
         let writer_destination = match target {
             Some(t) => WriterDestination::File(Self::create_target_file(t)?),
-            _ => WriterDestination::Stdout(io::stdout()),
+            None => WriterDestination::Stdout(io::stdout()),
         };
 
         Ok(Self { writer_destination })
