@@ -1,7 +1,9 @@
 [workspace]
 members = [
     "datanymizer_engine",
-    "datanymizer_dumper",
+    "dumpers/datanymizer_dumper",
+    "dumpers/mssql_datanymizer_dumper",
+    "dumpers/pg_datanymizer_dumper",
     "cli/mssql_datanymizer",
     "cli/pg_datanymizer",
 ]

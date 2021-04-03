@@ -1,8 +1,10 @@
 use super::row::PgRow;
 use super::schema_inspector::PgSchemaInspector;
 use super::table::PgTable;
-use crate::{progress_bar::DumpProgressBar, writer::DumpWriter, Dumper, SchemaInspector, Table};
 use anyhow::Result;
+use datanymizer_dumper::{
+    progress_bar::DumpProgressBar, writer::DumpWriter, Dumper, SchemaInspector, Table,
+};
 use datanymizer_engine::{Engine, Filter, Settings, TableList};
 use indicatif::{HumanDuration, ProgressBar};
 use postgres::Client;

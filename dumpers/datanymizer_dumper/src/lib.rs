@@ -5,8 +5,6 @@ use indicatif::HumanDuration;
 use solvent::DepGraph;
 use std::{collections::HashMap, hash::Hash, time::Instant};
 
-pub mod mssql;
-pub mod postgres;
 pub mod progress_bar;
 pub mod writer;
 

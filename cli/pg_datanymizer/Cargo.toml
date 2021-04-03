@@ -14,8 +14,9 @@ categories = ["command-line-utilities"]
 
 [dependencies]
 anyhow = "1.0"
-datanymizer_dumper = {path = "../../datanymizer_dumper"}
+datanymizer_dumper = {path = "../../dumpers/datanymizer_dumper"}
 datanymizer_engine = {path = "../../datanymizer_engine"}
+pg_datanymizer_dumper = {path = "../../dumpers/pg_datanymizer_dumper"}
 postgres = "0.18.1"
 structopt = "0.3.20"
 url = "2.2"

@@ -1,17 +1,16 @@
 [package]
-name = "datanymizer_dumper"
+name = "mssql_datanymizer_dumper"
 version = "0.1.0"
-authors = ["Aleksandr Kirillov <saratovsource@gmail.com>"]
+authors = ["Evgeniy Rashchepkin <e.a.rashchepkin@gmail.com>", "Aleksandr Kirillov <saratovsource@gmail.com>"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-datanymizer_engine = { path= "../datanymizer_engine" }
+datanymizer_dumper = { path= "../datanymizer_dumper" }
+datanymizer_engine = { path= "../../datanymizer_engine" }
 anyhow = "1.0"
 async-std = "1.9.0"
 chrono = "0.4"
 indicatif = "0.15.0"
-postgres = "0.18.1"
-solvent = "0.8.2"
 tiberius = { version = "0.5.10", features = ["chrono", "sql-browser-async-std"] }

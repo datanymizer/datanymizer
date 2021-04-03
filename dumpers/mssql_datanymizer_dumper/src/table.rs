@@ -1,5 +1,5 @@
-use crate::mssql::{column::MsSqlColumn, dumper::MsSqlDumper, row::MsSqlRow, sql_type::MsSqlType};
-use crate::Table;
+use super::{column::MsSqlColumn, dumper::MsSqlDumper, row::MsSqlRow, sql_type::MsSqlType};
+use datanymizer_dumper::Table;
 use std::{
     collections::HashMap,
     hash::{Hash, Hasher},

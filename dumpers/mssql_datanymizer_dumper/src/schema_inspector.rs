@@ -1,6 +1,6 @@
 use super::{column::MsSqlColumn, dumper::MsSqlDumper, sql_type::MsSqlType, table::MsSqlTable};
-use crate::{Dumper, SchemaInspector, Table};
 use anyhow::Result;
+use datanymizer_dumper::{Dumper, SchemaInspector, Table};
 use std::collections::HashMap;
 
 #[derive(Clone)]

@@ -2,8 +2,8 @@ use super::{
     column::PgColumn, dumper::PgDumper, foreign_key::ForeignKey, table::PgTable, Dumper,
     SchemaInspector,
 };
-use crate::Table;
 use anyhow::Result;
+use datanymizer_dumper::Table;
 use postgres::types::Type;
 use std::vec::Vec;
 

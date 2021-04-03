@@ -1,9 +1,11 @@
 use super::{
     schema_inspector::MsSqlSchemaInspector, scripter::SchemaDump, table::MsSqlTable, value::Value,
 };
-use crate::{progress_bar::DumpProgressBar, writer::DumpWriter, Dumper, SchemaInspector, Table};
 use anyhow::Result;
 use async_std::{net::TcpStream, stream::StreamExt, task};
+use datanymizer_dumper::{
+    progress_bar::DumpProgressBar, writer::DumpWriter, Dumper, SchemaInspector, Table,
+};
 use datanymizer_engine::{Engine, Settings};
 use indicatif::ProgressBar;
 use std::process::Command;
@@ -72,8 +74,6 @@ impl MsSqlDumper {
         let cfg = settings.get_table(table.get_full_name().as_str());
         let query_from = table.query_from();
 
-        self.init_progress_bar(table.get_size() as u64, &table.get_full_name());
-
         task::block_on(async {
             if table.has_identity_column() {
                 self.dump_writer
@@ -136,8 +136,6 @@ impl MsSqlDumper {
             }
             self.dump_writer.write_all(b"GO\r\n")?;
 
-            self.finish_progress_bar();
-
             Ok(())
         })
     }
@@ -172,7 +170,9 @@ impl Dumper for MsSqlDumper {
         self.write_log("DATA SECTION BEGIN".into())?;
 
         for table in inspector.get_tables(c)?.iter() {
+            self.init_progress_bar(table.get_size() as u64, &table.get_full_name());
             self.dump_table(c, table)?;
+            self.finish_progress_bar();
         }
 
         self.write_log("DATA SECTION END".into())?;

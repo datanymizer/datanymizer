@@ -1,7 +1,8 @@
 use anyhow::Result;
 use async_std::net::TcpStream;
-use datanymizer_dumper::{mssql::dumper::MsSqlDumper, Dumper};
+use datanymizer_dumper::Dumper;
 use datanymizer_engine::{Engine, Settings};
+use mssql_datanymizer_dumper::dumper::MsSqlDumper;
 use structopt::StructOpt;
 use tiberius::{Client, Config, SqlBrowser};
 

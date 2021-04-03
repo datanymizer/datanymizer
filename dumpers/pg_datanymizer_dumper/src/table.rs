@@ -1,5 +1,5 @@
 use super::{column::PgColumn, dumper::PgDumper, row::PgRow};
-use crate::Table;
+use datanymizer_dumper::Table;
 use postgres::{types::Type, Row as PostgresRow};
 use std::{
     collections::HashMap,

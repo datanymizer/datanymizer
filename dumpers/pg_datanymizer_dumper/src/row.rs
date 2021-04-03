@@ -1,5 +1,5 @@
-use crate::Table;
 use anyhow::Result;
+use datanymizer_dumper::Table;
 use datanymizer_engine::Engine;
 use postgres::types::Type;
 use std::char;

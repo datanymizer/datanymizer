@@ -3,7 +3,9 @@ use indicatif::{ProgressBar, ProgressStyle};
 pub trait DumpProgressBar {
     fn new_progress_bar(can_log_to_stdout: bool) -> ProgressBar {
         if can_log_to_stdout {
-            ProgressBar::new(0)
+            let pb = ProgressBar::new(0);
+            pb.finish_and_clear();
+            pb
         } else {
             ProgressBar::hidden()
         }
@@ -13,16 +15,18 @@ pub trait DumpProgressBar {
 
     fn init_progress_bar(&self, tsize: u64, prefix: &str) {
         let delta = tsize / 100;
-        self.progress_bar().set_length(tsize);
-        self.progress_bar().set_draw_delta(delta);
-        self.progress_bar().set_prefix(prefix);
-        self.progress_bar().set_style(
+        let pb = self.progress_bar();
+        pb.set_draw_delta(delta);
+        pb.set_prefix(prefix);
+        pb.set_length(tsize);
+        pb.set_style(
             ProgressStyle::default_bar()
                 .template(
                     "[Dumping: {prefix}] [|{bar:50}|] {pos} of {len} rows [{percent}%] ({eta})",
                 )
                 .progress_chars("#>-"),
         );
+        pb.reset();
     }
 
     fn inc_progress_bar(&self) {
@@ -30,8 +34,6 @@ pub trait DumpProgressBar {
     }
 
     fn finish_progress_bar(&self) {
-        let pb = self.progress_bar();
-        pb.finish();
-        pb.reset();
+        self.progress_bar().finish();
     }
 }

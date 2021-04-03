@@ -539,13 +539,9 @@ name = "datanymizer_dumper"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "async-std",
- "chrono",
  "datanymizer_engine",
  "indicatif",
- "postgres",
  "solvent",
- "tiberius",
 ]
 
 [[package]]
@@ -1171,7 +1167,21 @@ dependencies = [
  "async-std",
  "datanymizer_dumper",
  "datanymizer_engine",
+ "mssql_datanymizer_dumper",
  "structopt",
+ "tiberius",
+]
+
+[[package]]
+name = "mssql_datanymizer_dumper"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-std",
+ "chrono",
+ "datanymizer_dumper",
+ "datanymizer_engine",
+ "indicatif",
  "tiberius",
 ]
 
@@ -1429,9 +1439,21 @@ dependencies = [
  "anyhow",
  "datanymizer_dumper",
  "datanymizer_engine",
+ "pg_datanymizer_dumper",
  "postgres",
  "structopt",
  "url",
+]
+
+[[package]]
+name = "pg_datanymizer_dumper"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "datanymizer_dumper",
+ "datanymizer_engine",
+ "indicatif",
+ "postgres",
 ]
 
 [[package]]

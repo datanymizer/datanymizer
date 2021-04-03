@@ -1,5 +1,5 @@
 use super::sql_type::MsSqlType;
-use crate::Table;
+use datanymizer_dumper::Table;
 
 #[derive(Debug)]
 pub struct MsSqlRow<T>

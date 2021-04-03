@@ -1,6 +1,8 @@
 use anyhow::Result;
-use std::fs::File as StdFile;
-use std::io::{self, Stdout as StdStdout, Write};
+use std::{
+    fs::File as StdFile,
+    io::{self, Stdout as StdStdout, Write},
+};
 
 enum WriterDestination {
     File(StdFile),
@@ -15,7 +17,7 @@ impl DumpWriter {
     pub fn new(target: Option<String>) -> Result<Self> {
         let writer_destination = match target {
             Some(t) => WriterDestination::File(Self::create_target_file(t)?),
-            None => WriterDestination::Stdout(io::stdout()),
+            _ => WriterDestination::Stdout(io::stdout()),
         };
 
         Ok(Self { writer_destination })

@@ -1,4 +1,4 @@
-use crate::{Dumper, SchemaInspector};
+use datanymizer_dumper::{Dumper, SchemaInspector};
 
 pub mod column;
 pub mod dumper;

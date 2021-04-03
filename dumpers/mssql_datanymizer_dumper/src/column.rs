@@ -1,5 +1,5 @@
 use super::sql_type::MsSqlType;
-use crate::ColumnData;
+use datanymizer_dumper::ColumnData;
 use std::cmp::Ordering;
 use tiberius::Row;
 
