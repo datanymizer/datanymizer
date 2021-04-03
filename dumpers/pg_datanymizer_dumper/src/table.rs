@@ -120,7 +120,8 @@ impl From<PostgresRow> for PgTable {
 #[cfg(test)]
 mod tests {
     use super::PgTable;
-    use crate::{postgres::column::PgColumn, Table};
+    use crate::column::PgColumn;
+    use datanymizer_dumper::Table;
 
     #[test]
     fn table_full_name() {
