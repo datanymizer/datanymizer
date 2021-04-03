@@ -133,6 +133,3 @@ impl Table<MsSqlType> for MsSqlTable {
         &self.column_indexes
     }
 }
-
-#[cfg(test)]
-mod tests {}
