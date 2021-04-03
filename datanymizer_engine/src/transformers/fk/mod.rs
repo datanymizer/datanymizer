@@ -337,7 +337,7 @@ define_fk_transformers![
     "Gets an user name (login).",
     ("username", UsernameTransformer, Username, String, Empty),
     "Gets a MAC address.",
-    ("mac_address", MACAddressTransformer, MACAddress, String, Empty),
+    ("mac_address", MacAddressTransformer, MACAddress, String, Empty),
     "Gets a color code (e.g., `#ffffff`).",
     ("color", ColorTransformer, Color, String, Empty),
     "Gets an User-Agent header.",

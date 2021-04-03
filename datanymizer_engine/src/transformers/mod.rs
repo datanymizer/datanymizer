@@ -67,7 +67,7 @@ macro_rules! define_transformers_enum {
 define_transformers_enum![
     ("none", None, NoneTransformer),
     ("email", Email, EmailTransformer),
-    ("ip", IP, IpTransformer),
+    ("ip", Ip, IpTransformer),
     ("phone", Phone, PhoneTransformer),
     ("pipeline", Pipeline, PipelineTransformer<Transformers>),
     ("capitalize", Capitalize, CapitalizeTransformer),
@@ -115,7 +115,7 @@ define_transformers_enum![
     ("free_email_provider", FreeEmailProvider, FreeEmailProviderTransformer),
     ("domain_suffix", DomainSuffix, DomainSuffixTransformer),
     ("username", Username, UsernameTransformer),
-    ("mac_address", MACAddress, MACAddressTransformer),
+    ("mac_address", MacAddress, MacAddressTransformer),
     ("color", Color, ColorTransformer),
     ("user_agent", UserAgent, UserAgentTransformer),
     ("job_seniority", JobSeniority, JobSeniorityTransformer),
