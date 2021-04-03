@@ -5,7 +5,8 @@ use indicatif::HumanDuration;
 use solvent::DepGraph;
 use std::{collections::HashMap, hash::Hash, time::Instant};
 
-pub mod postgres;
+pub mod progress_bar;
+pub mod writer;
 
 // Dumper makes dump with same stages
 pub trait Dumper: 'static + Sized + Send {
@@ -30,6 +31,9 @@ pub trait Dumper: 'static + Sized + Send {
 
     fn data(&mut self, connection: &mut Self::Connection) -> Result<()>;
 
+    /// Stage after dumping data (e.g. in Postgres this stage makes dump foreign keys, indices...)
+    fn post_data(&mut self, _connection: &mut Self::Connection) -> Result<()>;
+
     fn filter_table(&mut self, table: String, filter: &Option<Filter>) -> bool {
         if let Some(f) = filter {
             f.filter_schema(&table) && f.filter_data(&table)
@@ -39,9 +43,6 @@ pub trait Dumper: 'static + Sized + Send {
     }
 
     fn schema_inspector(&self) -> Self::SchemaInspector;
-
-    /// This stage makes dump foreign keys, indices and other...
-    fn post_data(&mut self, _connection: &mut Self::Connection) -> Result<()>;
 
     fn settings(&mut self) -> Settings;
 

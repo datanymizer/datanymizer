@@ -1,8 +1,8 @@
 use anyhow::Result;
-use datanymizer_dumper::postgres::dumper::PgDumper;
 use datanymizer_dumper::Dumper;
 use datanymizer_engine::{Engine, Settings};
 use options::Options;
+use pg_datanymizer_dumper::dumper::PgDumper;
 use postgres::{Client, NoTls};
 use structopt::StructOpt;
 

@@ -3,11 +3,12 @@ use serde::{Deserialize, Serialize};
 mod ru;
 pub use ru::RU;
 
+#[allow(clippy::upper_case_acronyms)]
 pub type EN = fake::locales::EN;
-#[allow(non_camel_case_types)]
+#[allow(non_camel_case_types, clippy::upper_case_acronyms)]
 pub type ZH_TW = fake::locales::ZH_TW;
 
-#[allow(non_camel_case_types)]
+#[allow(non_camel_case_types, clippy::upper_case_acronyms)]
 #[derive(Copy, Serialize, Deserialize, PartialEq, Eq, Hash, Debug, Clone)]
 pub enum LocaleConfig {
     EN,

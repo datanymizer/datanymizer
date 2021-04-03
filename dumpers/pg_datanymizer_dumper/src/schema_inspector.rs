@@ -2,8 +2,8 @@ use super::{
     column::PgColumn, dumper::PgDumper, foreign_key::ForeignKey, table::PgTable, Dumper,
     SchemaInspector,
 };
-use crate::Table;
 use anyhow::Result;
+use datanymizer_dumper::Table;
 use postgres::types::Type;
 use std::vec::Vec;
 
@@ -128,7 +128,7 @@ impl SchemaInspector for PgSchemaInspector {
         Ok(tables)
     }
 
-    /// Get columnst for table
+    /// Get columns for table
     fn get_columns(
         &self,
         connection: &mut <Self::Dumper as Dumper>::Connection,

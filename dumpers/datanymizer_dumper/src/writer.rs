@@ -1,6 +1,8 @@
 use anyhow::Result;
-use std::fs::File as StdFile;
-use std::io::{self, Stdout as StdStdout, Write};
+use std::{
+    fs::File as StdFile,
+    io::{self, Stdout as StdStdout, Write},
+};
 
 enum WriterDestination {
     File(StdFile),

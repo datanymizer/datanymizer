@@ -106,6 +106,10 @@ impl Settings {
         }
     }
 
+    pub fn get_table(&self, name: &str) -> Option<&Table> {
+        self.tables.iter().find(|t| t.name == name)
+    }
+
     pub fn destination(&self) -> Result<String> {
         self.destination
             .clone()

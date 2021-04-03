@@ -80,7 +80,7 @@ mod tests {
     fn test_parse_config_v4() {
         let config = r#"ip: {}"#;
         let transformer: Transformers = serde_yaml::from_str(config).unwrap();
-        if let Transformers::IP(transformer) = &transformer {
+        if let Transformers::Ip(transformer) = &transformer {
             assert_eq!(transformer.kind, None);
         }
     }
@@ -92,7 +92,7 @@ ip:
   kind: V6
 "#;
         let transformer: Transformers = serde_yaml::from_str(config).unwrap();
-        if let Transformers::IP(transformer) = &transformer {
+        if let Transformers::Ip(transformer) = &transformer {
             assert_eq!(transformer.kind, Some(IpKind::V6));
         }
     }

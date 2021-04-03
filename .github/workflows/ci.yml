@@ -37,7 +37,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: clean
-          args: --package pg_datanymizer
+          args: --package pg_datanymizer --package mssql_datanymizer
         if: steps.cache-target.outputs.cache-hit != 'true'
 
   fmt:
@@ -84,7 +84,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: clean
-          args: --package pg_datanymizer
+          args: --package pg_datanymizer --package mssql_datanymizer
         if: steps.cache-target.outputs.cache-hit != 'true'
 
   test:
@@ -136,7 +136,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: clean
-          args: --package pg_datanymizer
+          args: --package pg_datanymizer --package mssql_datanymizer
         if: steps.cache-target.outputs.cache-hit != 'true'
 
   linux_build:
@@ -166,7 +166,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: clean
-          args: --package pg_datanymizer
+          args: --package pg_datanymizer --package mssql_datanymizer
         if: steps.cache-target.outputs.cache-hit != 'true'
 
   windows_build:
@@ -194,7 +194,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: clean
-          args: --package pg_datanymizer
+          args: --package pg_datanymizer --package mssql_datanymizer
         if: steps.cache-target.outputs.cache-hit != 'true'
 
   docker_build:

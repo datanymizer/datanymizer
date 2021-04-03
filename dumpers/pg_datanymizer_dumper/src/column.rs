@@ -1,4 +1,4 @@
-use crate::ColumnData;
+use datanymizer_dumper::ColumnData;
 use postgres::{types::Type, Row as PostgresRow};
 use std::cmp::Ordering;
 
