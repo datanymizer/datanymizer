@@ -95,6 +95,21 @@ impl PgTable {
         }
     }
 
+    pub fn count_of_query_to(&self, cfg: Option<&TableCfg>) -> Option<String> {
+        if let Some(c) = cfg {
+            c.query.as_ref().map(|q| {
+                format!(
+                    "SELECT COUNT(*) FROM {}{}{}",
+                    self.get_full_name(),
+                    Self::sql_conditions(&q.dump_condition),
+                    Self::sql_limit(q.limit),
+                )
+            })
+        } else {
+            None
+        }
+    }
+
     pub fn query_from(&self) -> String {
         format!(
             "COPY {}({}) FROM STDIN;",
@@ -116,7 +131,7 @@ impl PgTable {
             "COPY (SELECT * FROM {}{}{}) TO STDOUT",
             self.get_full_name(),
             Self::sql_conditions(cs),
-            limit.map_or(String::new(), |limit| format!(" LIMIT {}", limit)),
+            Self::sql_limit(limit),
         )
     }
 
@@ -124,6 +139,10 @@ impl PgTable {
         cs.as_ref().map_or(String::new(), |conditions| {
             format!(" WHERE ({})", conditions)
         })
+    }
+
+    fn sql_limit(limit: Option<usize>) -> String {
+        limit.map_or(String::new(), |limit| format!(" LIMIT {}", limit))
     }
 
     fn quoted_columns(&self) -> Vec<String> {
@@ -248,6 +267,7 @@ mod tests {
                 table().untransformed_query_to(None).unwrap(),
                 "COPY some_table(\"col1\", \"col2\") TO STDOUT"
             );
+            assert_eq!(table().count_of_query_to(None), None);
         }
 
         #[test]
@@ -259,6 +279,7 @@ mod tests {
                 "COPY some_table(\"col1\", \"col2\") TO STDOUT"
             );
             assert_eq!(table().untransformed_query_to(Some(&cfg)), None);
+            assert_eq!(table().count_of_query_to(Some(&cfg)), None);
         }
 
         #[test]
@@ -273,6 +294,10 @@ mod tests {
                 "COPY (SELECT * FROM some_table LIMIT 100) TO STDOUT"
             );
             assert_eq!(table().untransformed_query_to(Some(&cfg)), None);
+            assert_eq!(
+                table().count_of_query_to(Some(&cfg)).unwrap(),
+                "SELECT COUNT(*) FROM some_table LIMIT 100"
+            );
         }
 
         #[test]
@@ -287,6 +312,10 @@ mod tests {
                 "COPY (SELECT * FROM some_table WHERE (col1 = 'value')) TO STDOUT"
             );
             assert_eq!(table().untransformed_query_to(Some(&cfg)), None);
+            assert_eq!(
+                table().count_of_query_to(Some(&cfg)).unwrap(),
+                "SELECT COUNT(*) FROM some_table WHERE (col1 = 'value')"
+            );
         }
     }
 }

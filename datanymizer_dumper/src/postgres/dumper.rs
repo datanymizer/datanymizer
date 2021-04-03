@@ -73,13 +73,19 @@ impl PgDumper {
 
         self.write_log(format!("Dump table: {}", &table.get_full_name()))?;
 
-        self.init_progress_bar(table.get_size() as u64, &table.get_full_name());
-
         self.dump_writer.write_all(b"\n")?;
         self.dump_writer.write_all(&table.query_from().as_bytes())?;
         self.dump_writer.write_all(b"\n")?;
 
         let cfg = settings.get_table(table.get_name().as_str());
+
+        let count_query = table.count_of_query_to(cfg);
+        let pb_size = match count_query {
+            Some(q) => tr.query_one(q.as_str(), &[])?.get(0),
+            None => table.get_size(),
+        };
+
+        self.init_progress_bar(pb_size as u64, &table.get_full_name());
 
         if let Some(untransformed_query) = table.untransformed_query_to(cfg) {
             let reader = tr.copy_out(untransformed_query.as_str())?;

@@ -128,7 +128,7 @@ impl SchemaInspector for PgSchemaInspector {
         Ok(tables)
     }
 
-    /// Get columnst for table
+    /// Get columns for table
     fn get_columns(
         &self,
         connection: &mut <Self::Dumper as Dumper>::Connection,

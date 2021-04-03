@@ -228,6 +228,22 @@ filter:
       - public.markets
 ```
 
+### Dump conditions and limit
+
+You can specify conditions (SQL `WHERE` statement) and limit for dumped data per table:
+
+``` yaml
+# config.yml
+tables:
+  - name: people
+    query:
+      # don't dump some rows
+      dump_condition: "last_name <> 'Sensitive'"
+      # select maximum 100 rows
+      limit: 100 
+```
+
+
 ### Global variables
 
 You can specify global variables available from any `template` rule.
@@ -268,7 +284,7 @@ globals:
 | `datetime`                     | Make DateTime strings with options (`from` and `to`)                         |
 | more than 70 rules in total... |                                                                              |
 
-## Uniqueness
+### Uniqueness
 
 You can specify that result values must be unique (they are not unique by default).
 You can use short or full syntax.
@@ -291,7 +307,7 @@ depends on the rule).
 
 Currently, uniqueness is supported by: `email`, `ip`, `phone`, `random_number`.
 
-## Locales
+### Locales
 
 You can specify the locale for individual rules:
 
