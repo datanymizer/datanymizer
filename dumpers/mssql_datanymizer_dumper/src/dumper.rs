@@ -248,6 +248,3 @@ impl DumpProgressBar for MsSqlDumper {
         &self.progress_bar
     }
 }
-
-#[cfg(test)]
-mod tests {}
