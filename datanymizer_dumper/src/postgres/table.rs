@@ -95,19 +95,29 @@ impl PgTable {
         }
     }
 
-    pub fn count_of_query_to(&self, cfg: Option<&TableCfg>) -> Option<String> {
+    pub fn count_of_query_to(&self, cfg: Option<&TableCfg>) -> RowCount {
+        let mut number = self.get_size() as u64;
+        let mut query = None;
+
         if let Some(c) = cfg {
-            c.query.as_ref().map(|q| {
-                format!(
-                    "SELECT COUNT(*) FROM {}{}{}",
-                    self.get_full_name(),
-                    Self::sql_conditions(&q.dump_condition),
-                    Self::sql_limit(q.limit),
-                )
-            })
-        } else {
-            None
+            if let Some(q) = &c.query {
+                if let Some(limit) = q.limit {
+                    if number > limit as u64  {
+                        number = limit as u64;
+                    }
+                }
+
+                if q.dump_condition.is_some() {
+                    query = Some(format!(
+                        "SELECT COUNT(*) FROM {}{}",
+                        self.get_full_name(),
+                        Self::sql_conditions(&q.dump_condition),
+                    ))
+                }
+            }
         }
+
+        RowCount { number, query }
     }
 
     pub fn query_from(&self) -> String {
@@ -167,6 +177,12 @@ impl From<PostgresRow> for PgTable {
     fn from(row: PostgresRow) -> Self {
         Self::new(row.get("tablename"), row.try_get("schemaname").ok())
     }
+}
+
+#[derive(Debug, Eq, PartialEq)]
+pub struct RowCount {
+    pub number: u64,
+    pub query: Option<String>,
 }
 
 #[cfg(test)]
@@ -248,6 +264,7 @@ mod tests {
         fn table() -> PgTable {
             let mut table = PgTable::new(table_name(), None);
             table.set_columns(columns());
+            table.size = 1000;
             table
         }
 
@@ -267,7 +284,14 @@ mod tests {
                 table().untransformed_query_to(None).unwrap(),
                 "COPY some_table(\"col1\", \"col2\") TO STDOUT"
             );
-            assert_eq!(table().count_of_query_to(None), None);
+
+            assert_eq!(
+                table().count_of_query_to(None),
+                RowCount {
+                    query: None,
+                    number: 1000
+                }
+            );
         }
 
         #[test]
@@ -279,7 +303,14 @@ mod tests {
                 "COPY some_table(\"col1\", \"col2\") TO STDOUT"
             );
             assert_eq!(table().untransformed_query_to(Some(&cfg)), None);
-            assert_eq!(table().count_of_query_to(Some(&cfg)), None);
+
+            assert_eq!(
+                table().count_of_query_to(Some(&cfg)),
+                RowCount {
+                    query: None,
+                    number: 1000
+                }
+            );
         }
 
         #[test]
@@ -294,9 +325,13 @@ mod tests {
                 "COPY (SELECT * FROM some_table LIMIT 100) TO STDOUT"
             );
             assert_eq!(table().untransformed_query_to(Some(&cfg)), None);
+
             assert_eq!(
-                table().count_of_query_to(Some(&cfg)).unwrap(),
-                "SELECT COUNT(*) FROM some_table LIMIT 100"
+                table().count_of_query_to(Some(&cfg)),
+                RowCount {
+                    query: None,
+                    number: 100
+                }
             );
         }
 
@@ -313,8 +348,13 @@ mod tests {
             );
             assert_eq!(table().untransformed_query_to(Some(&cfg)), None);
             assert_eq!(
-                table().count_of_query_to(Some(&cfg)).unwrap(),
-                "SELECT COUNT(*) FROM some_table WHERE (col1 = 'value')"
+                table().count_of_query_to(Some(&cfg)),
+                RowCount {
+                    query: Some(String::from(
+                        "SELECT COUNT(*) FROM some_table WHERE (col1 = 'value')"
+                    )),
+                    number: 1000
+                }
             );
         }
     }
