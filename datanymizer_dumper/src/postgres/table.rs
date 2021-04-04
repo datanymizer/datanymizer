@@ -102,7 +102,7 @@ impl PgTable {
         if let Some(c) = cfg {
             if let Some(q) = &c.query {
                 if let Some(limit) = q.limit {
-                    if number > limit as u64  {
+                    if number > limit as u64 {
                         number = limit as u64;
                     }
                 }
