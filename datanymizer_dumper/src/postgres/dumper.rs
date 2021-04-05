@@ -79,20 +79,7 @@ impl PgDumper {
 
         let cfg = settings.get_table(table.get_name().as_str());
 
-        let row_count = table.count_of_query_to(cfg);
-        let pb_size = match row_count.query {
-            Some(q) => {
-                let count = tr.query_one(q.as_str(), &[])?.get::<_, i64>(0) as u64;
-                if count < row_count.number {
-                    count
-                } else {
-                    row_count.number
-                }
-            }
-            None => row_count.number,
-        };
-
-        self.init_progress_bar(pb_size, &table.get_full_name());
+        self.init_progress_bar(table.count_of_query_to(cfg), &table.get_full_name());
 
         if let Some(untransformed_query) = table.untransformed_query_to(cfg) {
             let reader = tr.copy_out(untransformed_query.as_str())?;
