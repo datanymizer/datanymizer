@@ -1,4 +1,5 @@
 mod filter;
+mod table;
 
 use crate::{transformers::Transformers, Transformer, TransformerDefaults};
 use anyhow::{anyhow, Result};
@@ -8,8 +9,8 @@ use serde_json::Value as JsonValue;
 use std::collections::HashMap;
 
 pub use filter::{Filter, TableList};
+pub use table::{Query, Table};
 
-pub type Rules = HashMap<String, Transformers>;
 pub type Tables = Vec<Table>;
 
 #[derive(Debug, Deserialize, Clone)]
@@ -26,31 +27,6 @@ impl Connection {
 }
 
 type TransformList = Vec<(String, Transformers)>;
-
-#[derive(Debug, Deserialize, Clone)]
-pub struct Table {
-    /// Table name
-    pub name: String,
-    /// Rule set for columns
-    pub rules: Rules,
-    /// Order of applying rules. All rules not listed are placed at the beginning
-    pub rule_order: Option<Vec<String>>,
-}
-
-impl Table {
-    fn transform_list(&self) -> TransformList {
-        let explicit_rule_order = self.rule_order.clone().unwrap_or_default();
-        let mut transform_list: TransformList = self
-            .rules
-            .iter()
-            .map(|(key, ts)| (key.clone(), ts.clone()))
-            .collect();
-        transform_list
-            .sort_by_cached_key(|(key, _)| explicit_rule_order.iter().position(|i| i == key));
-
-        transform_list
-    }
-}
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct Settings {
@@ -104,6 +80,10 @@ impl Settings {
         } else {
             panic!("No transform map");
         }
+    }
+
+    pub fn get_table(&self, name: &str) -> Option<&Table> {
+        self.tables.iter().find(|t| t.name == name)
     }
 
     pub fn destination(&self) -> Result<String> {
