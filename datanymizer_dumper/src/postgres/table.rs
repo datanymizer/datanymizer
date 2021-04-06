@@ -98,17 +98,16 @@ impl PgTable {
     pub fn count_of_query_to(&self, cfg: Option<&TableCfg>) -> u64 {
         let number = self.get_size() as u64;
 
-        if let Some(c) = cfg {
-            if let Some(q) = &c.query {
-                if let Some(limit) = q.limit {
-                    if number > limit as u64 {
-                        return limit as u64;
-                    }
+        cfg.and_then(|c| c.query.as_ref())
+            .and_then(|q| q.limit)
+            .and_then(|limit| {
+                if number > limit as u64 {
+                    Some(limit as u64)
+                } else {
+                    None
                 }
-            }
-        }
-
-        number
+            })
+            .unwrap_or(number)
     }
 
     pub fn query_from(&self) -> String {
