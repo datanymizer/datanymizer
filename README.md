@@ -255,7 +255,7 @@ tables:
       # don't dump some rows
       dump_condition: "last_name <> 'Sensitive'"
       # preserve original values for some rows
-      transform_condition: "first_name <> 'John' AND last_name <> 'Doe'"      
+      transform_condition: "NOT (first_name = 'John' AND last_name = 'Doe')"      
       # select maximum 100 rows
       limit: 100
 ```
