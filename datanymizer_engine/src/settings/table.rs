@@ -11,6 +11,8 @@ pub struct Query {
     pub limit: Option<usize>,
     /// SQL condition (WHERE) for dumping
     pub dump_condition: Option<String>,
+    /// SQL condition (WHERE) for transforming (anonymizing)
+    pub transform_condition: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Clone)]

@@ -81,18 +81,8 @@ impl PgDumper {
 
         self.init_progress_bar(table.count_of_query_to(cfg), &table.get_full_name());
 
-        if let Some(untransformed_query) = table.untransformed_query_to(cfg) {
-            let reader = tr.copy_out(untransformed_query.as_str())?;
-            for line in reader.lines() {
-                // Tick for bar
-                self.progress_bar.inc(1);
-
-                self.dump_writer.write_all(line?.as_bytes())?;
-                self.dump_writer.write_all(b"\n")?;
-            }
-        }
-
-        if let Some(transformed_query) = table.transformed_query_to(cfg) {
+        let mut count: u64 = 0;
+        if let Some(transformed_query) = table.transformed_query_to(cfg, count) {
             let reader = tr.copy_out(transformed_query.as_str())?;
             for line in reader.lines() {
                 // Tick for bar
@@ -100,9 +90,23 @@ impl PgDumper {
 
                 let row = PgRow::from_string_row(line?, table.clone());
                 let transformed = row.transform(&self.engine)?;
-                // Writer::from_writer(&self.dump_writer).write_record(&transformed_row)?;
                 self.dump_writer.write_all(transformed.as_bytes())?;
                 self.dump_writer.write_all(b"\n")?;
+
+                count += 1;
+            }
+        }
+
+        if let Some(untransformed_query) = table.untransformed_query_to(cfg, count) {
+            let reader = tr.copy_out(untransformed_query.as_str())?;
+            for line in reader.lines() {
+                // Tick for bar
+                self.progress_bar.inc(1);
+
+                self.dump_writer.write_all(line?.as_bytes())?;
+                self.dump_writer.write_all(b"\n")?;
+
+                count += 1;
             }
         }
 

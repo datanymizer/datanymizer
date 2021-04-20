@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### 🚀 Added
+- Configuration options for transformation SQL conditions [#45](https://github.com/datanymizer/datanymizer/pull/45)
+  ([@evgeniy-r](https://github.com/evgeniy-r))
 - Configuration options for dump query conditions and limit [#47](https://github.com/datanymizer/datanymizer/pull/47)
   ([@evgeniy-r](https://github.com/evgeniy-r))
 - Referencing values from original and transformed row. Improve performance for the TemplateTransformer

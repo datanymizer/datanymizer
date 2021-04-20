@@ -1,6 +1,6 @@
 use super::{column::PgColumn, dumper::PgDumper, row::PgRow};
 use crate::Table;
-use datanymizer_engine::Table as TableCfg;
+use datanymizer_engine::{Query as QueryCfg, Table as TableCfg};
 use postgres::{types::Type, Row as PostgresRow};
 use std::{
     collections::HashMap,
@@ -78,20 +78,41 @@ impl PgTable {
         }
     }
 
-    pub fn transformed_query_to(&self, cfg: Option<&TableCfg>) -> Option<String> {
-        cfg.map(|c| {
-            c.query.as_ref().map_or_else(
-                || self.default_query(),
-                |q| self.query_with_select(&q.dump_condition, q.limit),
-            )
+    pub fn set_columns(&mut self, columns: Vec<PgColumn>) {
+        let mut map: HashMap<String, usize> = HashMap::with_capacity(columns.len());
+        for column in &columns {
+            map.insert(column.name.clone(), (column.position - 1) as usize);
+        }
+
+        self.column_indexes = map;
+        self.columns = columns;
+    }
+
+    pub fn transformed_query_to(
+        &self,
+        cfg: Option<&TableCfg>,
+        already_dumped: u64,
+    ) -> Option<String> {
+        cfg.and_then(|c| match &c.query {
+            Some(q) => self.query_unless_already_dumped(q, |s| format!("({})", s), already_dumped),
+            None => Some(self.default_query()),
         })
     }
 
-    pub fn untransformed_query_to(&self, cfg: Option<&TableCfg>) -> Option<String> {
-        if cfg.is_none() {
-            Some(self.default_query())
-        } else {
-            None
+    pub fn untransformed_query_to(
+        &self,
+        cfg: Option<&TableCfg>,
+        already_dumped: u64,
+    ) -> Option<String> {
+        match cfg {
+            Some(c) => c.query.as_ref().and_then(|q| {
+                if q.transform_condition.is_some() {
+                    self.query_unless_already_dumped(q, |s| format!("NOT ({})", s), already_dumped)
+                } else {
+                    None
+                }
+            }),
+            None => Some(self.default_query()),
         }
     }
 
@@ -118,6 +139,27 @@ impl PgTable {
         )
     }
 
+    fn query_unless_already_dumped(
+        &self,
+        q: &QueryCfg,
+        tr_fmt: fn(s: &String) -> String,
+        already_dumped: u64,
+    ) -> Option<String> {
+        if q.limit
+            .map_or(false, |limit| limit as u64 <= already_dumped)
+        {
+            return None;
+        }
+
+        Some(self.query_with_select(
+            vec![
+                q.dump_condition.as_ref().map(|c| format!("({})", c)),
+                q.transform_condition.as_ref().map(tr_fmt),
+            ],
+            q.limit.map(|limit| limit as u64 - already_dumped),
+        ))
+    }
+
     fn default_query(&self) -> String {
         format!(
             "COPY {}({}) TO STDOUT",
@@ -126,7 +168,7 @@ impl PgTable {
         )
     }
 
-    fn query_with_select(&self, cs: &Option<String>, limit: Option<usize>) -> String {
+    fn query_with_select(&self, cs: Vec<Option<String>>, limit: Option<u64>) -> String {
         format!(
             "COPY (SELECT * FROM {}{}{}) TO STDOUT",
             self.get_full_name(),
@@ -135,13 +177,16 @@ impl PgTable {
         )
     }
 
-    fn sql_conditions(cs: &Option<String>) -> String {
-        cs.as_ref().map_or(String::new(), |conditions| {
-            format!(" WHERE ({})", conditions)
-        })
+    fn sql_conditions(cs: Vec<Option<String>>) -> String {
+        let conditions: Vec<String> = cs.into_iter().filter_map(|i| i).collect();
+        if conditions.is_empty() {
+            String::new()
+        } else {
+            format!(" WHERE {}", conditions.join(" AND "))
+        }
     }
 
-    fn sql_limit(limit: Option<usize>) -> String {
+    fn sql_limit(limit: Option<u64>) -> String {
         limit.map_or(String::new(), |limit| format!(" LIMIT {}", limit))
     }
 
@@ -150,16 +195,6 @@ impl PgTable {
             .into_iter()
             .map(|x| format!("\"{}\"", x))
             .collect()
-    }
-
-    pub fn set_columns(&mut self, columns: Vec<PgColumn>) {
-        let mut map: HashMap<String, usize> = HashMap::with_capacity(columns.len());
-        for column in &columns {
-            map.insert(column.name.clone(), (column.position - 1) as usize);
-        }
-
-        self.column_indexes = map;
-        self.columns = columns;
     }
 }
 
@@ -223,7 +258,6 @@ mod tests {
 
     mod query_to {
         use super::*;
-        use datanymizer_engine::Query;
 
         fn table_name() -> String {
             "some_table".to_string()
@@ -252,7 +286,7 @@ mod tests {
             table
         }
 
-        fn cfg(query: Option<Query>) -> TableCfg {
+        fn cfg(query: Option<QueryCfg>) -> TableCfg {
             TableCfg {
                 name: table_name(),
                 rules: HashMap::new(),
@@ -263,9 +297,9 @@ mod tests {
 
         #[test]
         fn no_table() {
-            assert_eq!(table().transformed_query_to(None), None);
+            assert_eq!(table().transformed_query_to(None, 0), None);
             assert_eq!(
-                table().untransformed_query_to(None).unwrap(),
+                table().untransformed_query_to(None, 0).unwrap(),
                 "COPY some_table(\"col1\", \"col2\") TO STDOUT"
             );
             assert_eq!(table().count_of_query_to(None), 1000);
@@ -276,41 +310,147 @@ mod tests {
             let cfg = cfg(None);
 
             assert_eq!(
-                table().transformed_query_to(Some(&cfg)).unwrap(),
+                table().transformed_query_to(Some(&cfg), 0).unwrap(),
                 "COPY some_table(\"col1\", \"col2\") TO STDOUT"
             );
-            assert_eq!(table().untransformed_query_to(Some(&cfg)), None);
+            assert_eq!(table().untransformed_query_to(Some(&cfg), 0), None);
             assert_eq!(table().count_of_query_to(Some(&cfg)), 1000);
         }
 
         #[test]
         fn only_limit() {
-            let cfg = cfg(Some(Query {
+            let cfg = cfg(Some(QueryCfg {
                 limit: Some(100),
                 dump_condition: None,
+                transform_condition: None,
             }));
 
             assert_eq!(
-                table().transformed_query_to(Some(&cfg)).unwrap(),
+                table().transformed_query_to(Some(&cfg), 0).unwrap(),
                 "COPY (SELECT * FROM some_table LIMIT 100) TO STDOUT"
             );
-            assert_eq!(table().untransformed_query_to(Some(&cfg)), None);
+            assert_eq!(table().untransformed_query_to(Some(&cfg), 0), None);
             assert_eq!(table().count_of_query_to(Some(&cfg)), 100);
         }
 
         #[test]
-        fn dump_condition() {
-            let cfg = cfg(Some(Query {
+        fn only_dump_condition() {
+            let cfg = cfg(Some(QueryCfg {
                 limit: None,
                 dump_condition: Some("col1 = 'value'".to_string()),
+                transform_condition: None,
             }));
 
             assert_eq!(
-                table().transformed_query_to(Some(&cfg)).unwrap(),
+                table().transformed_query_to(Some(&cfg), 0).unwrap(),
                 "COPY (SELECT * FROM some_table WHERE (col1 = 'value')) TO STDOUT"
             );
-            assert_eq!(table().untransformed_query_to(Some(&cfg)), None);
+            assert_eq!(table().untransformed_query_to(Some(&cfg), 0), None);
             assert_eq!(table().count_of_query_to(Some(&cfg)), 1000);
+        }
+
+        #[test]
+        fn only_transform_condition() {
+            let cfg = cfg(Some(QueryCfg {
+                limit: None,
+                dump_condition: None,
+                transform_condition: Some("col1 = 'value'".to_string()),
+            }));
+
+            assert_eq!(
+                table().transformed_query_to(Some(&cfg), 0).unwrap(),
+                "COPY (SELECT * FROM some_table WHERE (col1 = 'value')) TO STDOUT"
+            );
+            assert_eq!(
+                table().untransformed_query_to(Some(&cfg), 0).unwrap(),
+                "COPY (SELECT * FROM some_table WHERE NOT (col1 = 'value')) TO STDOUT"
+            );
+            assert_eq!(table().count_of_query_to(Some(&cfg)), 1000);
+        }
+
+        #[test]
+        fn all_query_params() {
+            let cfg = cfg(Some(QueryCfg {
+                limit: Some(500),
+                dump_condition: Some("col1 = 'value'".to_string()),
+                transform_condition: Some("col2 <> 'other_value'".to_string()),
+            }));
+
+            assert_eq!(
+                table().transformed_query_to(Some(&cfg), 0).unwrap(),
+                "COPY (SELECT * FROM some_table \
+                WHERE (col1 = 'value') AND (col2 <> 'other_value') LIMIT 500) TO STDOUT"
+            );
+            assert_eq!(
+                table().untransformed_query_to(Some(&cfg), 0).unwrap(),
+                "COPY (SELECT * FROM some_table \
+                WHERE (col1 = 'value') AND NOT (col2 <> 'other_value') LIMIT 500) TO STDOUT"
+            );
+            assert_eq!(table().count_of_query_to(Some(&cfg)), 500);
+        }
+
+        mod already_dumped {
+            use super::*;
+
+            #[test]
+            fn no_limit() {
+                let cfg = cfg(Some(QueryCfg {
+                    limit: None,
+                    dump_condition: None,
+                    transform_condition: Some("col1 = 'value'".to_string()),
+                }));
+
+                assert_eq!(
+                    table().transformed_query_to(Some(&cfg), 100).unwrap(),
+                    "COPY (SELECT * FROM some_table WHERE (col1 = 'value')) TO STDOUT"
+                );
+                assert_eq!(
+                    table().untransformed_query_to(Some(&cfg), 100).unwrap(),
+                    "COPY (SELECT * FROM some_table WHERE NOT (col1 = 'value')) TO STDOUT"
+                );
+            }
+
+            #[test]
+            fn limit_is_greater() {
+                let cfg = cfg(Some(QueryCfg {
+                    limit: Some(150),
+                    dump_condition: None,
+                    transform_condition: Some("col1 = 'value'".to_string()),
+                }));
+
+                assert_eq!(
+                    table().transformed_query_to(Some(&cfg), 100).unwrap(),
+                    "COPY (SELECT * FROM some_table WHERE (col1 = 'value') LIMIT 50) TO STDOUT"
+                );
+                assert_eq!(
+                    table().untransformed_query_to(Some(&cfg), 100).unwrap(),
+                    "COPY (SELECT * FROM some_table WHERE NOT (col1 = 'value') LIMIT 50) TO STDOUT"
+                );
+            }
+
+            #[test]
+            fn limit_is_equal() {
+                let cfg = cfg(Some(QueryCfg {
+                    limit: Some(100),
+                    dump_condition: None,
+                    transform_condition: Some("col1 = 'value'".to_string()),
+                }));
+
+                assert_eq!(table().transformed_query_to(Some(&cfg), 100), None);
+                assert_eq!(table().untransformed_query_to(Some(&cfg), 100), None);
+            }
+
+            #[test]
+            fn limit_is_lesser() {
+                let cfg = cfg(Some(QueryCfg {
+                    limit: Some(99),
+                    dump_condition: None,
+                    transform_condition: Some("col1 = 'value'".to_string()),
+                }));
+
+                assert_eq!(table().transformed_query_to(Some(&cfg), 100), None);
+                assert_eq!(table().untransformed_query_to(Some(&cfg), 100), None);
+            }
         }
     }
 }

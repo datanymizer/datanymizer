@@ -243,6 +243,25 @@ tables:
       limit: 100 
 ```
 
+### Transform conditions and limit
+
+As the additional option, you can specify SQL-conditions that define which rows will be transformed (anonymized):
+
+``` yaml
+# config.yml
+tables:
+  - name: people
+    query:
+      # don't dump some rows
+      dump_condition: "last_name <> 'Sensitive'"
+      # preserve original values for some rows
+      transform_condition: "NOT (first_name = 'John' AND last_name = 'Doe')"      
+      # select maximum 100 rows
+      limit: 100
+```
+
+You can use the `dump_condition`, `transform_condition` and `limit` options in any combination (only
+`transform_condition`, `transform_condition` and `limit`, etc).
 
 ### Global variables
 
