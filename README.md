@@ -4,14 +4,14 @@
      alt="datanymizer"
      src="https://raw.githubusercontent.com/datanymizer/datanymizer/master/logo.png">
 
-![](https://github.com/datanymizer/datanymizer/workflows/CI/badge.svg)
-![](https://img.shields.io/github/license/datanymizer/datanymizer)
-![](https://img.shields.io/github/v/release/datanymizer/datanymizer)
-[![](https://codecov.io/gh/datanymizer/datanymizer/branch/main/graph/badge.svg)](https://codecov.io/gh/datanymizer/datanymizer)
+[![Build Status](https://github.com/datanymizer/datanymizer/workflows/CI/badge.svg)](https://github.com/datanymizer/datanymizer/actions)
+![License](https://img.shields.io/github/license/datanymizer/datanymizer)
+![Release Version](https://img.shields.io/github/v/release/datanymizer/datanymizer)
+[![CodeCov](https://codecov.io/gh/datanymizer/datanymizer/branch/main/graph/badge.svg)](https://codecov.io/gh/datanymizer/datanymizer)
 
 Powerful database anonymizer with flexible rules. Written in Rust.
 
-Datanymizer is created & [supported by Evrone](https://evrone.com/?utm_campaign=datanymizer). What else we [develop with Rust](https://evrone.com/rust?utm_source=github&utm_campaign=datanymizer).
+Datanymizer is created & [supported by Evrone](https://evrone.com/?utm_campaign=datanymizer). See what else we [develop with Rust](https://evrone.com/rust?utm_source=github&utm_campaign=datanymizer).
 
 More information you can find in articles in [English](https://evrone.com/datanymizer?utm_source=github&utm_campaign=datanymizer) and [Russian](https://evrone.ru/datanymizer?utm_source=github&utm_campaign=datanymizer).
 
@@ -19,17 +19,17 @@ More information you can find in articles in [English](https://evrone.com/datany
 
 Database -> Dumper (+Faker) -> Dump.sql
 
-You can import or process you dump with supported database without 3rd-party importers.
+You can import or process your dump with supported database without 3rd-party importers.
 
 Datanymizer generates database-native dump.
 
 ## Installation
 
-There are several ways to install `pg_datanymizer`. Choose a more convenient option for you.
+There are several ways to install `pg_datanymizer`, choose a more convenient option for you.
 
 ### Pre-compiled binary
 
-```shell script
+```bash
 # Linux / macOS / Windows (MINGW and etc). Installs it into ./bin/ by default
 $ curl -sSfL https://raw.githubusercontent.com/datanymizer/datanymizer/main/cli/pg_datanymizer/install.sh | sh -s
 
@@ -61,9 +61,9 @@ $ docker run --rm -v `pwd`:/app -w /app datanymizer/pg_datanymizer
 
 ## Getting started with CLI dumper
 
-Inspect your database schema, choose fields with sensitive data and create config, based on it.
+First, inspect your database schema, choose fields with sensitive data, and create a config file based on it.
 
-``` yaml
+```yaml
 # config.yml
 tables:
   - name: markets
@@ -142,20 +142,20 @@ tables:
 
 And then start to make dump from your database instance:
 
-``` shell
+```bash
 pg_datanymizer -f /tmp/dump.sql -c ./config.yml postgres://postgres:postgres@localhost/test_database
 ```
-Uniqueness
+
 It creates new dump file `/tmp/dump.sql` with native SQL dump for Postgresql database.
 You can import fake data from this dump into new Postgresql database with command:
 
-``` shell
-psql -Upostgres -d new_database < /tmp/dump.sql
+```bash
+psql -U postgres -d new_database < /tmp/dump.sql
 ```
 
 Dumper can stream dump to `STDOUT` like `pg_dump` and you can use it in other pipelines:
 
-``` shell
+```bash
 pg_datanymizer -c ./config.yml postgres://postgres:postgres@localhost/test_database > /tmp/dump.sql
 ```
 
@@ -168,7 +168,7 @@ You can specify which tables you choose or ignore for making dump.
 
 For dumping only `public.markets` and `public.users` data.
 
-``` yaml
+```yaml
 # config.yml
 #...
 filter:
@@ -179,7 +179,7 @@ filter:
 
 For ignoring those tables and dump data from others.
 
-``` yaml
+```yaml
 # config.yml
 #...
 filter:
@@ -192,7 +192,7 @@ You can also specify data and schema filters separately.
 
 This is equivalent to the previous example.
 
-``` yaml
+```yaml
 # config.yml
 #...
 filter:
@@ -204,7 +204,7 @@ filter:
 
 For skipping schema and data from other tables.
 
-``` yaml
+```yaml
 # config.yml
 #...
 filter:
@@ -216,7 +216,7 @@ filter:
 
 For skipping schema for `markets` table and dumping data only from `users` table.
 
-``` yaml
+```yaml
 # config.yml
 #...
 filter:
@@ -232,7 +232,7 @@ filter:
 
 You can specify conditions (SQL `WHERE` statement) and limit for dumped data per table:
 
-``` yaml
+```yaml
 # config.yml
 tables:
   - name: people
@@ -371,4 +371,4 @@ All rules not listed will be placed at the beginning (i.e. you must list only ru
 
 ## License
 
-[MIT](https://choosealicense.com/licenses/mit)
+[MIT](https://github.com/datanymizer/datanymizer/blob/main/LICENSE)
