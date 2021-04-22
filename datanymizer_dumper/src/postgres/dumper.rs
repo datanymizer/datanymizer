@@ -156,7 +156,7 @@ impl Dumper for PgDumper {
 
         // In transaction
         let mut tr = connection.transaction()?;
-        for (ind, (table, _weidth)) in tables.iter().enumerate() {
+        for (ind, (table, _weight)) in tables.iter().enumerate() {
             self.debug(format!(
                 "[{} / {}] Prepare to dump table: {}",
                 ind + 1,
