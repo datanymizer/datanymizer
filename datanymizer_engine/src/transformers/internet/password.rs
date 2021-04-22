@@ -68,7 +68,7 @@ impl Transformer for PasswordTransformer {
         _field_value: &str,
         _ctx: &Option<TransformContext>,
     ) -> TransformResult {
-        let range = self.min.0..self.max.0;
+        let range = self.min.0..self.max.0 + 1;
         let val: String = Password(EN, range).fake();
         TransformResult::present(val)
     }
@@ -77,13 +77,11 @@ impl Transformer for PasswordTransformer {
 #[cfg(test)]
 mod test {
     use super::{MaxValue, MinValue};
-    use crate::Transformers;
+    use crate::{Transformer, Transformers};
 
     #[test]
     fn deserialize_default_transformer() {
-        let config = r#"
-password: {}
-"#;
+        let config = "password: {}";
         let transformer: Transformers = serde_yaml::from_str(config).unwrap();
         if let Transformers::Password(p_transformer) = transformer {
             assert_eq!(p_transformer.min, MinValue(8));
@@ -96,10 +94,10 @@ password: {}
     #[test]
     fn deserialize_custom_transformer() {
         let config = r#"
-password:
-  min: 1
-  max: 10
-"#;
+            password:
+              min: 1
+              max: 10
+            "#;
         let transformer: Transformers = serde_yaml::from_str(config).unwrap();
 
         if let Transformers::Password(p_transformer) = transformer {
@@ -108,5 +106,18 @@ password:
         } else {
             assert!(false);
         }
+    }
+
+    #[test]
+    fn transformed_length() {
+        let config = r#"
+            password:
+              min: 8
+              max: 8
+            "#;
+        let transformer: Transformers = serde_yaml::from_str(config).unwrap();
+        let value = transformer.transform("pwd", "", &None).unwrap().unwrap();
+
+        assert_eq!(value.len(), 8);
     }
 }
