@@ -25,7 +25,11 @@ pub use number::RandomNumberTransformer;
 mod datetime;
 pub use datetime::RandomDateTimeTransformer;
 
+mod token;
+pub use token::HexTokenTransformer;
+
 mod fk;
+
 pub use fk::sql_value::AsSqlValue;
 pub use fk::*;
 
@@ -75,6 +79,7 @@ define_transformers_enum![
     ("random_num", RandomNum, RandomNumberTransformer),
     ("password", Password, PasswordTransformer),
     ("datetime", DateTime, RandomDateTimeTransformer),
+    ("hex_token", HexToken, HexTokenTransformer),
 
     ("city", City, CityTransformer),
     ("city_prefix", CityPrefix, CityPrefixTransformer),
