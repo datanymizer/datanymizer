@@ -1,7 +1,7 @@
 use super::transformer::{TransformContext, TransformResult, Transformer, TransformerDefaults};
 use serde::{Deserialize, Serialize};
 
-pub mod none;
+mod none;
 pub use none::NoneTransformer;
 
 mod internet;
