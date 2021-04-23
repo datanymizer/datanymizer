@@ -24,7 +24,7 @@ const PREV_ROW_KEY: &str = "prev";
 /// rules:
 ///   field_name:
 ///     template:
-///       format: "Hello, {{name}}! {{_1}}:{{_0 | upper}}
+///       format: "Hello, {{name}}! {{_1}}:{{_0 | upper}}"
 ///       rules:
 ///         - email:
 ///             kind: Safe
