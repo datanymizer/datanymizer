@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   [#23](https://github.com/datanymizer/datanymizer/pull/23) ([@evgeniy-r](https://github.com/evgeniy-r))
 
 ### ⚙️ Changed
+- Now the `max` option for PasswordTransformer is inclusive [#49](https://github.com/datanymizer/datanymizer/pull/49)
+  ([@evgeniy-r](https://github.com/evgeniy-r))
 
 ### 🛠 Fixed
 - Fix CapitalizeTransformer
