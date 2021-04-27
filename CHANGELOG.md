@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### 🚀 Added
+
+### ⚙️ Changed
+
+### 🛠 Fixed
+
+## [v0.2.0] - 2021-04-28
+### 🚀 Added
 - `hex_token` rule (`HexTokenTransformer`) [#50](https://github.com/datanymizer/datanymizer/pull/50)
   ([@evgeniy-r](https://github.com/evgeniy-r))
 - Configuration options for transformation SQL conditions [#45](https://github.com/datanymizer/datanymizer/pull/45)
