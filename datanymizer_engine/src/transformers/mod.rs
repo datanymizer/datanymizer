@@ -32,7 +32,7 @@ mod fk;
 pub use fk::sql_value::AsSqlValue;
 pub use fk::*;
 
-// The TemplateTransformer is much larger then others (about 350 bytes), so we add
+// The TemplateTransformer is much larger than others (about 350 bytes), so we add
 // #[allow(clippy::large_enum_variant)].
 // We can box TemplateTransformer.renderer, but reducing memory usage even by several hundred
 // kilobytes is insignificant.
