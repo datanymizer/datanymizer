@@ -1,7 +1,7 @@
 [package]
 name = "datanymizer_dumper"
 version = "0.2.0"
-authors = ["Aleksandr Kirillov <saratovsource@gmail.com>"]
+authors = ["Aleksandr Kirillov <saratovsource@gmail.com>", "Evgeniy Rashchepkin <e.a.rashchepkin@gmail.com>"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
