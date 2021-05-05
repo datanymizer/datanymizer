@@ -1,8 +1,9 @@
+use super::escaper;
 use crate::Table;
 use anyhow::Result;
 use datanymizer_engine::Engine;
 use postgres::types::Type;
-use std::char;
+use std::{borrow::Cow, char};
 
 #[derive(Debug)]
 pub struct PgRow<T>
@@ -29,11 +30,16 @@ where
     pub fn transform(&self, engine: &Engine) -> Result<String> {
         let split_char: char = char::from_u32(0x0009).unwrap();
         let values: Vec<_> = self.source.split(split_char).collect();
-        let transformed_values = engine.process_row(
+        let mut transformed_values = engine.process_row(
             self.table.get_name(),
             self.table.get_column_indexes(),
             &values,
         )?;
+        for v in &mut transformed_values {
+            if let Cow::Owned(ref mut s) = v {
+                escaper::replace_chars(s);
+            }
+        }
 
         Ok(transformed_values.join("\t"))
     }
@@ -58,6 +64,11 @@ mod tests {
                   capitalize: ~
                 last_name:
                   capitalize: ~
+                comment:
+                  template:
+                    format: |
+                      Multi
+                      line
         "#;
         let settings = Settings::from_yaml(config, String::new()).unwrap();
 
@@ -81,13 +92,19 @@ mod tests {
             data_type: String::new(),
             inner_type: Some(0),
         };
+        let col4 = PgColumn {
+            position: 4,
+            name: String::from("comment"),
+            data_type: String::new(),
+            inner_type: Some(0),
+        };
 
-        table.set_columns(vec![col1, col2, col3]);
-        let row = PgRow::from_string_row("first\tmiddle\tlast".to_string(), table);
+        table.set_columns(vec![col1, col2, col3, col4]);
+        let row = PgRow::from_string_row("first\tmiddle\tlast\t".to_string(), table);
 
         assert_eq!(
             row.transform(&Engine::new(settings)).unwrap(),
-            "First\tMiddle\tLast"
+            "First\tMiddle\tLast\tMulti\\nline\\n"
         );
     }
 }
