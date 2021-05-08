@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### ⚙️ Changed
 
 ### 🛠 Fixed
+- Add proper escaping after the transformation for Postgres [#60](https://github.com/datanymizer/datanymizer/pull/60)
+  ([@evgeniy-r](https://github.com/evgeniy-r))
 
 ## [v0.2.0] - 2021-04-28
 ### 🚀 Added
