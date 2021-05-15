@@ -1,5 +1,4 @@
 use crate::transformer::{TransformContext, TransformResult, TransformResultHelper, Transformer};
-use rand::distributions::{Distribution, Uniform};
 use serde::{Deserialize, Serialize};
 
 const DEFAULT_LENGTH: usize = 32;
@@ -52,15 +51,7 @@ impl Transformer for HexTokenTransformer {
         _field_value: &str,
         _ctx: &Option<TransformContext>,
     ) -> TransformResult {
-        let rng = rand::thread_rng();
-        let distribution = Uniform::<usize>::from(0..16);
-        TransformResult::present(
-            distribution
-                .sample_iter(rng)
-                .take(self.len)
-                .map(|i| CHARS[i])
-                .collect::<String>(),
-        )
+        TransformResult::present(super::rnd_chars(self.len, &CHARS))
     }
 }
 
