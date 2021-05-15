@@ -95,11 +95,9 @@ pub trait SchemaInspector: 'static + Sized + Send + Clone {
             for table in tables.iter() {
                 let _ = res.entry(table.clone()).or_insert(0);
                 if let Ok(nodes) = depgraph.dependencies_of(&table) {
-                    for node in nodes {
-                        if let Ok(node) = node {
-                            let counter = res.entry(node.clone()).or_insert(0);
-                            *counter += 1;
-                        }
+                    for node in nodes.flatten() {
+                        let counter = res.entry(node.clone()).or_insert(0);
+                        *counter += 1;
                     }
                 }
             }
