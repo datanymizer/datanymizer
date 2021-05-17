@@ -9,6 +9,6 @@ edition = "2018"
 [dependencies]
 datanymizer_engine = { path= "../datanymizer_engine" }
 anyhow = "1.0"
-postgres = "0.18.1"
+postgres = "0.19.1"
 solvent = "0.8.2"
 indicatif = "0.15.0"

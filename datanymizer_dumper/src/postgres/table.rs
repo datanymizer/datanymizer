@@ -178,7 +178,7 @@ impl PgTable {
     }
 
     fn sql_conditions(cs: Vec<Option<String>>) -> String {
-        let conditions: Vec<String> = cs.into_iter().filter_map(|i| i).collect();
+        let conditions: Vec<String> = cs.into_iter().flatten().collect();
         if conditions.is_empty() {
             String::new()
         } else {
