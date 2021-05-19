@@ -21,7 +21,16 @@ fn main() -> Result<()> {
         url.clone(),
     )?;
 
-    let connector = TlsConnector::new()?;
+    let mut builder = TlsConnector::builder();
+
+    if cfg.accept_invalid_hostnames.unwrap_or(false) {
+        builder.danger_accept_invalid_hostnames(true);
+    }
+    if cfg.accept_invalid_certs.unwrap_or(false) {
+        builder.danger_accept_invalid_certs(true);
+    }
+
+    let connector = builder.build()?;
     let connector = MakeTlsConnector::new(connector);
     let mut client = Client::connect(&url, connector)?;
     let mut dumper = PgDumper::new(Engine::new(s), cfg.pg_dump_location, cfg.file)?;
