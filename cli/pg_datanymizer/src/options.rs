@@ -56,6 +56,17 @@ pub struct Options {
         default_value = "pg_dump"
     )]
     pub pg_dump_location: String,
+
+    #[structopt(
+        long = "accept_invalid_hostnames",
+        help = "Accept invalid hostnames when using SSL"
+    )]
+    pub accept_invalid_hostnames: Option<bool>,
+    #[structopt(
+        long = "accept_invalid_certs",
+        help = "Accept invalid certificates (e.g., self-signed) when using SSL"
+    )]
+    pub accept_invalid_certs: Option<bool>,
 }
 
 impl Options {
@@ -108,6 +119,7 @@ mod test {
             username: None,
             password: None,
             pg_dump_location: "pg_dump".to_string(),
+            accept_invalid_hostnames: false,
         };
 
         let expected = "postgres://hostname/test".to_string();
@@ -126,6 +138,7 @@ mod test {
             username: None,
             password: None,
             pg_dump_location: "pg_dump".to_string(),
+            accept_invalid_hostnames: false,
         };
 
         let cfg2 = Options {
