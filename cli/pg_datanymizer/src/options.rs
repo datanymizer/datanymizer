@@ -119,7 +119,8 @@ mod test {
             username: None,
             password: None,
             pg_dump_location: "pg_dump".to_string(),
-            accept_invalid_hostnames: false,
+            accept_invalid_hostnames: Some(false),
+            accept_invalid_certs: Some(false),
         };
 
         let expected = "postgres://hostname/test".to_string();
@@ -138,7 +139,8 @@ mod test {
             username: None,
             password: None,
             pg_dump_location: "pg_dump".to_string(),
-            accept_invalid_hostnames: false,
+            accept_invalid_hostnames: Some(false),
+            accept_invalid_certs: Some(false),
         };
 
         let cfg2 = Options {
