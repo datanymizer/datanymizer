@@ -63,7 +63,7 @@ title_addition = ""
 timeformat = "%B %e, %Y" # e.g. June 14, 2021
 timezone = "Europe/Moscow"
 
-# Edit page on reposity or not
+# Edit page on repository or not
 edit_page = false
 docs_repo = "https://github.com/datanymizer/datanymizer"
 repo_branch = "main"
