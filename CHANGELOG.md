@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### ⚙️ Changed
 
 ### 🛠 Fixed
+- Update crates with security issues [#65](https://github.com/datanymizer/datanymizer/pull/65)
+  ([@evgeniy-r](https://github.com/evgeniy-r))
 - Add proper escaping after the transformation for Postgres [#60](https://github.com/datanymizer/datanymizer/pull/60)
   ([@evgeniy-r](https://github.com/evgeniy-r))
 
