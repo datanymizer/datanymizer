@@ -24,7 +24,7 @@ pub struct Format(String);
 ///     datetime: {}
 /// ```
 ///
-/// or custome date ranges:
+/// or custom date ranges:
 ///
 /// ```yaml
 /// #...

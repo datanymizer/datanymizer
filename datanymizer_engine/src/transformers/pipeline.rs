@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use std::iter::Iterator;
 
 /// You can use `pipelines` with complicated rules to generate more difficult values.
-/// You can use any transformer as steps (as well as a pipelines to).
+/// You can use any transformer as steps (as well as a pipelines too).
 ///
 /// # Example:
 ///
