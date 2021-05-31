@@ -80,8 +80,10 @@ impl PgTable {
 
     pub fn set_columns(&mut self, columns: Vec<PgColumn>) {
         let mut map: HashMap<String, usize> = HashMap::with_capacity(columns.len());
-        for column in &columns {
-            map.insert(column.name.clone(), (column.position - 1) as usize);
+        let mut column_refs: Vec<_> = columns.iter().collect();
+        column_refs.sort_by_key(|c| c.position);
+        for (i, column) in column_refs.iter().enumerate() {
+            map.insert(column.name.clone(), i);
         }
 
         self.column_indexes = map;
@@ -240,8 +242,10 @@ mod tests {
             inner_type: Some(0),
         };
         let col3 = PgColumn {
-            position: 3,
-            name: String::from("col3"),
+            // Column positions in Postgres are not always in sequence
+            // (e.g., when we have dropped some column).
+            position: 4,
+            name: String::from("col4"),
             data_type: String::new(),
             inner_type: Some(0),
         };
@@ -253,7 +257,7 @@ mod tests {
         assert_eq!(table.column_indexes.len(), 3);
         assert_eq!(table.column_indexes["col1"], 0);
         assert_eq!(table.column_indexes["col2"], 1);
-        assert_eq!(table.column_indexes["col3"], 2);
+        assert_eq!(table.column_indexes["col4"], 2);
     }
 
     mod query_to {
