@@ -16,22 +16,19 @@ use serde::{Deserialize, Serialize};
 ///       kind: Safe
 /// ```
 #[derive(Serialize, Deserialize, PartialEq, Eq, Hash, Clone, Debug)]
+#[serde(default)]
 pub struct EmailTransformer {
-    /// Transformation kind
-    pub kind: Option<EmailKind>,
-
-    #[serde(default)]
+    /// Email kind (`Safe`, `Free`; `Safe` is default)
+    pub kind: EmailKind,
     pub uniq: Uniqueness,
 }
 
-/// Kind of email generator
+/// Kind of email
 #[derive(Serialize, Deserialize, PartialEq, Eq, Hash, Clone, Debug)]
 pub enum EmailKind {
-    /// Used by default
+    /// Only for free email providers (e.g., "gmail.com", "yahoo.com", "hotmail.com")
     Free,
-    /// Only for "gmail.com", "yahoo.com", "hotmail.com" providers
-    FreeProvider,
-    /// Generates only for .com, .net, .org domains
+    /// Only for example domains (e.g., "example.com") - not real email addresses
     Safe,
 }
 
@@ -44,7 +41,7 @@ impl EmailTransformer {
 impl Default for EmailTransformer {
     fn default() -> Self {
         Self {
-            kind: Some(EmailKind::Free),
+            kind: EmailKind::Safe,
             uniq: Uniqueness::default(),
         }
     }
@@ -58,9 +55,8 @@ impl UniqTransformer for EmailTransformer {
         _ctx: &Option<TransformContext>,
     ) -> String {
         match self.kind {
-            Some(EmailKind::FreeProvider) => FreeEmailProvider(EN).fake(),
-            Some(EmailKind::Free) => FreeEmail(EN).fake(),
-            _ => SafeEmail(EN).fake(),
+            EmailKind::Free => FreeEmail(EN).fake(),
+            EmailKind::Safe => SafeEmail(EN).fake(),
         }
     }
 
@@ -72,27 +68,38 @@ impl UniqTransformer for EmailTransformer {
 #[cfg(test)]
 mod tests {
     use super::EmailKind;
-    use crate::Transformers;
+    use crate::transformers::EmailTransformer;
+    use crate::{Transformer, Transformers};
 
     #[test]
-    fn test_parse_config() {
-        let config = r#"email: {}"#;
+    fn parse_config() {
+        let config = "email: {}";
         let transformer: Transformers = serde_yaml::from_str(config).unwrap();
         if let Transformers::Email(transformer) = &transformer {
-            assert_eq!(transformer.kind, None);
+            assert_eq!(transformer.kind, EmailKind::Safe);
         }
         assert!(matches!(transformer, Transformers::Email(_)));
     }
 
     #[test]
-    fn test_different_email_kinds() {
+    fn different_email_kind() {
         let config = r#"
-email:
-  kind: Safe
-"#;
+                           email:
+                             kind: Free
+                           "#;
         let transformer: Transformers = serde_yaml::from_str(config).unwrap();
         if let Transformers::Email(transformer) = &transformer {
-            assert_eq!(transformer.kind, Some(EmailKind::Safe));
+            assert_eq!(transformer.kind, EmailKind::Free);
         }
+    }
+
+    #[test]
+    fn transform() {
+        let transformer = EmailTransformer::new();
+        let result = transformer.transform("field", "", &None).unwrap().unwrap();
+        let user_and_domain: Vec<_> = result.split('@').collect();
+
+        assert_eq!(user_and_domain.len(), 2);
+        assert!(user_and_domain[1].starts_with("example."));
     }
 }
