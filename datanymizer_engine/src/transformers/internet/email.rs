@@ -67,8 +67,7 @@ impl UniqTransformer for EmailTransformer {
 
 #[cfg(test)]
 mod tests {
-    use super::EmailKind;
-    use crate::transformers::EmailTransformer;
+    use super::*;
     use crate::{Transformer, Transformers};
 
     #[test]
