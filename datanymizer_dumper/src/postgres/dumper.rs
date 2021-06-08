@@ -7,8 +7,13 @@ use anyhow::Result;
 use datanymizer_engine::{Engine, Filter, Settings, TableList};
 use indicatif::{HumanDuration, ProgressBar, ProgressStyle};
 use postgres::{Client, Transaction};
-use std::{ffi::OsStr, io::{self, prelude::*}, process::{self, Command}, time::Instant};
 use std::fmt::Display;
+use std::{
+    ffi::OsStr,
+    io::{self, prelude::*},
+    process::{self, Command},
+    time::Instant,
+};
 
 pub struct PgDumper {
     schema_inspector: PgSchemaInspector,
@@ -39,7 +44,7 @@ impl PgDumper {
     where
         I: IntoIterator<Item = S>,
         S: AsRef<OsStr>,
-        E: Display
+        E: Display,
     {
         let dump_output = Command::new(&self.pg_dump_location)
             .args(args)
