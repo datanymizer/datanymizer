@@ -7,9 +7,7 @@ use anyhow::Result;
 use datanymizer_engine::{Engine, Filter, Settings, TableList};
 use indicatif::{HumanDuration, ProgressBar, ProgressStyle};
 use postgres::{Client, Transaction};
-use std::fmt::Display;
 use std::{
-    ffi::OsStr,
     io::{self, prelude::*},
     process::{self, Command},
     time::Instant,
@@ -40,20 +38,31 @@ impl PgDumper {
         })
     }
 
-    fn run_pg_dump<I, S, E>(&mut self, args: I, err_msg: E) -> Result<()>
-    where
-        I: IntoIterator<Item = S>,
-        S: AsRef<OsStr>,
-        E: Display,
-    {
-        let dump_output = Command::new(&self.pg_dump_location)
-            .args(args)
-            .args(Self::table_args(&self.engine.settings.filter))
-            .arg(self.engine.settings.source.get_database_url())
-            .output()?;
+    fn run_pg_dump(&mut self, args: &[&str]) -> Result<()> {
+        let program = &self.pg_dump_location;
+        let table_args = Self::table_args(&self.engine.settings.filter);
+        let db_url = self.engine.settings.source.get_database_url();
 
+        let mut command = Command::new(program);
+        command.args(args).args(&table_args).arg(&db_url);
+
+        let dump_output = command.output()?;
         if !dump_output.status.success() {
-            eprintln!("{}", err_msg);
+            let mut command_args = Vec::with_capacity(args.len() + table_args.len());
+            for &arg in args {
+                command_args.push(arg);
+            }
+            for arg in &table_args {
+                command_args.push(arg.as_str());
+            }
+
+            eprintln!(
+                "pg_dump error. Command:\n{} {} {}\nOutput:",
+                program,
+                command_args.join(" "),
+                db_url
+            );
+
             io::stderr().write_all(&dump_output.stderr)?;
             process::exit(1);
         }
@@ -163,7 +172,7 @@ impl Dumper for PgDumper {
     // Stage before dumping data. It makes dump schema with any options
     fn pre_data(&mut self, _connection: &mut Self::Connection) -> Result<()> {
         self.debug("Prepare data scheme...".into());
-        self.run_pg_dump(&["--section", "pre-data"], "pg_dump error (in pre_data)")
+        self.run_pg_dump(&["--section", "pre-data"])
     }
 
     // This stage makes dump data only
@@ -199,7 +208,7 @@ impl Dumper for PgDumper {
     // This stage makes dump foreign keys, indices and other...
     fn post_data(&mut self, _connection: &mut Self::Connection) -> Result<()> {
         self.debug("Finishing with indexes...".into());
-        self.run_pg_dump(&["--section", "post-data"], "pg_dump error (in post_data)")
+        self.run_pg_dump(&["--section", "post-data"])
     }
 
     fn schema_inspector(&self) -> Self::SchemaInspector {
