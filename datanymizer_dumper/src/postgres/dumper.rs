@@ -54,7 +54,7 @@ impl PgDumper {
 
         if !dump_output.status.success() {
             eprintln!("{}", err_msg);
-            io::stderr().write_all(dump_output.stderr.as_slice())?;
+            io::stderr().write_all(&dump_output.stderr)?;
             process::exit(1);
         }
 
