@@ -48,18 +48,14 @@ impl PgDumper {
 
         let dump_output = command.output()?;
         if !dump_output.status.success() {
-            let mut command_args = Vec::with_capacity(args.len() + table_args.len());
-            for &arg in args {
-                command_args.push(arg);
-            }
-            for arg in &table_args {
-                command_args.push(arg.as_str());
-            }
-
             eprintln!(
                 "pg_dump error. Command:\n{} {} {}\nOutput:",
                 program,
-                command_args.join(" "),
+                args.to_vec()
+                    .into_iter()
+                    .chain(table_args.iter().map(|s| s.as_str()))
+                    .collect::<Vec<_>>()
+                    .join(" "),
                 db_url
             );
 
