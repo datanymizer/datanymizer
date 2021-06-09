@@ -298,7 +298,7 @@ globals:
 | `capitalize`                   | Like filter, it capitalizes input value                                      |
 | `template`                     | Template engine for generate random text with included rules                 |
 | `digit`                        | Random digit (in range `0..9`)                                               |
-| `random_num`                | Random number with `min` and `max` options                                   |
+| `random_num`                   | Random number with `min` and `max` options                                   |
 | `password`                     | Password with different <br>length options (support `max` and `min` options) |
 | `datetime`                     | Make DateTime strings with options (`from` and `to`)                         |
 | more than 70 rules in total... |                                                                              |
