@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### ⚙️ Changed
 
 ### 🛠 Fixed
+- Fix EmailTransformer [#72](https://github.com/datanymizer/datanymizer/pull/72)
+  ([@evgeniy-r](https://github.com/evgeniy-r))
 - Fix bug with dropped columns [#69](https://github.com/datanymizer/datanymizer/pull/69)
   ([@evgeniy-r](https://github.com/evgeniy-r))
 - Update crates with security issues [#65](https://github.com/datanymizer/datanymizer/pull/65)
