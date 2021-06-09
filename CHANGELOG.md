@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### ⚙️ Changed
 
 ### 🛠 Fixed
+- Exit on `pg_dump` errors [#73](https://github.com/datanymizer/datanymizer/pull/73)
+  ([@evgeniy-r](https://github.com/evgeniy-r))
 - Fix EmailTransformer [#72](https://github.com/datanymizer/datanymizer/pull/72)
   ([@evgeniy-r](https://github.com/evgeniy-r))
 - Fix bug with dropped columns [#69](https://github.com/datanymizer/datanymizer/pull/69)
