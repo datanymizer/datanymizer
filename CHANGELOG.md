@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### 🚀 Added
+- Improve docs [#67](https://github.com/datanymizer/datanymizer/pull/67) ([@evgeniy-r](https://github.com/evgeniy-r))
 - Add the basic SSL support for Postgres [#61](https://github.com/datanymizer/datanymizer/pull/61)
   ([@evgeniy-r](https://github.com/evgeniy-r))
 

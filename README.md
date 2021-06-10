@@ -245,9 +245,9 @@ tables:
 
 ### Transform conditions and limit
 
-As the additional option, you can specify SQL-conditions that define which rows will be transformed (anonymized):
+As the additional option, you can specify SQL conditions that define which rows will be transformed (anonymized):
 
-``` yaml
+```yaml
 # config.yml
 tables:
   - name: people
@@ -261,13 +261,13 @@ tables:
 ```
 
 You can use the `dump_condition`, `transform_condition` and `limit` options in any combination (only
-`transform_condition`, `transform_condition` and `limit`, etc).
+`transform_condition`; `transform_condition` and `limit`; etc).
 
 ### Global variables
 
 You can specify global variables available from any `template` rule.
 
-``` yaml
+```yaml
 # config.yml
 tables:
   users:
@@ -276,7 +276,7 @@ tables:
         format: "User bio is {{var_a}}"
     age:
       template:
-        format: {{_0 * global_multiplicator}}
+        format: {{_0 | float * global_multiplicator}}
 #...
 globals:
   var_a: Global variable 1
@@ -298,10 +298,12 @@ globals:
 | `capitalize`                   | Like filter, it capitalizes input value                                      |
 | `template`                     | Template engine for generate random text with included rules                 |
 | `digit`                        | Random digit (in range `0..9`)                                               |
-| `random_number`                | Random number with `min` and `max` options                                   |
+| `random_num`                   | Random number with `min` and `max` options                                   |
 | `password`                     | Password with different <br>length options (support `max` and `min` options) |
 | `datetime`                     | Make DateTime strings with options (`from` and `to`)                         |
 | more than 70 rules in total... |                                                                              |
+
+For the complete list of rules please refer [this document](docs/transformers.md).
 
 ### Uniqueness
 
@@ -324,7 +326,7 @@ Uniqueness is ensured by re-generating values when they are same.
 You can customize the number of attempts with `try_count` (this is an optional field, the default number of tries
 depends on the rule).
 
-Currently, uniqueness is supported by: `email`, `ip`, `phone`, `random_number`.
+Currently, uniqueness is supported by: `email`, `ip`, `phone`, `random_num`.
 
 ### Locales
 
@@ -378,6 +380,11 @@ All rules not listed will be placed at the beginning (i.e. you must list only ru
 
 - [x] Postgresql
 - [ ] MySQL or MariaDB (TODO)
+
+## Documentation
+
+* [pg_datanymizer](docs/pg_datanymizer.md) CLI application manual.
+* [config.yml](docs/config.md) file specification.
 
 ## Sponsors
 

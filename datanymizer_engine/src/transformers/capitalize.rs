@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use unicode_segmentation::UnicodeSegmentation;
 
-/// Capitalize inner value (from database or previews value in pipeline)
+/// Capitalize a given value (from the database, or a previous value in the pipeline)
 #[derive(Serialize, Deserialize, PartialEq, Eq, Hash, Clone, Debug, Default)]
 pub struct CapitalizeTransformer;
 
