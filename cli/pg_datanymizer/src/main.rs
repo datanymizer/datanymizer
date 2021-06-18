@@ -1,38 +1,14 @@
 use anyhow::Result;
-use datanymizer_dumper::postgres::dumper::PgDumper;
-use datanymizer_dumper::Dumper;
-use datanymizer_engine::{Engine, Settings};
-use native_tls::TlsConnector;
-use options::Options;
-use postgres::Client;
-use postgres_native_tls::MakeTlsConnector;
 use structopt::StructOpt;
 
+use app::App;
+use options::Options;
+
+mod app;
 mod options;
 
 fn main() -> Result<()> {
-    let cfg = Options::from_args();
-
-    let url = cfg.database_url()?;
-    let s = Settings::new(
-        cfg.clone()
-            .config
-            .unwrap_or_else(|| "./config.yml".to_string()),
-        url.clone(),
-    )?;
-
-    let mut builder = TlsConnector::builder();
-
-    if cfg.accept_invalid_hostnames.unwrap_or(false) {
-        builder.danger_accept_invalid_hostnames(true);
-    }
-    if cfg.accept_invalid_certs.unwrap_or(false) {
-        builder.danger_accept_invalid_certs(true);
-    }
-
-    let connector = builder.build()?;
-    let connector = MakeTlsConnector::new(connector);
-    let mut client = Client::connect(&url, connector)?;
-    let mut dumper = PgDumper::new(Engine::new(s), cfg.pg_dump_location, cfg.file)?;
-    dumper.dump(&mut client)
+    let options = Options::from_args();
+    let app = App::from_options(options)?;
+    app.run()
 }
