@@ -49,11 +49,7 @@ pub struct Options {
         help = "Connect as specified database user"
     )]
     pub username: Option<String>,
-    #[structopt(
-        short = "W",
-        long = "password",
-        help = "User password"
-    )]
+    #[structopt(short = "W", long = "password", help = "User password")]
     pub password: Option<String>,
     #[structopt(
         long = "pg_dump",
