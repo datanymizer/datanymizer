@@ -11,7 +11,7 @@ pub struct Options {
     #[structopt(
         short = "c",
         long = "config",
-        help = "Path to config file. Default: ./config.yml",
+        help = "Path to config file",
         default_value = "./config.yml"
     )]
     pub config: String,
@@ -33,22 +33,26 @@ pub struct Options {
     #[structopt(
         short = "h",
         long = "host",
-        help = "database server host or socket directory",
+        help = "Database server host or socket directory",
         default_value = "localhost"
     )]
     pub host: String,
-    #[structopt(short = "p", long = "port", help = "database server port number")]
+    #[structopt(
+        short = "p",
+        long = "port",
+        help = "Database server port number [default: 5432]"
+    )]
     pub port: Option<u16>,
     #[structopt(
         short = "U",
         long = "username",
-        help = "connect as specified database user"
+        help = "Connect as specified database user"
     )]
     pub username: Option<String>,
     #[structopt(
         short = "W",
         long = "password",
-        help = "force password prompt (should happen automatically)"
+        help = "User password"
     )]
     pub password: Option<String>,
     #[structopt(
@@ -60,12 +64,12 @@ pub struct Options {
 
     #[structopt(
         long = "accept_invalid_hostnames",
-        help = "Accept invalid hostnames when using SSL"
+        help = "Accept or not invalid hostnames when using SSL [default: false]"
     )]
     pub accept_invalid_hostnames: Option<bool>,
     #[structopt(
         long = "accept_invalid_certs",
-        help = "Accept invalid certificates (e.g., self-signed) when using SSL"
+        help = "Accept or not invalid certificates (e.g., self-signed) when using SSL [default: false]"
     )]
     pub accept_invalid_certs: Option<bool>,
 }
