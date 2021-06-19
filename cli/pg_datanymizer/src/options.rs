@@ -105,7 +105,7 @@ impl Options {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::Options;
 
     #[test]

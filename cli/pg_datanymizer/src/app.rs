@@ -92,3 +92,43 @@ impl App {
         Ok(connector)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use structopt::StructOpt;
+
+    mod tls_connector {
+        use super::*;
+
+        fn connector(db_str: &str) -> Option<MakeTlsConnector> {
+            let options = Options::from_iter(vec!["DBNAME", db_str]);
+            let app = App::from_options(options).unwrap();
+            app.tls_connector().unwrap()
+        }
+
+        #[test]
+        fn default() {
+            let connector = connector("postgres://postgres@localhost/dbname");
+            assert!(connector.is_none());
+        }
+
+        #[test]
+        fn ssl_disable() {
+            let connector = connector("postgres://postgres@localhost/dbname?sslmode=disable");
+            assert!(connector.is_none());
+        }
+
+        #[test]
+        fn ssl_prefer() {
+            let connector = connector("postgres://postgres@localhost/dbname?sslmode=prefer");
+            assert!(connector.is_some());
+        }
+
+        #[test]
+        fn ssl_require() {
+            let connector = connector("postgres://postgres@localhost/dbname?sslmode=require");
+            assert!(connector.is_some());
+        }
+    }
+}
