@@ -13,12 +13,14 @@ use std::{
     error,
     fmt::{self, Display, Formatter},
     result,
+    sync::{Arc, RwLock},
 };
 
 use crate::LocaleConfig;
 
 pub type TransformResult = result::Result<Option<String>, TransformError>;
 pub type Globals = HashMap<String, Value>;
+type TemplateStore = Arc<RwLock<HashMap<String, tera::Value>>>;
 
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct TransformError {
@@ -36,11 +38,15 @@ pub struct TransformerDefaults {
 #[derive(Default)]
 pub struct TransformerInitContext {
     pub defaults: TransformerDefaults,
+    pub template_store: TemplateStore,
 }
 
 impl TransformerInitContext {
     pub fn from_defaults(defaults: TransformerDefaults) -> Self {
-        Self { defaults }
+        Self {
+            defaults,
+            template_store: TemplateStore::default(),
+        }
     }
 }
 

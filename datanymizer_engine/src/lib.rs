@@ -2,6 +2,7 @@ mod engine;
 mod errors;
 mod locale;
 mod settings;
+pub(crate) mod store;
 mod transformer;
 pub mod transformers;
 pub(crate) mod uniq_collector;
