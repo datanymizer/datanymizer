@@ -1,7 +1,11 @@
 mod filter;
 mod table;
 
-use crate::{transformers::Transformers, Transformer, TransformerDefaults};
+use crate::{
+    transformer::{TransformerDefaults, TransformerInitContext},
+    transformers::Transformers,
+    Transformer,
+};
 use anyhow::{anyhow, Result};
 use config::{Config, ConfigError, File, FileFormat};
 use serde::Deserialize;
@@ -40,7 +44,8 @@ pub struct Settings {
     pub tables: Tables,
 
     /// Default transformers configuration
-    pub default: Option<TransformerDefaults>,
+    #[serde(default)]
+    pub default: TransformerDefaults,
 
     pub filter: Option<Filter>,
 
@@ -48,6 +53,7 @@ pub struct Settings {
     /// They may be shadowed by template variables.
     pub globals: Option<HashMap<String, JsonValue>>,
 
+    #[serde(skip)]
     transform_map: Option<HashMap<String, TransformList>>,
 }
 
@@ -93,11 +99,11 @@ impl Settings {
     }
 
     fn preprocess(&mut self) {
-        if let Some(defs) = &self.default {
-            for table in self.tables.iter_mut() {
-                for (_name, rule) in table.rules.iter_mut() {
-                    rule.set_defaults(defs);
-                }
+        let init_ctx = TransformerInitContext::from_defaults(self.default.clone());
+
+        for table in self.tables.iter_mut() {
+            for (_name, rule) in table.rules.iter_mut() {
+                rule.init(&init_ctx);
             }
         }
 

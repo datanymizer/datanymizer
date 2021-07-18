@@ -3,10 +3,10 @@
 To create transformers, we actively use the [fake](https://github.com/cksac/fake-rs) crate.
 It is a Rust library for generating fake data.
 
-Fakers must implement the `fake::Fake` trait. It supports using the locale as an argument for internalization. 
+Fakers must implement the `fake::Fake` trait. It supports using the locale as an argument for internalization.
 You can implement the `FkTransformer` trait to easily interact with the `fake::Fake` trait in your transformer.
 
-You can implement `FkTransformer` manually (if you want to place your transformer in a separate module, perhaps in 
+You can implement `FkTransformer` manually (if you want to place your transformer in a separate module, perhaps in
 separate crate) or you can add some data to the macro in the
 [transformers/fk/mod.rs](/datanymizer_engine/src/transformers/fk/mod.rs) file. We use this macro to reduce the size of
 boilerplate code.
@@ -14,7 +14,7 @@ boilerplate code.
 Let's suppose that we want to implement a transformer that uses some hypothetical `Passport` faker to generate
 passport data.
 
-Fakers are tuple structs with the locale as the first field. 
+Fakers are tuple structs with the locale as the first field.
 They can return values of different types (in our example, we assume `String`).
 
 ```rust
@@ -45,7 +45,7 @@ use passport::Passport;
 
 use datanymizer_engine::{
     FkTransformer, LocaleConfig, Localized, LocalizedFaker, TransformContext, TransformResult, Transformer,
-    TransformerDefaults,
+    TransformerInitContext, TransformerDefaults,
 };
 
 #[derive(Default, Serialize, Deserialize, PartialEq, Eq, Hash, Debug, Clone)]
@@ -82,8 +82,8 @@ impl Transformer for PassportTransformer {
         self.transform_with_faker()
     }
 
-    fn set_defaults(&mut self, defaults: &TransformerDefaults) {
-        self.set_defaults_for_faker(defaults);
+    fn init(&mut self, ctx: &TransformerInitContext) {
+        self.set_defaults_for_faker(&ctx.defaults);
     }
 }
 ```
@@ -93,10 +93,10 @@ impl Transformer for PassportTransformer {
 Fakers have a different structure. We currently support the following structures:
 
 * `Empty` - `SomeFaker(EN)`, a faker struct has a single locale field (like our `Passport`).
-  
+
 * `Ratio` - `SomeFaker(EN, ratio)`, a faker struct has an additional `u8` field, the `fake::faker::raw::Boolean` faker
   has this structure (`ratio` is a probability of the `true` value).
-  
+
 * `Count` - `SomeFaker(EN, count)`, a faker struct has an additional range field (from min to max). For example, the  
   `fake::faker::lorem::raw::Words` faker has this structure (`count` determines the number of words).
 
@@ -105,13 +105,13 @@ It is easier to add a faker with one of these structures.
 ### With the already implemented structure
 
 1. In the [transformers/fk/mod.rs](/datanymizer_engine/src/transformers/fk/mod.rs) file.
-   
+
 Add dependency for the faker:
 
 ```rust
 use passport::Passport;
 ```
-    
+
 Update the transformer list in the `define_fk_transformers!` macro call:
 
 ```rust

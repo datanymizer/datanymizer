@@ -1,6 +1,9 @@
 use crate::{
-    transformer::{TransformContext, TransformResult, TransformResultHelper, Transformer},
-    TransformerDefaults, Transformers,
+    transformer::{
+        TransformContext, TransformResult, TransformResultHelper, Transformer,
+        TransformerInitContext,
+    },
+    Transformers,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -33,7 +36,7 @@ const PREV_ROW_KEY: &str = "prev";
 /// ```
 ///
 /// where:
-/// * `_0` - transformed value;
+/// * `_0` - original value;
 /// * `_1` and `_N` - Rules by index (started from `1`). You can use any transformer from engine;
 /// * `{{name}}` - Named variable from `variables` config;
 ///
@@ -146,10 +149,10 @@ impl Transformer for TemplateTransformer {
         }
     }
 
-    fn set_defaults(&mut self, defaults: &TransformerDefaults) {
+    fn init(&mut self, ctx: &TransformerInitContext) {
         if let Some(ts) = &mut self.rules {
             for t in ts {
-                t.set_defaults(defaults);
+                t.init(ctx);
             }
         }
     }
@@ -173,7 +176,7 @@ mod tests {
     use super::*;
     use crate::transformer::TransformError;
     use crate::{
-        transformer::Globals,
+        transformer::{Globals, TransformerDefaults},
         transformers::{CityTransformer, NoneTransformer, PersonNameTransformer},
         LocaleConfig, Transformers,
     };
@@ -214,7 +217,7 @@ mod tests {
     }
 
     #[test]
-    fn set_defaults() {
+    fn init() {
         let mut t = TemplateTransformer::new(
             String::new(),
             Some(vec![
@@ -226,9 +229,11 @@ mod tests {
             ]),
             None,
         );
-        t.set_defaults(&TransformerDefaults {
-            locale: LocaleConfig::RU,
-        });
+        t.init(&TransformerInitContext::from_defaults(
+            TransformerDefaults {
+                locale: LocaleConfig::RU,
+            },
+        ));
 
         let rules = t.rules.unwrap();
 

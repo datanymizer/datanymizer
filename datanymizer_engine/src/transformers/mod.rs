@@ -1,4 +1,4 @@
-use super::transformer::{TransformContext, TransformResult, Transformer, TransformerDefaults};
+use super::transformer::{TransformContext, TransformResult, Transformer, TransformerInitContext};
 use serde::{Deserialize, Serialize};
 
 mod none;
@@ -166,22 +166,24 @@ impl Transformer for Transformers {
         self.transformer().transform(field_name, field_value, ctx)
     }
 
-    fn set_defaults(&mut self, defaults: &TransformerDefaults) {
-        self.mut_transformer().set_defaults(defaults);
+    fn init(&mut self, ctx: &TransformerInitContext) {
+        self.mut_transformer().init(ctx);
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::LocaleConfig;
+    use crate::{transformer::TransformerDefaults, LocaleConfig};
 
     #[test]
-    fn set_defaults() {
+    fn init() {
         let mut ts = Transformers::FirstName(FirstNameTransformer::default());
-        ts.set_defaults(&TransformerDefaults {
-            locale: LocaleConfig::RU,
-        });
+        ts.init(&TransformerInitContext::from_defaults(
+            TransformerDefaults {
+                locale: LocaleConfig::RU,
+            },
+        ));
 
         assert!(matches!(ts, Transformers::FirstName(t) if t.locale == Some(LocaleConfig::RU)));
     }

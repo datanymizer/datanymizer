@@ -14,7 +14,7 @@ impl<L: Data> Dummy<Passport<L>> for String {
 
 use datanymizer_engine::{
     FkTransformer, LocaleConfig, Localized, LocalizedFaker, TransformContext, TransformResult,
-    Transformer, TransformerDefaults,
+    Transformer, TransformerDefaults, TransformerInitContext,
 };
 use fake::Fake;
 use serde::{Deserialize, Serialize};
@@ -54,8 +54,8 @@ impl Transformer for PassportTransformer {
         self.transform_with_faker()
     }
 
-    fn set_defaults(&mut self, defaults: &TransformerDefaults) {
-        self.set_defaults_for_faker(defaults);
+    fn init(&mut self, ctx: &TransformerInitContext) {
+        self.set_defaults_for_faker(&ctx.defaults);
     }
 }
 
@@ -71,8 +71,10 @@ fn set_defaults() {
     let mut t = PassportTransformer::default();
     assert_eq!(t.locale(), None);
 
-    t.set_defaults(&TransformerDefaults {
-        locale: LocaleConfig::RU,
-    });
+    t.init(&TransformerInitContext::from_defaults(
+        TransformerDefaults {
+            locale: LocaleConfig::RU,
+        },
+    ));
     assert_eq!(t.locale(), Some(LocaleConfig::RU));
 }
