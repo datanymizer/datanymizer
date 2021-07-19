@@ -8,9 +8,12 @@ pub use uniqueness::Uniqueness;
 
 use serde::Deserialize;
 use serde_json::Value;
-use std::collections::HashMap;
-use std::fmt::{self, Display, Formatter};
-use std::{error, result};
+use std::{
+    collections::HashMap,
+    error,
+    fmt::{self, Display, Formatter},
+    result,
+};
 
 use crate::LocaleConfig;
 
@@ -28,6 +31,17 @@ pub struct TransformError {
 #[serde(default)]
 pub struct TransformerDefaults {
     pub locale: LocaleConfig,
+}
+
+#[derive(Default)]
+pub struct TransformerInitContext {
+    pub defaults: TransformerDefaults,
+}
+
+impl TransformerInitContext {
+    pub fn from_defaults(defaults: TransformerDefaults) -> Self {
+        Self { defaults }
+    }
 }
 
 pub trait TransformResultHelper {
@@ -66,7 +80,7 @@ pub trait Transformer {
         ctx: &Option<TransformContext>,
     ) -> TransformResult;
 
-    fn set_defaults(&mut self, _defaults: &TransformerDefaults) {}
+    fn init(&mut self, _ctx: &TransformerInitContext) {}
 }
 
 impl error::Error for TransformError {

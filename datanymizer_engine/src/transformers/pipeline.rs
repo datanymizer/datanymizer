@@ -1,5 +1,5 @@
 use crate::transformer::{
-    TransformContext, TransformResult, TransformResultHelper, Transformer, TransformerDefaults,
+    TransformContext, TransformResult, TransformResultHelper, Transformer, TransformerInitContext,
 };
 use serde::{Deserialize, Serialize};
 use std::iter::Iterator;
@@ -55,9 +55,9 @@ where
         TransformResult::present(res)
     }
 
-    fn set_defaults(&mut self, defaults: &TransformerDefaults) {
+    fn init(&mut self, ctx: &TransformerInitContext) {
         for t in &mut self.pipes {
-            t.set_defaults(defaults);
+            t.init(ctx);
         }
     }
 }
@@ -66,12 +66,13 @@ where
 mod tests {
     use super::*;
     use crate::{
+        transformer::TransformerDefaults,
         transformers::{CapitalizeTransformer, FirstNameTransformer, LastNameTransformer},
         LocaleConfig, Transformers,
     };
 
     #[test]
-    fn set_defaults() {
+    fn init() {
         let mut t = PipelineTransformer {
             pipes: vec![
                 Transformers::FirstName(FirstNameTransformer::default()),
@@ -81,9 +82,11 @@ mod tests {
                 Transformers::Capitalize(CapitalizeTransformer),
             ],
         };
-        t.set_defaults(&TransformerDefaults {
-            locale: LocaleConfig::RU,
-        });
+        t.init(&TransformerInitContext::from_defaults(
+            TransformerDefaults {
+                locale: LocaleConfig::RU,
+            },
+        ));
 
         assert!(
             matches!(&t.pipes[0], Transformers::FirstName(t) if t.locale == Some(LocaleConfig::RU))

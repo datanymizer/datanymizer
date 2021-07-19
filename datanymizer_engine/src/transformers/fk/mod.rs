@@ -7,7 +7,7 @@ pub mod sql_value;
 
 use crate::{
     locale::{LocaleConfig, Localized, LocalizedFaker},
-    transformer::{TransformContext, TransformResult, TransformerDefaults},
+    transformer::{TransformContext, TransformResult, TransformerDefaults, TransformerInitContext},
     Transformer,
 };
 use fake::{
@@ -249,8 +249,8 @@ macro_rules! define_fk_transformer {
                 self.transform_with_faker()
             }
 
-            fn set_defaults(&mut self, defaults: &TransformerDefaults) {
-                self.set_defaults_for_faker(defaults);
+            fn init(&mut self, ctx: &TransformerInitContext) {
+                self.set_defaults_for_faker(&ctx.defaults);
             }
         }
     };
@@ -497,9 +497,11 @@ mod tests {
         #[test]
         fn locale_is_none() {
             let mut t = CityTransformer { locale: None };
-            t.set_defaults(&TransformerDefaults {
-                locale: LocaleConfig::RU,
-            });
+            t.init(&TransformerInitContext::from_defaults(
+                TransformerDefaults {
+                    locale: LocaleConfig::RU,
+                },
+            ));
             assert_eq!(t.locale, Some(LocaleConfig::RU));
         }
 
@@ -508,9 +510,11 @@ mod tests {
             let mut t = CityTransformer {
                 locale: Some(LocaleConfig::EN),
             };
-            t.set_defaults(&TransformerDefaults {
-                locale: LocaleConfig::RU,
-            });
+            t.init(&TransformerInitContext::from_defaults(
+                TransformerDefaults {
+                    locale: LocaleConfig::RU,
+                },
+            ));
             assert_eq!(t.locale, Some(LocaleConfig::EN));
         }
     }
