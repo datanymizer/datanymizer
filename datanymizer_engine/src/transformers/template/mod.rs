@@ -530,10 +530,10 @@ mod tests {
         }
 
         #[test]
-        fn add_float() {
+        fn inc() {
             let config = r#"
                   template:
-                    format: '{{ store_add_float(key="key", value=_0 | float) }}Write: {{ _0 | float }} into key'
+                    format: '{{ store_inc(key="key", value=_0 | float) }}Write: {{ _0 | float }} into key'
                 "#;
 
             let mut r = read_transformer();
@@ -549,50 +549,17 @@ mod tests {
             let value = r.transform("field", "key", &None).unwrap().unwrap();
             assert_eq!(value, "Read: 0.5");
 
-            let value = w.transform("field", "2.0", &None).unwrap().unwrap();
+            let value = w.transform("field", "2", &None).unwrap().unwrap();
             assert_eq!(value, "Write: 2 into key");
 
             let value = r.transform("field", "key", &None).unwrap().unwrap();
             assert_eq!(value, "Read: 2.5");
 
-            let value = w.transform("field", "-1.0", &None).unwrap().unwrap();
+            let value = w.transform("field", "-1", &None).unwrap().unwrap();
             assert_eq!(value, "Write: -1 into key");
 
             let value = r.transform("field", "key", &None).unwrap().unwrap();
             assert_eq!(value, "Read: 1.5");
-        }
-
-        #[test]
-        fn add_int() {
-            let config = r#"
-                  template:
-                    format: '{{ store_add_int(key="key", value=_0 | int) }}Write: {{ _0 | int }} into key'
-                "#;
-
-            let mut r = read_transformer();
-            let mut w: Transformers = serde_yaml::from_str(config).unwrap();
-            let ctx = TransformerInitContext::default();
-
-            r.init(&ctx);
-            w.init(&ctx);
-
-            let value = w.transform("field", "5", &None).unwrap().unwrap();
-            assert_eq!(value, "Write: 5 into key");
-
-            let value = r.transform("field", "key", &None).unwrap().unwrap();
-            assert_eq!(value, "Read: 5");
-
-            let value = w.transform("field", "2", &None).unwrap().unwrap();
-            assert_eq!(value, "Write: 2 into key");
-
-            let value = r.transform("field", "key", &None).unwrap().unwrap();
-            assert_eq!(value, "Read: 7");
-
-            let value = w.transform("field", "-10", &None).unwrap().unwrap();
-            assert_eq!(value, "Write: -10 into key");
-
-            let value = r.transform("field", "key", &None).unwrap().unwrap();
-            assert_eq!(value, "Read: -3");
         }
     }
 }
