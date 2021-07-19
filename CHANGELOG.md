@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### 🚀 Added
+- Key-value store that allows to share information between template transformers
+  [#75](https://github.com/datanymizer/datanymizer/pull/75) ([@evgeniy-r](https://github.com/evgeniy-r))
 - Options to ignore invalid certificates and hostnames when using SSL
   [#64](https://github.com/datanymizer/datanymizer/pull/64) ([@evgeniy-r](https://github.com/evgeniy-r))
 - Improve docs [#67](https://github.com/datanymizer/datanymizer/pull/67) ([@evgeniy-r](https://github.com/evgeniy-r))

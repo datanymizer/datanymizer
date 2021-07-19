@@ -376,6 +376,32 @@ tables:
 You must specify the order of rule execution when using `final` with `rule_order`.
 All rules not listed will be placed at the beginning (i.e. you must list only rules with `final`).
 
+## Sharing information between rows
+
+We implemented a built-in key-value store that allows information to be exchanged between anonymized rows.
+
+It is available via the special functions in templates.
+
+Take a look at an example:
+
+```yaml
+tables:
+  - name: users  
+    rules:
+      name:
+        template:    
+          # Save a name to the store as a side effect, the key is `user_names.<USER_ID>` 
+          format: "{{ _1 }}{{ store_write key='user_names.' ~ prev.id, value=_1 }}"
+          rules:
+            - person_name: {}
+  - name: user_operations
+    rules:
+      user_name:          
+        template:
+          # Using the saved value again  
+          format: "{{ store_read key='user_names.' ~ prev.user_id }}"
+```
+
 ## Supported databases
 
 - [x] Postgresql

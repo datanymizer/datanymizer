@@ -247,7 +247,7 @@ template:
 ```
 
 where:
-* `_0` - transformed value (original);
+* `_0` - original value;
 * `_1`, `_2`, ... `_N` - nested rules by index (started from 1). You can use any transformer (including templates);
 * `name` - the named variable from the `variables` section.
 
@@ -283,6 +283,44 @@ tables:
 You must specify the order of rule execution when using `final` with [rule_order](config.md#rule_order).
 All rules not listed will be placed at the beginning (i.e., you must list only rules with `final`).
 
+Also, we implemented a built-in key-value store that allows information to be exchanged between anonymized rows.
+
+It is available via the custom functions in templates (you can read about Tera functions
+[here](https://tera.netlify.app/docs/#functions)).
+
+Take a look at an example:
+
+```yaml
+tables:
+  - name: users  
+    rules:
+      name:
+        template:    
+          # Save a name to the store as a side effect, the key is `user_names.<USER_ID>` 
+          format: "{{ _1 }}{{ store_write key='user_names.' ~ prev.id, value=_1 }}"
+          rules:
+            - person_name: {}
+  - name: user_operations
+    rules:
+      user_name:          
+        template:
+          # Using the saved value again  
+          format: "{{ store_read key='user_names.' ~ prev.user_id }}"
+```
+
+The full list of functions for working with the store:
+
+* `store_read` - returns a value by a key, raises an error when no such key.<br/>
+  Arguments: `key`.
+
+* `store_write` - stores a value in a key, raises an error when the key is already present.<br/>
+  Arguments: `key`, `value`.
+
+* `store_force_write` - like `store_write` but `store_force_write` overrides values without errors.<br/>
+  Arguments: `key`, `value`.
+  
+* `store_inc` - increments a value in a key (in the first time just stores a value). Working only with numbers.<br/>
+  Arguments: `key`, `value`. 
 
 ## Business
 

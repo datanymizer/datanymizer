@@ -1,3 +1,5 @@
+mod store_functions;
+
 use crate::{
     transformer::{
         TransformContext, TransformResult, TransformResultHelper, Transformer,
@@ -150,6 +152,8 @@ impl Transformer for TemplateTransformer {
     }
 
     fn init(&mut self, ctx: &TransformerInitContext) {
+        store_functions::register(&mut self.renderer, ctx.template_store.clone());
+
         if let Some(ts) = &mut self.rules {
             for t in ts {
                 t.init(ctx);
@@ -419,6 +423,143 @@ mod tests {
 
                 assert_eq!(res, Ok(Some(expected)));
             }
+        }
+    }
+
+    mod store {
+        use super::*;
+
+        fn read_transformer() -> Transformers {
+            let config = r#"
+                                template:
+                                  format: "Read: {{ store_read(key=_0) }}"
+                              "#;
+            serde_yaml::from_str(config).unwrap()
+        }
+
+        fn write_transformer() -> Transformers {
+            let config = r#"
+                  template:
+                    format: "{{ store_force_write(key=_1, value=_2) }}Write: {{ _2 }} into {{ _1 }}"
+                    rules:
+                      - template:
+                          format: '{{ "key_" ~ _0 }}'
+                      - template:
+                          format: '{{ "value_" ~ _0 }}'
+                "#;
+            serde_yaml::from_str(config).unwrap()
+        }
+
+        #[test]
+        fn basic() {
+            let mut r = read_transformer();
+            let mut w = write_transformer();
+            let ctx = TransformerInitContext::default();
+
+            r.init(&ctx);
+            w.init(&ctx);
+
+            let value = w.transform("field", "a", &None).unwrap().unwrap();
+            assert_eq!(value, "Write: value_a into key_a");
+
+            let value = w.transform("field", "b", &None).unwrap().unwrap();
+            assert_eq!(value, "Write: value_b into key_b");
+
+            let value = w.transform("field", "c", &None).unwrap().unwrap();
+            assert_eq!(value, "Write: value_c into key_c");
+
+            let value = r.transform("field", "key_a", &None).unwrap().unwrap();
+            assert_eq!(value, "Read: value_a");
+
+            let value = r.transform("field", "key_b", &None).unwrap().unwrap();
+            assert_eq!(value, "Read: value_b");
+
+            let value = r.transform("field", "key_c", &None).unwrap().unwrap();
+            assert_eq!(value, "Read: value_c");
+        }
+
+        #[test]
+        fn repeatable_read() {
+            let mut r = read_transformer();
+            let mut w = write_transformer();
+            let ctx = TransformerInitContext::default();
+
+            r.init(&ctx);
+            w.init(&ctx);
+
+            let value = w.transform("field", "a", &None).unwrap().unwrap();
+            assert_eq!(value, "Write: value_a into key_a");
+
+            let value = r.transform("field", "key_a", &None).unwrap().unwrap();
+            assert_eq!(value, "Read: value_a");
+
+            let value = r.transform("field", "key_a", &None).unwrap().unwrap();
+            assert_eq!(value, "Read: value_a");
+        }
+
+        #[test]
+        fn overwrite() {
+            let config = r#"
+                  template:
+                    format: "{{ store_force_write(key=_1, value=_2) }}Write: {{ _2 }} into {{ _1 }}"
+                    rules:
+                      - template:
+                          format: 'key'
+                      - template:
+                          format: '{{ "value_" ~ _0 }}'
+                "#;
+
+            let mut r = read_transformer();
+            let mut w: Transformers = serde_yaml::from_str(config).unwrap();
+            let ctx = TransformerInitContext::default();
+
+            r.init(&ctx);
+            w.init(&ctx);
+
+            let value = w.transform("field", "a", &None).unwrap().unwrap();
+            assert_eq!(value, "Write: value_a into key");
+
+            let value = r.transform("field", "key", &None).unwrap().unwrap();
+            assert_eq!(value, "Read: value_a");
+
+            let value = w.transform("field", "b", &None).unwrap().unwrap();
+            assert_eq!(value, "Write: value_b into key");
+
+            let value = r.transform("field", "key", &None).unwrap().unwrap();
+            assert_eq!(value, "Read: value_b");
+        }
+
+        #[test]
+        fn inc() {
+            let config = r#"
+                  template:
+                    format: '{{ store_inc(key="key", value=_0 | float) }}Write: {{ _0 | float }} into key'
+                "#;
+
+            let mut r = read_transformer();
+            let mut w: Transformers = serde_yaml::from_str(config).unwrap();
+            let ctx = TransformerInitContext::default();
+
+            r.init(&ctx);
+            w.init(&ctx);
+
+            let value = w.transform("field", "0.5", &None).unwrap().unwrap();
+            assert_eq!(value, "Write: 0.5 into key");
+
+            let value = r.transform("field", "key", &None).unwrap().unwrap();
+            assert_eq!(value, "Read: 0.5");
+
+            let value = w.transform("field", "2", &None).unwrap().unwrap();
+            assert_eq!(value, "Write: 2 into key");
+
+            let value = r.transform("field", "key", &None).unwrap().unwrap();
+            assert_eq!(value, "Read: 2.5");
+
+            let value = w.transform("field", "-1", &None).unwrap().unwrap();
+            assert_eq!(value, "Write: -1 into key");
+
+            let value = r.transform("field", "key", &None).unwrap().unwrap();
+            assert_eq!(value, "Read: 1.5");
         }
     }
 }
