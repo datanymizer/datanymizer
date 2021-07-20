@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### 🚀 Added
+- `base64_token` and `base64url_token` transformers. [#77](https://github.com/datanymizer/datanymizer/pull/77)
+  ([@evgeniy-r](https://github.com/evgeniy-r))
 - Key-value store that allows to share information between template transformers
   [#75](https://github.com/datanymizer/datanymizer/pull/75) ([@evgeniy-r](https://github.com/evgeniy-r))
 - Options to ignore invalid certificates and hostnames when using SSL
