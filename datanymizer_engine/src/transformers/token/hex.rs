@@ -7,7 +7,7 @@ const CHARS: [char; 16] = [
 ];
 
 /// Transformer generates random hex tokens.
-/// You can set the token length (default is 32)
+/// You can set a token length (default is 32)
 ///
 /// # Examples
 ///
@@ -19,15 +19,13 @@ const CHARS: [char; 16] = [
 ///     hex_token: {}
 /// ```
 ///
-/// with custom length:
-///
+/// with a custom length:
 /// ```yaml
 /// #...
 /// rules:
 ///   field_name:
 ///     hex_token:
 ///       len: 128
-///
 /// ```
 #[derive(Serialize, Deserialize, PartialEq, Eq, Hash, Clone, Debug)]
 #[serde(default)]

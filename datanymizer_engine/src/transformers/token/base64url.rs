@@ -10,7 +10,7 @@ const CHARS: [char; 64] = [
 ];
 
 /// Transformer generates random Base64Url tokens.
-/// You can set the token length (default is 32) and the padding (`%3D` sequences) length.
+/// You can set a token length (default is 32) and a padding (`%3D` sequences) length.
 ///
 /// # Examples
 ///
@@ -22,17 +22,15 @@ const CHARS: [char; 64] = [
 ///     base64_token: {}
 /// ```
 ///
-/// with custom length:
-///
+/// with a custom length:
 /// ```yaml
 /// #...
 /// rules:
 ///   field_name:
 ///     base64_token:
-///       # the padding is included into the length (it will be `%3D%3D`)
-///       len: 32
+///       # the padding is included into the length, so we have 34 symbols and the padding (`%3D%3D`)
+///       len: 36
 ///       pad: 2
-///
 /// ```
 #[derive(Serialize, Deserialize, PartialEq, Eq, Hash, Clone, Debug)]
 #[serde(default)]
