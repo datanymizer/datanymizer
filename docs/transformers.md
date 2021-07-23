@@ -800,9 +800,49 @@ words:
 
 ## Tokens
 
+#### base64_token
+
+Generates random Base64 tokens. You can set a token length (default is 32) and a padding (`=` symbols) length.
+
+Examples:
+
+With defaults:
+```yaml
+#...
+base64_token: {}
+```
+
+With a custom length:
+```yaml
+base64_token:
+  # the padding is included into the length, so we have 35 symbols and `=`
+  len: 36
+  pad: 1
+```
+
+#### base64url_token
+
+Generates random Base64Url tokens.
+You can set a token length (default is 32) and a padding - a number of `%3D` sequences.
+
+Examples:
+
+With defaults:
+```yaml
+base64_token: {}
+```
+
+With a custom length:
+```yaml
+base64_token:
+  # the padding is included into the length, so we have 34 symbols and the padding (`%3D%3D`)
+  len: 36
+  pad: 2
+```
+
 #### hex_token
 
-Generates random hex tokens. You can set the token length (default is 32).
+Generates random hex tokens. You can set a token length (default is 32).
 
 Examples:
 
