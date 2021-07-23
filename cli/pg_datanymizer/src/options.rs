@@ -9,48 +9,46 @@ pub struct Options {
     database: String,
 
     #[structopt(
-        short = "c",
-        long = "config",
+        short,
+        long,
         help = "Path to config file",
         default_value = "./config.yml"
     )]
     pub config: String,
+
     #[structopt(
-        short = "f",
-        long = "file",
+        short,
+        long,
         name = "FILE",
         help = "Path to dump file, example: /tmp/dump.sql"
     )]
     pub file: Option<String>,
 
     #[structopt(
-        short = "d",
+        short,
         long = "dbname",
         help = "database to dump",
         default_value = "postgres"
     )]
     pub db_name: String,
+
     #[structopt(
-        short = "h",
-        long = "host",
+        short,
+        long,
         help = "Database server host or socket directory",
         default_value = "localhost"
     )]
     pub host: String,
-    #[structopt(
-        short = "p",
-        long = "port",
-        help = "Database server port number [default: 5432]"
-    )]
+
+    #[structopt(short, long, help = "Database server port number [default: 5432]")]
     pub port: Option<u16>,
-    #[structopt(
-        short = "U",
-        long = "username",
-        help = "Connect as specified database user"
-    )]
+
+    #[structopt(short = "U", long, help = "Connect as specified database user")]
     pub username: Option<String>,
-    #[structopt(short = "W", long = "password", help = "User password")]
+
+    #[structopt(short = "W", long, help = "User password")]
     pub password: Option<String>,
+
     #[structopt(
         long = "pg_dump",
         help = "pg_dump file location",
@@ -60,14 +58,21 @@ pub struct Options {
 
     #[structopt(
         long = "accept_invalid_hostnames",
-        help = "Accept or not invalid hostnames when using SSL [default: false]"
+        help = "Accept or not invalid hostnames when using SSL"
     )]
-    pub accept_invalid_hostnames: Option<bool>,
+    pub accept_invalid_hostnames: bool,
+
     #[structopt(
         long = "accept_invalid_certs",
-        help = "Accept or not invalid certificates (e.g., self-signed) when using SSL [default: false]"
+        help = "Accept or not invalid certificates (e.g., self-signed) when using SSL"
     )]
-    pub accept_invalid_certs: Option<bool>,
+    pub accept_invalid_certs: bool,
+
+    #[structopt(
+        name = "PG_DUMP_ARGS",
+        help = "The remaining arguments are passed directly to `pg_dump` calls. You should add `--` before <DBNAME> in such cases"
+    )]
+    pub pg_dump_args: Vec<String>,
 }
 
 impl Options {
@@ -106,7 +111,7 @@ impl Options {
 
 #[cfg(test)]
 mod tests {
-    use super::Options;
+    use super::*;
 
     #[test]
     fn parse_empty_config() {
@@ -120,8 +125,9 @@ mod tests {
             username: None,
             password: None,
             pg_dump_location: "pg_dump".to_string(),
-            accept_invalid_hostnames: Some(false),
-            accept_invalid_certs: Some(false),
+            accept_invalid_hostnames: false,
+            accept_invalid_certs: false,
+            pg_dump_args: vec![],
         };
 
         let expected = "postgres://hostname/test".to_string();
@@ -140,8 +146,9 @@ mod tests {
             username: None,
             password: None,
             pg_dump_location: "pg_dump".to_string(),
-            accept_invalid_hostnames: Some(false),
-            accept_invalid_certs: Some(false),
+            accept_invalid_hostnames: false,
+            accept_invalid_certs: false,
+            pg_dump_args: vec![],
         };
 
         let cfg2 = Options {
@@ -165,5 +172,29 @@ mod tests {
         assert_eq!(cfg2.database_url().unwrap().to_string(), expected2);
         assert_eq!(cfg3.database_url().unwrap().to_string(), expected3);
         assert_eq!(cfg4.database_url().unwrap().to_string(), expected4);
+    }
+
+    #[test]
+    fn parse_args() {
+        let cmd = vec![
+            "pg_datanymizer",
+            "-c",
+            "some_config.yml",
+            "-f",
+            "some_file.sql",
+            "--",
+            "postgres://user@hostname/test",
+            "--no-owner",
+            "--no-acl",
+        ];
+        let options = Options::from_iter(cmd);
+
+        assert_eq!(
+            options.database_url().unwrap().as_str(),
+            "postgres://user@hostname/test"
+        );
+        assert_eq!(options.config, "some_config.yml");
+        assert_eq!(options.file, Some("some_file.sql".to_string()));
+        assert_eq!(options.pg_dump_args, vec!["--no-owner", "--no-acl"]);
     }
 }

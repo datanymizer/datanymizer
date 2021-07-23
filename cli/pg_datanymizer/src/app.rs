@@ -42,6 +42,7 @@ impl App {
             engine,
             self.options.pg_dump_location.clone(),
             self.options.file.clone(),
+            self.options.pg_dump_args.clone(),
         )
     }
 
@@ -78,10 +79,10 @@ impl App {
         } else {
             let mut builder = TlsConnector::builder();
 
-            if self.options.accept_invalid_hostnames.unwrap_or(false) {
+            if self.options.accept_invalid_hostnames {
                 builder.danger_accept_invalid_hostnames(true);
             }
-            if self.options.accept_invalid_certs.unwrap_or(false) {
+            if self.options.accept_invalid_certs {
                 builder.danger_accept_invalid_certs(true);
             }
 

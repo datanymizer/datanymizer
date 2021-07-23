@@ -18,23 +18,31 @@ pub struct PgDumper {
     engine: Engine,
     dump_writer: DumpWriter,
     pg_dump_location: String,
+    pg_dump_args: Vec<String>,
     progress_bar: ProgressBar,
 }
 
 impl PgDumper {
-    pub fn new(engine: Engine, pg_dump_location: String, target: Option<String>) -> Result<Self> {
+    pub fn new(
+        engine: Engine,
+        pg_dump_location: String,
+        target: Option<String>,
+        pg_dump_args: Vec<String>,
+    ) -> Result<Self> {
         let dump_writer = DumpWriter::new(target)?;
         let pb: ProgressBar = if dump_writer.can_log_to_stdout() {
             ProgressBar::new(0)
         } else {
             ProgressBar::hidden()
         };
+
         Ok(Self {
             engine,
             dump_writer,
             pg_dump_location,
             schema_inspector: PgSchemaInspector {},
             progress_bar: pb,
+            pg_dump_args,
         })
     }
 
@@ -45,6 +53,7 @@ impl PgDumper {
         let db_url = self.engine.settings.source.get_database_url();
 
         let dump_output = Command::new(program)
+            .args(&self.pg_dump_args)
             .args(&args)
             .args(&table_args)
             .arg(&db_url)
