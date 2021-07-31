@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### 🚀 Added
+- Add `prefix` and `suffix` options for `EmailTransformer` [#80](https://github.com/datanymizer/datanymizer/pull/80)
+  ([@evgeniy-r](https://github.com/evgeniy-r))
 - Additional arguments for pg_dump [#78](https://github.com/datanymizer/datanymizer/pull/78)
   ([@evgeniy-r](https://github.com/evgeniy-r))
 - `base64_token` and `base64url_token` transformers. [#77](https://github.com/datanymizer/datanymizer/pull/77)

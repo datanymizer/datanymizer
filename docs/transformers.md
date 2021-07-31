@@ -423,6 +423,10 @@ It is not real email addresses.
 With the `Free` kind the transformer generates emails for free email providers (e.g., `some@gmail.com`, 
 `some@yahoo.com`, `some@hotmail.com`). 
 
+You can add a random alphanumeric prefix and/or suffix (e.g., `12zsd-some@example.com`, `some-asd1mk@example.com`,
+`anahgk-some-a21km@example.com`).
+This is useful when you need many unique emails.
+
 Examples:
 
 The default:
@@ -436,6 +440,22 @@ You can specify the kind:
 ```yaml
 email:
   kind: Free
+```
+
+With a random prefix:
+
+```yaml
+email:
+  # prefix length
+  prefix: 5
+```
+
+With a random suffix:
+
+```yaml
+  email:
+    # suffix length
+    suffix: 5
 ```
 
 If you want to generate unique emails, use this option:
