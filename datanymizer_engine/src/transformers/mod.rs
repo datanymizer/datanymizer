@@ -29,7 +29,6 @@ mod token;
 pub use token::{Base64TokenTransformer, Base64UrlTokenTransformer, HexTokenTransformer};
 
 mod fk;
-
 pub use fk::sql_value::AsSqlValue;
 pub use fk::*;
 
