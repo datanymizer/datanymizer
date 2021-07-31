@@ -6,6 +6,7 @@ pub(crate) mod store;
 mod transformer;
 pub mod transformers;
 pub(crate) mod uniq_collector;
+mod utils;
 mod value;
 
 pub use engine::Engine;
