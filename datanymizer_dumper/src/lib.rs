@@ -85,7 +85,7 @@ pub trait SchemaInspector: 'static + Sized + Send + Clone {
         if let Ok(tables) = self.get_tables(connection) {
             for table in tables.iter() {
                 let deps: Vec<Self::Table> = self
-                    .get_dependencies(connection, &table)
+                    .get_dependencies(connection, table)
                     .unwrap_or_default()
                     .into_iter()
                     .collect();
@@ -94,7 +94,7 @@ pub trait SchemaInspector: 'static + Sized + Send + Clone {
 
             for table in tables.iter() {
                 let _ = res.entry(table.clone()).or_insert(0);
-                if let Ok(nodes) = depgraph.dependencies_of(&table) {
+                if let Ok(nodes) = depgraph.dependencies_of(table) {
                     for node in nodes.flatten() {
                         let counter = res.entry(node.clone()).or_insert(0);
                         *counter += 1;

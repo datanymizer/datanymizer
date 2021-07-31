@@ -18,7 +18,7 @@ pub trait UniqTransformer {
         let mut count = self.try_count();
         while count > 0 {
             let val = self.do_transform(field_name, field_value, ctx);
-            if uniq_collector::add_to_collector(&field_name, &val) {
+            if uniq_collector::add_to_collector(field_name, &val) {
                 return Some(val);
             } else {
                 count -= 1;
