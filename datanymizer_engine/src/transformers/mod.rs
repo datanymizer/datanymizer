@@ -108,9 +108,10 @@ define_transformers_enum![
 
     ("company_suffix", CompanySuffix, CompanySuffixTransformer),
     ("company_name", CompanyName, CompanyNameTransformer),
+    ("alt_company_name", AltCompanyName, AltCompanyNameTransformer),
     ("company_motto", CompanyMotto, CompanyMottoTransformer),
     ("company_motto_head", CompanyMottoHead, CompanyMottoHeadTransformer),
-    ("company_motto_middle", BCompanyMottoMiddle, CompanyMottoMiddleTransformer),
+    ("company_motto_middle", CompanyMottoMiddle, CompanyMottoMiddleTransformer),
     ("company_motto_tail", CompanyMottoTail, CompanyMottoTailTransformer),
     ("company_activity", CompanyActivity, CompanyActivityTransformer),
     ("company_activity_verb", CompanyActivityVerb, CompanyActivityVerbTransformer),
@@ -139,6 +140,7 @@ define_transformers_enum![
 
     ("first_name", FirstName, FirstNameTransformer),
     ("last_name", LastName, LastNameTransformer),
+    ("middle_name", MiddleName, MiddleNameTransformer),
     ("name_suffix", NameSuffix, NameSuffixTransformer),
     ("person_title", PersonTitle, PersonTitleTransformer),
     ("person_name", PersonName, PersonNameTransformer),

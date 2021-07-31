@@ -3,10 +3,11 @@
 //! To create a new faker-based transformer please refer to
 //! [docs/new_fk_transformer.md](/datanymizer_engine/docs/new_fk_transformer.md).
 
+mod fakers;
 pub mod sql_value;
 
 use crate::{
-    locale::{LocaleConfig, Localized, LocalizedFaker},
+    locale::{ExtData, LocaleConfig, Localized, LocalizedFaker},
     transformer::{TransformContext, TransformResult, TransformerDefaults, TransformerInitContext},
     Transformer,
 };
@@ -33,6 +34,7 @@ use fake::{
     },
     Fake,
 };
+use fakers::*;
 use serde::{Deserialize, Serialize};
 use sql_value::*;
 
@@ -194,19 +196,19 @@ macro_rules! define_fk_struct {
 /// `$sql` - faker value type (must implements [AsSqlValue] trait).
 macro_rules! impl_localized_faker {
     ( $fk:ident, $sql:ty, Empty ) => {
-        fn fake<L: Copy + fake::locales::Data>(&self, l: L) -> $sql {
+        fn fake<L: ExtData>(&self, l: L) -> $sql {
             $fk(l).fake()
         }
     };
 
     ( $fk:ident, $sql:ty, Ratio ) => {
-        fn fake<L: Copy + fake::locales::Data>(&self, l: L) -> $sql {
+        fn fake<L: ExtData>(&self, l: L) -> $sql {
             $fk(l, self.ratio).fake()
         }
     };
 
     ( $fk:ident, $sql:ty, Count ) => {
-        fn fake<L: Copy + fake::locales::Data>(&self, l: L) -> $sql {
+        fn fake<L: ExtData>(&self, l: L) -> $sql {
             $fk(l, self.min..self.max + 1).fake()
         }
     };
@@ -310,6 +312,8 @@ define_fk_transformers![
     ("company_suffix", CompanySuffixTransformer, CompanySuffix, String, Empty),
     "Gets a company name.",
     ("company_name", CompanyNameTransformer, CompanyName, String, Empty),
+    "Gets a company name (another variant).",
+    ("alt_company_name", AltCompanyNameTransformer, AltCompanyName, String, Empty),
     "Gets a company motto.",
     ("company_motto", CompanyMottoTransformer, CatchPhase, String, Empty),
     "Gets a head component of a company motto.",
@@ -368,6 +372,8 @@ define_fk_transformers![
     ("first_name", FirstNameTransformer, FirstName, String, Empty),
     "Gets the last name",
     ("last_name", LastNameTransformer, LastName, String, Empty),
+    "Gets the middle name",
+    ("middle_name", MiddleNameTransformer, MiddleName, String, Empty),
     "Gets a name suffix (e.g., `Jr.`)",
     ("name_suffix", NameSuffixTransformer, NameSuffix, String, Empty),
     "Gets a person name title (e.g., `Mr` or `Ms`).",

@@ -44,7 +44,7 @@ use serde::{Deserialize, Serialize};
 use passport::Passport;
 
 use datanymizer_engine::{
-    FkTransformer, LocaleConfig, Localized, LocalizedFaker, TransformContext, TransformResult, Transformer,
+    ExtData, FkTransformer, LocaleConfig, Localized, LocalizedFaker, TransformContext, TransformResult, Transformer,
     TransformerInitContext, TransformerDefaults,
 };
 
@@ -65,7 +65,7 @@ impl Localized for PassportTransformer {
 }
 
 impl LocalizedFaker<String> for PassportTransformer {
-    fn fake<L: Copy + fake::locales::Data>(&self, l: L) -> String {
+    fn fake<L: ExtData>(&self, l: L) -> String {
         Passport(l).fake()
     }
 }
@@ -228,7 +228,7 @@ macro_rules! impl_localized_faker {
     // .........
     
     ( $fk:ident, $sql:ty, Year ) => {
-        fn fake<L: Copy + fake::locales::Data>(&self, l: L) -> $sql {
+        fn fake<L: ExtData>(&self, l: L) -> $sql {
             $fk(l, self.year).fake()
         }
     };
