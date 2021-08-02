@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   ([@evgeniy-r](https://github.com/evgeniy-r))
 
 ### ⚙️ Changed
+- Move `rnd_chars()` from `token` to `utils` [#79](https://github.com/datanymizer/datanymizer/pull/79)
+  ([@evgeniy-r](https://github.com/evgeniy-r))
 - Change transformer initialization (`set_defaults` -> `init`) [#76](https://github.com/datanymizer/datanymizer/pull/76)
   ([@evgeniy-r](https://github.com/evgeniy-r))
 

@@ -101,16 +101,16 @@ impl SchemaInspector for PgSchemaInspector {
         connection: &mut <Self::Dumper as Dumper>::Connection,
         table: &Self::Table,
     ) -> Result<Vec<Self::Table>> {
-        let fkeys: Vec<ForeignKey> = connection
+        let fkeys_iterator = connection
             .query(TABLE_FOREIGN_KEYS, &[&table.get_name()])?
             .into_iter()
-            .map(|row| row.into())
-            .collect();
+            .map(|row| row.into());
 
-        let tables: Vec<Self::Table> = fkeys
-            .into_iter()
+        let tables: Vec<Self::Table> = fkeys_iterator
             // Table from foreign key
-            .map(|fkey| PgTable::new(fkey.foreign_table_name, Some(fkey.foreign_table_schema)))
+            .map(|fkey: ForeignKey| {
+                PgTable::new(fkey.foreign_table_name, Some(fkey.foreign_table_schema))
+            })
             // Columns for table
             .map(|mut table| {
                 if let Ok(columns) = self.get_columns(connection, &table) {

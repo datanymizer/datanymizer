@@ -1,4 +1,7 @@
-use crate::transformer::{TransformContext, TransformResult, TransformResultHelper, Transformer};
+use crate::{
+    transformer::{TransformContext, TransformResult, TransformResultHelper, Transformer},
+    utils,
+};
 use serde::{Deserialize, Serialize};
 
 const DEFAULT_LENGTH: usize = 32;
@@ -49,7 +52,7 @@ impl Transformer for HexTokenTransformer {
         _field_value: &str,
         _ctx: &Option<TransformContext>,
     ) -> TransformResult {
-        TransformResult::present(super::rnd_chars(self.len, &CHARS))
+        TransformResult::present(utils::rnd_chars(self.len, &CHARS))
     }
 }
 

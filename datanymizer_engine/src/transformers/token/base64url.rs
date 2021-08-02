@@ -1,4 +1,7 @@
-use crate::transformer::{TransformContext, TransformResult, TransformResultHelper, Transformer};
+use crate::{
+    transformer::{TransformContext, TransformResult, TransformResultHelper, Transformer},
+    utils,
+};
 use serde::{Deserialize, Serialize};
 
 const DEFAULT_LENGTH: usize = 32;
@@ -65,7 +68,7 @@ impl Transformer for Base64UrlTokenTransformer {
         };
         TransformResult::present(format!(
             "{}{}",
-            super::rnd_chars(self.len - self.pad, &CHARS),
+            utils::rnd_chars(self.len - self.pad, &CHARS),
             padding
         ))
     }

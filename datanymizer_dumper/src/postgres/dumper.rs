@@ -118,7 +118,7 @@ impl PgDumper {
         self.write_log(format!("Dump table: {}", &table.get_full_name()))?;
 
         self.dump_writer.write_all(b"\n")?;
-        self.dump_writer.write_all(&table.query_from().as_bytes())?;
+        self.dump_writer.write_all(table.query_from().as_bytes())?;
         self.dump_writer.write_all(b"\n")?;
 
         let cfg = settings.get_table(table.get_name().as_str());
