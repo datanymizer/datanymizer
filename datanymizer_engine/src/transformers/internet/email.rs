@@ -153,8 +153,10 @@ impl Affix {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::transformers::FirstNameTransformer;
-    use crate::{LocaleConfig, Transformer, TransformerDefaults, Transformers};
+    use crate::{
+        transformers::FirstNameTransformer, LocaleConfig, Transformer, TransformerDefaults,
+        Transformers,
+    };
 
     #[test]
     fn parse_config() {
