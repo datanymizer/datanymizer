@@ -5,6 +5,13 @@ use crate::{
 use fake::{faker::internet::raw::*, locales::EN, Fake};
 use serde::{Deserialize, Serialize};
 
+const CHARS: &[char] = &[
+    'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's',
+    't', 'u', 'v', 'w', 'x', 'y', 'z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+];
+
+const DEFAULT_AFFIX_SEPARATOR: char = '-';
+
 /// Transformer generates random emails
 ///
 /// # Examples
@@ -17,7 +24,7 @@ use serde::{Deserialize, Serialize};
 ///       kind: Safe
 /// ```
 ///
-/// You can add a random alphanumeric prefix and/or suffix:
+/// You can add a random alphanumeric prefix and/or suffix (like "ac23f-" or "-dfz12"):
 ///
 /// ```yaml
 /// #...
@@ -36,14 +43,63 @@ use serde::{Deserialize, Serialize};
 ///       # suffix length
 ///       suffix: 5
 /// ```
-#[derive(Serialize, Deserialize, PartialEq, Eq, Hash, Clone, Debug, Default)]
+///
+/// Also you can specify a fixed prefix/suffix ("test-" or "-test"):
+///
+/// ```yaml
+/// #...
+/// rules:
+///   field_name:
+///     email:
+///       # prefix content
+///       prefix: "test"
+/// ```
+///
+/// Or use a transformer as prefix/suffix (usually, a template):
+///
+/// ```yaml
+/// #...
+/// rules:
+///   field_name:
+///     email:
+///       # prefix template
+///       prefix:
+///         template:
+///           format: "........"
+///           #.......
+/// ```
+///
+/// The default separator is "-" you can change it with `affix_separator`:
+///
+/// ```yaml
+/// #...
+/// rules:
+///   field_name:
+///     email:
+///       prefix: 5
+///       affix_separator: "__"
+/// ```
+#[derive(Serialize, Deserialize, PartialEq, Eq, Hash, Clone, Debug)]
 #[serde(default)]
 pub struct EmailTransformer {
     /// Email kind (`Safe`, `Free`; `Safe` is default)
     pub kind: EmailKind,
     prefix: Option<Affix>,
     suffix: Option<Affix>,
+    affix_separator: String,
     pub uniq: Uniqueness,
+}
+
+impl Default for EmailTransformer {
+    fn default() -> Self {
+        Self {
+            kind: EmailKind::default(),
+            prefix: None,
+            suffix: None,
+            affix_separator: String::from(DEFAULT_AFFIX_SEPARATOR),
+            uniq: Uniqueness::default()
+        }
+    }
 }
 
 /// Kind of email
@@ -60,13 +116,6 @@ impl Default for EmailKind {
         Self::Safe
     }
 }
-
-const CHARS: &[char] = &[
-    'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's',
-    't', 'u', 'v', 'w', 'x', 'y', 'z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-];
-
-const AFFIX_SEPARATOR: char = '-';
 
 impl EmailTransformer {
     pub fn new() -> Self {
@@ -91,22 +140,22 @@ impl UniqTransformer for EmailTransformer {
             email = format!(
                 "{}{}{}@{}",
                 parts[0],
-                AFFIX_SEPARATOR,
+                self.affix_separator,
                 suffix.generate(field_name, field_value, ctx),
                 parts[1]
             );
         };
 
         if let Some(prefix) = &self.prefix {
-            format!(
+            email = format!(
                 "{}{}{}",
                 prefix.generate(field_name, field_value, ctx),
-                AFFIX_SEPARATOR,
+                self.affix_separator,
                 email
             )
-        } else {
-            email
         }
+
+        email
     }
 
     fn uniq(&self) -> &Uniqueness {
@@ -205,7 +254,7 @@ mod tests {
             let user_and_domain = user_and_domain("prefix: 5");
 
             assert_eq!(user_and_domain.len(), 2);
-            assert_eq!(user_and_domain[0].chars().nth(5).unwrap(), AFFIX_SEPARATOR);
+            assert_eq!(user_and_domain[0].chars().nth(5).unwrap(), DEFAULT_AFFIX_SEPARATOR);
             assert!(user_and_domain[0].len() > 7);
         }
 
@@ -232,9 +281,22 @@ mod tests {
             assert!(user_and_domain[0].starts_with("tpl-orig-"));
             assert_eq!(
                 user_and_domain[0].chars().nth_back(2).unwrap(),
-                AFFIX_SEPARATOR
+                DEFAULT_AFFIX_SEPARATOR
             );
             assert!(user_and_domain[0].len() > 13);
+        }
+
+        #[test]
+        fn other_separator() {
+            let config = r#"
+                             prefix: 3
+                             affix_separator: "_"
+                           "#;
+            let user_and_domain = user_and_domain(config);
+
+            assert_eq!(user_and_domain.len(), 2);
+            assert_eq!(user_and_domain[0].chars().nth(3).unwrap(), '_');
+            assert!(user_and_domain[0].len() > 5);
         }
     }
 
