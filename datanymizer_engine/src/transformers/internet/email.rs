@@ -97,7 +97,7 @@ impl Default for EmailTransformer {
             prefix: None,
             suffix: None,
             affix_separator: String::from(DEFAULT_AFFIX_SEPARATOR),
-            uniq: Uniqueness::default()
+            uniq: Uniqueness::default(),
         }
     }
 }
@@ -254,7 +254,10 @@ mod tests {
             let user_and_domain = user_and_domain("prefix: 5");
 
             assert_eq!(user_and_domain.len(), 2);
-            assert_eq!(user_and_domain[0].chars().nth(5).unwrap(), DEFAULT_AFFIX_SEPARATOR);
+            assert_eq!(
+                user_and_domain[0].chars().nth(5).unwrap(),
+                DEFAULT_AFFIX_SEPARATOR
+            );
             assert!(user_and_domain[0].len() > 7);
         }
 
