@@ -423,6 +423,15 @@ It is not real email addresses.
 With the `Free` kind the transformer generates emails for free email providers (e.g., `some@gmail.com`, 
 `some@yahoo.com`, `some@hotmail.com`). 
 
+You can add a random alphanumeric prefix and/or suffix (e.g., `12zsd-some@example.com`, `some-asd1mk@example.com`,
+`anahgk-some-a21km@example.com`).
+This is useful when you need many unique emails.
+
+Also, you can specify a fixed prefix/suffix (`test-` or `-test`) or use a transformer as a prefix/suffix
+(usually, a template).
+
+The default separator for prefixes and suffixes is `-`. You can change it with the `affix_separator` option.
+
 Examples:
 
 The default:
@@ -436,6 +445,48 @@ You can specify the kind:
 ```yaml
 email:
   kind: Free
+```
+
+With a random prefix:
+
+```yaml
+email:
+  # prefix length
+  prefix: 5
+```
+
+With a random suffix:
+
+```yaml
+  email:
+    # suffix length
+    suffix: 5
+```
+
+With a fixed prefix:
+```yaml
+email:
+  # prefix content
+  prefix: "test"
+```
+
+Using a transformer as prefix:
+
+```yaml
+email:
+  # prefix template
+  prefix:
+    template:
+      format: "........"
+      #.......
+```
+
+Custom `affix_separator` (`77zsd__some@example.com`):
+
+```yaml
+email:
+  prefix: 5
+  affix_separator: "__"
 ```
 
 If you want to generate unique emails, use this option:

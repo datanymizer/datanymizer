@@ -1,5 +1,5 @@
 use super::{TransformContext, TransformResult, TransformResultHelper, Transformer, Uniqueness};
-use crate::uniq_collector;
+use crate::{uniq_collector, TransformerInitContext};
 
 pub trait UniqTransformer {
     fn do_transform(
@@ -46,6 +46,8 @@ pub trait UniqTransformer {
             self.try_count()
         )
     }
+
+    fn init(&mut self, _ctx: &TransformerInitContext) {}
 }
 
 impl<T> Transformer for T
@@ -70,6 +72,10 @@ where
         } else {
             TransformResult::present(self.do_transform(field_name, field_value, ctx))
         }
+    }
+
+    fn init(&mut self, ctx: &TransformerInitContext) {
+        self.init(ctx);
     }
 }
 
