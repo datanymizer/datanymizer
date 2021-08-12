@@ -44,7 +44,7 @@ const DEFAULT_AFFIX_SEPARATOR: char = '-';
 ///       suffix: 5
 /// ```
 ///
-/// Also you can specify a fixed prefix/suffix ("test-" or "-test"):
+/// Also, you can specify a fixed prefix/suffix ("test-" or "-test"):
 ///
 /// ```yaml
 /// #...
@@ -69,7 +69,7 @@ const DEFAULT_AFFIX_SEPARATOR: char = '-';
 ///           #.......
 /// ```
 ///
-/// The default separator is "-" you can change it with `affix_separator`:
+/// The default separator is "-". You can change it with `affix_separator`:
 ///
 /// ```yaml
 /// #...

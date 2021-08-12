@@ -427,6 +427,11 @@ You can add a random alphanumeric prefix and/or suffix (e.g., `12zsd-some@exampl
 `anahgk-some-a21km@example.com`).
 This is useful when you need many unique emails.
 
+Also, you can specify a fixed prefix/suffix (`test-` or `-test`) or use a transformer as a prefix/suffix
+(usually, a template).
+
+The default separator for prefixes and suffixes is `-`. You can change it with the `affix_separator` option.
+
 Examples:
 
 The default:
@@ -456,6 +461,32 @@ With a random suffix:
   email:
     # suffix length
     suffix: 5
+```
+
+With a fixed prefix:
+```yaml
+email:
+  # prefix content
+  prefix: "test"
+```
+
+Using a transformer as prefix:
+
+```yaml
+email:
+  # prefix template
+  prefix:
+    template:
+      format: "........"
+      #.......
+```
+
+Custom `affix_separator` (`77zsd__some@example.com`):
+
+```yaml
+email:
+  prefix: 5
+  affix_separator: "__"
 ```
 
 If you want to generate unique emails, use this option:
