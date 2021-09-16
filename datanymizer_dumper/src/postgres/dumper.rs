@@ -155,6 +155,13 @@ impl PgDumper {
         }
 
         self.dump_writer.write_all(b"\\.\n")?;
+        for seq in &table.sequences {
+            let last_value: i64 = tr.query_one(seq.last_value_query().as_str(), &[])?.get(0);
+            self.dump_writer.write_all(b"\n")?;
+            self.dump_writer
+                .write_all(seq.setval_query(last_value).as_bytes())?;
+            self.dump_writer.write_all(b"\n")?;
+        }
 
         self.progress_bar.finish();
         self.progress_bar.reset();

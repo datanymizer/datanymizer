@@ -6,6 +6,7 @@ mod escaper;
 pub mod foreign_key;
 pub mod row;
 pub mod schema_inspector;
+mod sequence;
 pub mod table;
 pub mod writer;
 

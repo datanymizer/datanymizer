@@ -1,11 +1,10 @@
 use super::{
-    column::PgColumn, dumper::PgDumper, foreign_key::ForeignKey, table::PgTable, Dumper,
-    SchemaInspector,
+    column::PgColumn, dumper::PgDumper, foreign_key::ForeignKey, sequence::PgSequence,
+    table::PgTable, Dumper, SchemaInspector,
 };
 use crate::Table;
 use anyhow::Result;
 use postgres::types::Type;
-use std::vec::Vec;
 
 const PG_CATALOG_SCHEMA: &str = "SELECT tablename, schemaname
                                  FROM pg_catalog.pg_tables
@@ -59,6 +58,9 @@ impl SchemaInspector for PgSchemaInspector {
             .map(|mut table| {
                 if let Ok(columns) = self.get_columns(connection, &table) {
                     table.set_columns(columns);
+                };
+                if let Ok(sequences) = self.get_sequences(connection, &table) {
+                    table.set_sequences(sequences);
                 };
 
                 match self.get_table_size(connection, table.get_name()) {
@@ -116,6 +118,9 @@ impl SchemaInspector for PgSchemaInspector {
                 if let Ok(columns) = self.get_columns(connection, &table) {
                     table.set_columns(columns);
                 };
+                if let Ok(sequences) = self.get_sequences(connection, &table) {
+                    table.set_sequences(sequences);
+                };
 
                 match self.get_table_size(connection, table.get_name()) {
                     Ok(size) => table.size = size as i64,
@@ -140,5 +145,28 @@ impl SchemaInspector for PgSchemaInspector {
             .map(|row| row.into())
             .collect();
         Ok(items)
+    }
+}
+
+impl PgSchemaInspector {
+    pub fn get_sequences(
+        &self,
+        connection: &mut <<Self as SchemaInspector>::Dumper as Dumper>::Connection,
+        table: &<Self as SchemaInspector>::Table,
+    ) -> Result<Vec<PgSequence>> {
+        let mut sequences = vec![];
+        for col in table.columns.iter() {
+            let full_name: Option<String> = connection
+                .query_one(
+                    "SELECT pg_get_serial_sequence($1, $2)",
+                    &[&table.get_full_name(), &col.name],
+                )?
+                .get(0);
+            if let Some(full_name) = full_name {
+                sequences.push(PgSequence { full_name });
+            }
+        }
+
+        Ok(sequences)
     }
 }
