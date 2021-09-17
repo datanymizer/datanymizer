@@ -1,4 +1,4 @@
-use super::{column::PgColumn, dumper::PgDumper, row::PgRow};
+use super::{column::PgColumn, dumper::PgDumper, row::PgRow, sequence::PgSequence};
 use crate::Table;
 use datanymizer_engine::{Query as QueryCfg, Table as TableCfg};
 use postgres::{types::Type, Row as PostgresRow};
@@ -12,6 +12,7 @@ pub struct PgTable {
     pub tablename: String,
     pub schemaname: Option<String>,
     pub columns: Vec<PgColumn>,
+    pub sequences: Vec<PgSequence>,
     column_indexes: HashMap<String, usize>,
     pub size: i64,
 }
@@ -73,6 +74,7 @@ impl PgTable {
             tablename,
             schemaname,
             columns: vec![],
+            sequences: vec![],
             column_indexes: HashMap::new(),
             size: 0,
         }
@@ -88,6 +90,10 @@ impl PgTable {
 
         self.column_indexes = map;
         self.columns = columns;
+    }
+
+    pub fn set_sequences(&mut self, sequences: Vec<PgSequence>) {
+        self.sequences = sequences;
     }
 
     pub fn transformed_query_to(
