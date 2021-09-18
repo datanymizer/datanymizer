@@ -32,6 +32,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   ([@evgeniy-r](https://github.com/evgeniy-r))
 
 ### 🛠 Fixed
+- Update the `fake` crate to 2.4.1 [#85](https://github.com/datanymizer/datanymizer/pull/85)
+  ([@evgeniy-r](https://github.com/evgeniy-r))
 - Exit on `pg_dump` errors [#73](https://github.com/datanymizer/datanymizer/pull/73)
   ([@evgeniy-r](https://github.com/evgeniy-r))
 - Fix EmailTransformer [#72](https://github.com/datanymizer/datanymizer/pull/72)

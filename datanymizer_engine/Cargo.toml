@@ -10,9 +10,9 @@ edition = "2018"
 anyhow = "1.0"
 config = "0.10"
 csv = "1.1"
-fake = { version = "2.2", features = ["chrono"] }
+fake = { version = "2.4.1", features = ["chrono"] }
 serde = { version = "1.0", features = ["derive"] }
-rand = "0.7.3"
+rand = "0.8.4"
 unicode-segmentation = "1.7.0"
 serde_yaml = "0.8.14"
 serde_json = "1.0"
