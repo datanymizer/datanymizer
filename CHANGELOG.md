@@ -32,7 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   ([@evgeniy-r](https://github.com/evgeniy-r))
 
 ### 🛠 Fixed
-- Update the `tokio` and `futures`crates due to security issues
+- Update the `tokio` and `futures` crates due to security issues
   [#87](https://github.com/datanymizer/datanymizer/pull/87) ([@evgeniy-r](https://github.com/evgeniy-r))
 - Update the `fake` crate to 2.4.1 [#85](https://github.com/datanymizer/datanymizer/pull/85)
   ([@evgeniy-r](https://github.com/evgeniy-r))
