@@ -1,20 +1,20 @@
 // Test the faker-based transformer implementation from docs/new_fk_transformer.md
 
-use fake::{locales::Data, Dummy};
+use fake::Dummy;
 use rand::Rng;
 
 // Mock faker
 struct Passport<L>(pub L);
 
-impl<L: Data> Dummy<Passport<L>> for String {
+impl<L: ExtData> Dummy<Passport<L>> for String {
     fn dummy_with_rng<R: Rng + ?Sized>(_: &Passport<L>, _rng: &mut R) -> Self {
         String::from("1234567")
     }
 }
 
 use datanymizer_engine::{
-    FkTransformer, LocaleConfig, Localized, LocalizedFaker, TransformContext, TransformResult,
-    Transformer, TransformerDefaults, TransformerInitContext,
+    ExtData, FkTransformer, LocaleConfig, Localized, LocalizedFaker, TransformContext,
+    TransformResult, Transformer, TransformerDefaults, TransformerInitContext,
 };
 use fake::Fake;
 use serde::{Deserialize, Serialize};
@@ -37,7 +37,7 @@ impl Localized for PassportTransformer {
 }
 
 impl LocalizedFaker<String> for PassportTransformer {
-    fn fake<L: Copy + fake::locales::Data>(&self, l: L) -> String {
+    fn fake<L: ExtData>(&self, l: L) -> String {
         Passport(l).fake()
     }
 }

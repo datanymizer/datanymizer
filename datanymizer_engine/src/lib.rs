@@ -10,7 +10,7 @@ mod utils;
 mod value;
 
 pub use engine::Engine;
-pub use locale::{LocaleConfig, Localized, LocalizedFaker};
+pub use locale::{ExtData, LocaleConfig, Localized, LocalizedFaker};
 pub use settings::{Filter, Query, Settings, Table, TableList, Tables};
 pub use transformer::{
     TransformContext, TransformResult, Transformer, TransformerDefaults, TransformerInitContext,

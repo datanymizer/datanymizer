@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### 🚀 Added
+- `ExtData` trait, dictionaries for the Russian locale (person and company names), the new transformers: `middle_name`
+  and `company_name_alt` [#83](https://github.com/datanymizer/datanymizer/pull/83)
+  ([@evgeniy-r](https://github.com/evgeniy-r))
 - Add sequences to the dump [#84](https://github.com/datanymizer/datanymizer/pull/84)
   ([@evgeniy-r](https://github.com/evgeniy-r)) 
 - Add `prefix` and `suffix` options for `EmailTransformer` [#80](https://github.com/datanymizer/datanymizer/pull/80)

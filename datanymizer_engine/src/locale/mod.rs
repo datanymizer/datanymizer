@@ -1,5 +1,8 @@
 use serde::{Deserialize, Serialize};
 
+mod ext_data;
+pub use ext_data::ExtData;
+
 mod ru;
 pub use ru::RU;
 
@@ -29,7 +32,7 @@ pub trait Localized {
 }
 
 pub trait LocalizedFaker<V>: Localized {
-    fn fake<L: Copy + fake::locales::Data>(&self, l: L) -> V;
+    fn fake<L: ExtData>(&self, l: L) -> V;
 
     fn localized_fake(&self) -> V {
         match self.locale().unwrap_or_else(LocaleConfig::default) {
