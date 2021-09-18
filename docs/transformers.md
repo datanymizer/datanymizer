@@ -360,6 +360,10 @@ Gets a tail component of a company motto.
 
 Gets a company name.
 
+#### company_name_alt 🌐
+
+Gets a company name (an alternative variant).
+
 #### company_suffix 🌐
 
 Gets a company name suffix (e.g., `Inc.` or `LLC`).
@@ -710,6 +714,10 @@ Gets a person first name.
 #### last_name 🌐
 
 Gets a person last name.
+
+#### middle_name 🌐
+
+Gets a person middle name (a patronymic name, if the locale has such a concept).
 
 #### name_suffix 🌐
 

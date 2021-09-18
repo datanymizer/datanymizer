@@ -108,7 +108,7 @@ define_transformers_enum![
 
     ("company_suffix", CompanySuffix, CompanySuffixTransformer),
     ("company_name", CompanyName, CompanyNameTransformer),
-    ("alt_company_name", AltCompanyName, AltCompanyNameTransformer),
+    ("company_name_alt", CompanyNameAlt, CompanyNameAltTransformer),
     ("company_motto", CompanyMotto, CompanyMottoTransformer),
     ("company_motto_head", CompanyMottoHead, CompanyMottoHeadTransformer),
     ("company_motto_middle", CompanyMottoMiddle, CompanyMottoMiddleTransformer),

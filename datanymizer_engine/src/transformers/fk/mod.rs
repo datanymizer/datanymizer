@@ -313,7 +313,7 @@ define_fk_transformers![
     "Gets a company name.",
     ("company_name", CompanyNameTransformer, CompanyName, String, Empty),
     "Gets a company name (another variant).",
-    ("alt_company_name", AltCompanyNameTransformer, AltCompanyName, String, Empty),
+    ("company_name_alt", CompanyNameAltTransformer, CompanyNameAlt, String, Empty),
     "Gets a company motto.",
     ("company_motto", CompanyMottoTransformer, CatchPhase, String, Empty),
     "Gets a head component of a company motto.",
@@ -612,5 +612,14 @@ mod tests {
         };
         let value = t.transform("table.field", "t", &None).unwrap().unwrap();
         assert!(!('A'..='Z').contains(&value.chars().next().unwrap()));
+    }
+
+    #[test]
+    fn ru_locale() {
+        let t = MiddleNameTransformer {
+            locale: Some(LocaleConfig::RU),
+        };
+        let value = t.transform("table.field", "t", &None).unwrap().unwrap();
+        assert!(('А'..='Я').contains(&value.chars().next().unwrap()));
     }
 }
