@@ -1,6 +1,6 @@
 [package]
 name = "pg_datanymizer"
-version = "0.3.0"
+version = "0.3.1"
 authors = ["Aleksandr Kirillov <saratovsource@gmail.com>"]
 edition = "2018"
 description = "Powerful database anonymizer with flexible rules"
