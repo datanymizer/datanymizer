@@ -32,6 +32,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   ([@evgeniy-r](https://github.com/evgeniy-r))
 
 ### 🛠 Fixed
+- Fix a release Cargo profile [#89](https://github.com/datanymizer/datanymizer/pull/89)
+  ([@evgeniy-r](https://github.com/evgeniy-r))
 - Fix the audit pipeline (using fresh bases) [#88](https://github.com/datanymizer/datanymizer/pull/88)
   ([@evgeniy-r](https://github.com/evgeniy-r))
 - Update the `tokio` and `futures` crates due to security issues
