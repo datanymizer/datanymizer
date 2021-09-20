@@ -19,7 +19,8 @@ jobs:
       - name: Build
         run: |
           rustup target add x86_64-unknown-linux-musl
-          sudo sh -c 'mkdir /usr/include/x86_64-linux-musl && \
+          sudo sh -c 'apt-get install musl-tools && \
+              mkdir /usr/include/x86_64-linux-musl && \
               ln -s /usr/include/x86_64-linux-gnu/asm /usr/include/x86_64-linux-musl/asm && \
               ln -s /usr/include/asm-generic /usr/include/x86_64-linux-musl/asm-generic && \
               ln -s /usr/include/linux /usr/include/x86_64-linux-musl/linux && \
