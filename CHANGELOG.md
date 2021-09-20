@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [v0.3.0] - 2021-09-20
+## [v0.3.1] - 2021-09-20
 ### 🚀 Added
 - `ExtData` trait, dictionaries for the Russian locale (person and company names), the new transformers: `middle_name`
   and `company_name_alt` [#83](https://github.com/datanymizer/datanymizer/pull/83)
@@ -50,6 +50,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   ([@evgeniy-r](https://github.com/evgeniy-r))
 - Add proper escaping after the transformation for Postgres [#60](https://github.com/datanymizer/datanymizer/pull/60)
   ([@evgeniy-r](https://github.com/evgeniy-r))
+
+## [v0.3.0] - 2021-09-20
+
+The release was yanked.
 
 ## [v0.2.0] - 2021-04-28
 ### 🚀 Added
