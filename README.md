@@ -37,7 +37,7 @@ $ curl -sSfL https://raw.githubusercontent.com/datanymizer/datanymizer/main/cli/
 $ curl -sSfL https://git.io/pg_datanymizer | sh -s
 
 # Specify installation directory and version
-$ curl -sSfL https://git.io/pg_datanymizer | sh -s -- -b usr/local/bin v0.2.0
+$ curl -sSfL https://git.io/pg_datanymizer | sudo sh -s -- -b /usr/local/bin v0.2.0
 
 # Alpine Linux (wget)
 $ wget -q -O - https://git.io/pg_datanymizer | sh -s
