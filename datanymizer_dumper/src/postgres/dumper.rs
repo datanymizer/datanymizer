@@ -6,7 +6,7 @@ use crate::{Dumper, SchemaInspector, Table};
 use anyhow::Result;
 use datanymizer_engine::{Engine, Filter, Settings, TableList};
 use indicatif::{HumanDuration, ProgressBar, ProgressStyle};
-use postgres::{Client, Transaction};
+use postgres::{Client, IsolationLevel, Transaction};
 use std::{
     io::{self, prelude::*},
     process::{self, Command},
@@ -198,7 +198,10 @@ impl Dumper for PgDumper {
         let all_tables_count = tables.len();
 
         // In transaction
-        let mut tr = connection.transaction()?;
+        let mut tr = connection
+            .build_transaction()
+            .isolation_level(IsolationLevel::RepeatableRead)
+            .start()?;
         for (ind, (table, _weight)) in tables.iter().enumerate() {
             self.debug(format!(
                 "[{} / {}] Prepare to dump table: {}",
