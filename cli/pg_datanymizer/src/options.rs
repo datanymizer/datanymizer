@@ -1,6 +1,23 @@
 use anyhow::{anyhow, Result};
-use structopt::StructOpt;
+use structopt::{clap::arg_enum, StructOpt};
 use url::Url;
+
+arg_enum! {
+    #[derive(Debug, Clone)]
+    pub enum TransactionConfig {
+        NoTransaction,
+        ReadUncommitted,
+        ReadCommitted,
+        RepeatableRead,
+        Serializable,
+    }
+}
+
+impl Default for TransactionConfig {
+    fn default() -> Self {
+        Self::ReadCommitted
+    }
+}
 
 #[derive(StructOpt, Debug, Clone)]
 #[structopt(name = "pg_datanymizer")]
@@ -48,6 +65,15 @@ pub struct Options {
 
     #[structopt(short = "W", long, help = "User password")]
     pub password: Option<String>,
+
+    #[structopt(
+        long,
+        default_value,
+        case_insensitive = true,
+        possible_values = &TransactionConfig::variants(),
+        help = "Using a transaction when dumping data, you can specify the isolation level",
+    )]
+    pub dump_transaction: TransactionConfig,
 
     #[structopt(
         long = "pg_dump",

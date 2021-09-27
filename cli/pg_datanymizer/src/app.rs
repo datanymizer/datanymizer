@@ -1,11 +1,11 @@
 use anyhow::Result;
 use native_tls::TlsConnector;
-use postgres::{Client, NoTls};
+use postgres::{Client, NoTls, IsolationLevel};
 use postgres_native_tls::MakeTlsConnector;
 use std::borrow::Cow;
 use url::Url;
 
-use crate::options::Options;
+use crate::options::{Options, TransactionConfig};
 
 use datanymizer_dumper::{postgres::dumper::PgDumper, Dumper};
 use datanymizer_engine::{Engine, Settings};
@@ -40,6 +40,7 @@ impl App {
 
         PgDumper::new(
             engine,
+            self.isolation_level(),
             self.options.pg_dump_location.clone(),
             self.options.file.clone(),
             self.options.pg_dump_args.clone(),
@@ -91,6 +92,16 @@ impl App {
         };
 
         Ok(connector)
+    }
+
+    fn isolation_level(&self) -> Option<IsolationLevel> {
+        match self.options.dump_transaction {
+            TransactionConfig::NoTransaction => None,
+            TransactionConfig::ReadUncommitted => Some(IsolationLevel::ReadUncommitted),
+            TransactionConfig::ReadCommitted => Some(IsolationLevel::ReadCommitted),
+            TransactionConfig::RepeatableRead => Some(IsolationLevel::RepeatableRead),
+            TransactionConfig::Serializable => Some(IsolationLevel::Serializable),
+        }
     }
 }
 
