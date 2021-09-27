@@ -1,6 +1,6 @@
 use anyhow::Result;
 use native_tls::TlsConnector;
-use postgres::{Client, NoTls, IsolationLevel};
+use postgres::{Client, IsolationLevel, NoTls};
 use postgres_native_tls::MakeTlsConnector;
 use std::borrow::Cow;
 use url::Url;

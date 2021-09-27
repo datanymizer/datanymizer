@@ -1,8 +1,7 @@
-use super::row::PgRow;
-use super::schema_inspector::PgSchemaInspector;
-use super::table::PgTable;
-use super::writer::DumpWriter;
-use crate::postgres::query_wrapper::QueryWrapper;
+use super::{
+    query_wrapper::QueryWrapper, row::PgRow, schema_inspector::PgSchemaInspector, table::PgTable,
+    writer::DumpWriter,
+};
 use crate::{Dumper, SchemaInspector, Table};
 use anyhow::Result;
 use datanymizer_engine::{Engine, Filter, Settings, TableList};
