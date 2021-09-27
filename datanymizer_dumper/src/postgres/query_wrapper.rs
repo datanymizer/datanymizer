@@ -8,7 +8,7 @@ pub enum QueryWrapper<'a> {
 }
 
 impl<'a> QueryWrapper<'a> {
-    pub fn with_iso_level(cl: &'a mut Client, level: Option<IsolationLevel>) -> Result<Self> {
+    pub fn with_isolation_level(cl: &'a mut Client, level: Option<IsolationLevel>) -> Result<Self> {
         let wrapper = match level {
             Some(level) => {
                 let tr = cl.build_transaction().isolation_level(level).start()?;

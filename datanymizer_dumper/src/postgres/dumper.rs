@@ -200,7 +200,8 @@ impl Dumper for PgDumper {
         tables.sort_by(|a, b| b.1.cmp(&a.1));
         let all_tables_count = tables.len();
 
-        let mut query_wrapper = QueryWrapper::with_iso_level(connection, self.pg_isolation_level)?;
+        let mut query_wrapper =
+            QueryWrapper::with_isolation_level(connection, self.pg_isolation_level)?;
         for (ind, (table, _weight)) in tables.iter().enumerate() {
             self.debug(format!(
                 "[{} / {}] Prepare to dump table: {}",
