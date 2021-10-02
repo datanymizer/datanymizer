@@ -6,8 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### 🚀 Added
+- Implement returning NULL values for PostgreSQL from transformers
+  [#98](https://github.com/datanymizer/datanymizer/pull/98) ([@evgeniy-r](https://github.com/evgeniy-r))
 - Configurable dump transaction (whether to use, an isolation level)
-  [#99](https://github.com/datanymizer/datanymizer/pull/99) ([@evgeniy-r](https://github.com/evgeniy-r))
+  [#96](https://github.com/datanymizer/datanymizer/pull/96) ([@evgeniy-r](https://github.com/evgeniy-r))
 
 ### ⚙️ Changed
 
