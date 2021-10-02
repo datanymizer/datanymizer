@@ -17,7 +17,7 @@ pub struct PgDumper {
     schema_inspector: PgSchemaInspector,
     engine: Engine,
     dump_writer: DumpWriter,
-    pg_isolation_level: Option<IsolationLevel>,
+    dump_isolation_level: Option<IsolationLevel>,
     pg_dump_location: String,
     pg_dump_args: Vec<String>,
     progress_bar: ProgressBar,
@@ -26,7 +26,7 @@ pub struct PgDumper {
 impl PgDumper {
     pub fn new(
         engine: Engine,
-        pg_isolation_level: Option<IsolationLevel>,
+        dump_isolation_level: Option<IsolationLevel>,
         pg_dump_location: String,
         target: Option<String>,
         pg_dump_args: Vec<String>,
@@ -41,7 +41,7 @@ impl PgDumper {
         Ok(Self {
             engine,
             dump_writer,
-            pg_isolation_level,
+            dump_isolation_level,
             pg_dump_location,
             schema_inspector: PgSchemaInspector {},
             progress_bar: pb,
@@ -201,7 +201,7 @@ impl Dumper for PgDumper {
         let all_tables_count = tables.len();
 
         let mut query_wrapper =
-            QueryWrapper::with_isolation_level(connection, self.pg_isolation_level)?;
+            QueryWrapper::with_isolation_level(connection, self.dump_isolation_level)?;
         for (ind, (table, _weight)) in tables.iter().enumerate() {
             self.debug(format!(
                 "[{} / {}] Prepare to dump table: {}",
