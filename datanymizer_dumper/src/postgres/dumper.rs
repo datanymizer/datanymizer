@@ -1,12 +1,12 @@
-use super::row::PgRow;
-use super::schema_inspector::PgSchemaInspector;
-use super::table::PgTable;
-use super::writer::DumpWriter;
+use super::{
+    query_wrapper::QueryWrapper, row::PgRow, schema_inspector::PgSchemaInspector, table::PgTable,
+    writer::DumpWriter,
+};
 use crate::{Dumper, SchemaInspector, Table};
 use anyhow::Result;
 use datanymizer_engine::{Engine, Filter, Settings, TableList};
 use indicatif::{HumanDuration, ProgressBar, ProgressStyle};
-use postgres::{Client, Transaction};
+use postgres::{Client, IsolationLevel};
 use std::{
     io::{self, prelude::*},
     process::{self, Command},
@@ -17,6 +17,7 @@ pub struct PgDumper {
     schema_inspector: PgSchemaInspector,
     engine: Engine,
     dump_writer: DumpWriter,
+    dump_isolation_level: Option<IsolationLevel>,
     pg_dump_location: String,
     pg_dump_args: Vec<String>,
     progress_bar: ProgressBar,
@@ -25,6 +26,7 @@ pub struct PgDumper {
 impl PgDumper {
     pub fn new(
         engine: Engine,
+        dump_isolation_level: Option<IsolationLevel>,
         pg_dump_location: String,
         target: Option<String>,
         pg_dump_args: Vec<String>,
@@ -39,6 +41,7 @@ impl PgDumper {
         Ok(Self {
             engine,
             dump_writer,
+            dump_isolation_level,
             pg_dump_location,
             schema_inspector: PgSchemaInspector {},
             progress_bar: pb,
@@ -111,7 +114,7 @@ impl PgDumper {
         Vec::new()
     }
 
-    fn dump_table(&mut self, table: &PgTable, tr: &mut Transaction) -> Result<()> {
+    fn dump_table(&mut self, table: &PgTable, qw: &mut QueryWrapper) -> Result<()> {
         let settings = self.settings();
         let started = Instant::now();
 
@@ -127,7 +130,7 @@ impl PgDumper {
 
         let mut count: u64 = 0;
         if let Some(transformed_query) = table.transformed_query_to(cfg, count) {
-            let reader = tr.copy_out(transformed_query.as_str())?;
+            let reader = qw.copy_out(transformed_query.as_str())?;
             for line in reader.lines() {
                 // Tick for bar
                 self.progress_bar.inc(1);
@@ -142,7 +145,7 @@ impl PgDumper {
         }
 
         if let Some(untransformed_query) = table.untransformed_query_to(cfg, count) {
-            let reader = tr.copy_out(untransformed_query.as_str())?;
+            let reader = qw.copy_out(untransformed_query.as_str())?;
             for line in reader.lines() {
                 // Tick for bar
                 self.progress_bar.inc(1);
@@ -156,7 +159,7 @@ impl PgDumper {
 
         self.dump_writer.write_all(b"\\.\n")?;
         for seq in &table.sequences {
-            let last_value: i64 = tr.query_one(seq.last_value_query().as_str(), &[])?.get(0);
+            let last_value: i64 = qw.query_one(seq.last_value_query().as_str(), &[])?.get(0);
             self.dump_writer.write_all(b"\n")?;
             self.dump_writer
                 .write_all(seq.setval_query(last_value).as_bytes())?;
@@ -197,8 +200,8 @@ impl Dumper for PgDumper {
         tables.sort_by(|a, b| b.1.cmp(&a.1));
         let all_tables_count = tables.len();
 
-        // In transaction
-        let mut tr = connection.transaction()?;
+        let mut query_wrapper =
+            QueryWrapper::with_isolation_level(connection, self.dump_isolation_level)?;
         for (ind, (table, _weight)) in tables.iter().enumerate() {
             self.debug(format!(
                 "[{} / {}] Prepare to dump table: {}",
@@ -208,7 +211,7 @@ impl Dumper for PgDumper {
             ));
 
             if self.filter_table(table.get_full_name(), &settings.filter) {
-                self.dump_table(table, &mut tr)?;
+                self.dump_table(table, &mut query_wrapper)?;
             } else {
                 self.debug(format!("[Dumping: {}] --- SKIP ---", table.get_full_name()));
             }

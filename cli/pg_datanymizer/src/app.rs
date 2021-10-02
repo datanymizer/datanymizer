@@ -1,11 +1,11 @@
 use anyhow::Result;
 use native_tls::TlsConnector;
-use postgres::{Client, NoTls};
+use postgres::{Client, IsolationLevel, NoTls};
 use postgres_native_tls::MakeTlsConnector;
 use std::borrow::Cow;
 use url::Url;
 
-use crate::options::Options;
+use crate::options::{Options, TransactionConfig};
 
 use datanymizer_dumper::{postgres::dumper::PgDumper, Dumper};
 use datanymizer_engine::{Engine, Settings};
@@ -40,6 +40,7 @@ impl App {
 
         PgDumper::new(
             engine,
+            self.dump_isolation_level(),
             self.options.pg_dump_location.clone(),
             self.options.file.clone(),
             self.options.pg_dump_args.clone(),
@@ -92,6 +93,16 @@ impl App {
 
         Ok(connector)
     }
+
+    fn dump_isolation_level(&self) -> Option<IsolationLevel> {
+        match self.options.dump_transaction {
+            TransactionConfig::NoTransaction => None,
+            TransactionConfig::ReadUncommitted => Some(IsolationLevel::ReadUncommitted),
+            TransactionConfig::ReadCommitted => Some(IsolationLevel::ReadCommitted),
+            TransactionConfig::RepeatableRead => Some(IsolationLevel::RepeatableRead),
+            TransactionConfig::Serializable => Some(IsolationLevel::Serializable),
+        }
+    }
 }
 
 #[cfg(test)]
@@ -130,6 +141,40 @@ mod tests {
         fn ssl_require() {
             let connector = connector("postgres://postgres@localhost/dbname?sslmode=require");
             assert!(connector.is_some());
+        }
+    }
+
+    mod isolation_level {
+        use super::*;
+
+        #[test]
+        fn default() {
+            let options =
+                Options::from_iter(vec!["DBNAME", "postgres://postgres@localhost/dbname"]);
+            let level = App::from_options(options).unwrap().dump_isolation_level();
+            assert!(matches!(level, Some(IsolationLevel::ReadCommitted)));
+        }
+
+        fn level(dt: &str) -> Option<IsolationLevel> {
+            let options = Options::from_iter(vec![
+                "DBNAME",
+                "postgres://postgres@localhost/dbname",
+                "--dump-transaction",
+                dt,
+            ]);
+            App::from_options(options).unwrap().dump_isolation_level()
+        }
+
+        #[test]
+        fn no_transaction() {
+            let level = level("NoTransaction");
+            assert!(level.is_none());
+        }
+
+        #[test]
+        fn repeatable_read() {
+            let level = level("RepeatableRead");
+            assert!(matches!(level, Some(IsolationLevel::RepeatableRead)));
         }
     }
 }
