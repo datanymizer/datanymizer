@@ -27,14 +27,24 @@ const TABLE_FOREIGN_KEYS: &str = "SELECT
                                     JOIN information_schema.constraint_column_usage AS ccu
                                     ON ccu.constraint_name = tc.constraint_name
                                     AND ccu.table_schema = tc.table_schema
-                                WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_name=$1";
+                                WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_name = $1";
 
 const TABLE_COLUMNS_QUERY: &str = "SELECT cc.column_name, cc.ordinal_position, cc.data_type, pt.oid
                                    FROM information_schema.columns as cc
                                    JOIN pg_catalog.pg_type as pt
                                    ON cc.udt_name = pt.typname
-                                   WHERE cc.table_schema=$1 and cc.table_name = $2
+                                   WHERE cc.table_schema = $1 and cc.table_name = $2
                                    ORDER BY cc.ordinal_position ASC";
+
+const TABLE_SIZE_QUERY: &str =
+    "SELECT
+    (pg_catalog.pg_class.reltuples / COALESCE(NULLIF(pg_catalog.pg_class.relpages, 0), 1))::bigint * (
+        pg_relation_size(pg_catalog.pg_class.oid)::bigint /
+        current_setting('block_size')::bigint
+    )::bigint AS len
+    FROM pg_catalog.pg_class
+    INNER JOIN pg_catalog.pg_namespace ON pg_catalog.pg_class.relnamespace = pg_catalog.pg_namespace.oid
+    WHERE pg_catalog.pg_class.relname = $1 AND pg_catalog.pg_namespace.nspname = $2";
 
 #[derive(Clone)]
 pub struct PgSchemaInspector;
@@ -63,7 +73,7 @@ impl SchemaInspector for PgSchemaInspector {
                     table.set_sequences(sequences);
                 };
 
-                match self.get_table_size(connection, table.get_name()) {
+                match self.get_table_size(connection, &table) {
                     Ok(size) => table.size = size as i64,
                     Err(e) => panic!("ERR: {}", e),
                 }
@@ -80,19 +90,9 @@ impl SchemaInspector for PgSchemaInspector {
     fn get_table_size(
         &self,
         connection: &mut <Self::Dumper as Dumper>::Connection,
-        table_name: String,
+        table: &Self::Table,
     ) -> Result<i64> {
-        let query: &str = &format!(
-            "SELECT
-            (reltuples/COALESCE(NULLIF(relpages, 0), 1))::bigint * (
-                pg_relation_size('{table_name}')::bigint /
-                (current_setting('block_size')::bigint)
-            )::bigint as len
-            FROM pg_class where relname = '{table_name}'",
-            table_name = table_name
-        );
-
-        let row = connection.query_one(query, &[])?;
+        let row = connection.query_one(TABLE_SIZE_QUERY, &[&table.tablename, &table.schemaname])?;
         let size: i64 = row.get("len");
         Ok(size)
     }
@@ -111,7 +111,7 @@ impl SchemaInspector for PgSchemaInspector {
         let tables: Vec<Self::Table> = fkeys_iterator
             // Table from foreign key
             .map(|fkey: ForeignKey| {
-                PgTable::new(fkey.foreign_table_name, Some(fkey.foreign_table_schema))
+                PgTable::new(fkey.foreign_table_name, fkey.foreign_table_schema)
             })
             // Columns for table
             .map(|mut table| {
@@ -122,7 +122,7 @@ impl SchemaInspector for PgSchemaInspector {
                     table.set_sequences(sequences);
                 };
 
-                match self.get_table_size(connection, table.get_name()) {
+                match self.get_table_size(connection, &table) {
                     Ok(size) => table.size = size as i64,
                     Err(e) => println!("ERR: {}", e),
                 }
@@ -158,8 +158,8 @@ impl PgSchemaInspector {
         for col in table.columns.iter() {
             let full_name: Option<String> = connection
                 .query_one(
-                    "SELECT pg_get_serial_sequence($1, $2)",
-                    &[&table.get_full_name(), &col.name],
+                    "SELECT pg_catalog.pg_get_serial_sequence($1, $2)",
+                    &[&table.quoted_full_name(), &col.name],
                 )?
                 .get(0);
             if let Some(full_name) = full_name {

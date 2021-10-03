@@ -230,6 +230,9 @@ tables:
 | [rule_order](#rule_order) | no        | list       | An order of rule execution
 | [query](#query)           | no        | dictionary | Conditions for SQL queries for dumping data 
 
+You can use table names with schema (e.g. `public.users`) or without it (just `users`). In the latter case, this means
+that the rules will be applied to the `users` table in any schema.
+
 #### rules
 
 Anonymization rules (we call them `transformers`) for the table columns.
@@ -552,7 +555,11 @@ default:
 
 You can specify which tables you choose (whitelisting) or ignore (blacklisting) to dump.
 
-For dumping only `public.markets` and `public.users` data.
+For now, you must use the full table names here (with schema).
+
+### Examples
+
+For dumping only `public.markets` and `public.users` data:
 
 ```yaml
 filter:
@@ -561,7 +568,7 @@ filter:
     - public.users
 ```
 
-For ignoring these tables and dump data from others.
+For ignoring these tables and dump data from others:
 
 ```yaml
 filter:
@@ -572,7 +579,7 @@ filter:
 
 You can also specify data and schema filters separately.
 
-This is equivalent to the previous example.
+This is equivalent to the previous example:
 
 ```yaml
 filter:
@@ -582,7 +589,7 @@ filter:
       - public.users
 ```
 
-For skipping schema and data from other tables.
+For skipping schema and data from other tables:
 
 ```yaml
 filter:
@@ -592,7 +599,7 @@ filter:
       - public.users
 ```
 
-For skipping schema for `markets` table and dumping data only from `users` table.
+For skipping schema for `markets` table and dumping data only from `users` table:
 
 ```yaml
 filter:

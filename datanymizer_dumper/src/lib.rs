@@ -66,7 +66,7 @@ pub trait SchemaInspector: 'static + Sized + Send + Clone {
     fn get_table_size(
         &self,
         connection: &mut <Self::Dumper as Dumper>::Connection,
-        table_name: String,
+        table: &Self::Table,
     ) -> Result<i64>;
 
     /// Get all dependencies (by FK) for `table` in database
