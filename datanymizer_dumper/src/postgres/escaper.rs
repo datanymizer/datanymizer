@@ -145,5 +145,12 @@ mod tests {
             replace_chars(&mut s);
             assert_eq!(s, r#"\\\\\\\\N"#);
         }
+
+        #[test]
+        fn null_sequence_inside_string() {
+            let mut s = String::from(r#"test\Nstring"#);
+            replace_chars(&mut s);
+            assert_eq!(s, r#"test\\Nstring"#);
+        }
     }
 }
