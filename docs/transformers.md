@@ -335,7 +335,7 @@ If you need the `\N` literal in your database, please return `\\N` from the tran
 
 If you need the `\\N` literal - return `\\\N` and so on.
 
-**Warning!** This behaviour can be changed in the future.
+**Warning!** This behavior can be changed in the future.
 
 ## Business
 
