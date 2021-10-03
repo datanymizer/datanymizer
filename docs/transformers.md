@@ -32,7 +32,7 @@ then there are no configuration options for it.
 
 ### Locales
 
-Also many of them support locale configuration:
+Also, many of them support locale configuration:
 
 ```yaml
 # gets a person last name  
@@ -321,6 +321,21 @@ The full list of functions for working with the store:
   
 * `store_inc` - increments a value in a key (in the first time just stores a value). Working only with numbers.<br/>
   Arguments: `key`, `value`. 
+
+Also, you can use the template transformer for returning NULL values for your database.
+
+For PostgreSQL, we must return `\N` from the transformer:
+
+```yaml
+template:
+  format: '\N'
+```
+
+If you need the `\N` literal in your database, please return `\\N` from the transformer.
+
+If you need the `\\N` literal - return `\\\N` and so on.
+
+**Warning!** This behavior can be changed in the future.
 
 ## Business
 
