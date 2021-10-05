@@ -1,4 +1,4 @@
-example_database_url="https://sp.postgresqltutorial.com/wp-content/uploads/2019/05/dvdrental.zip"
+example_database_url="https://www.postgresqltutorial.com/wp-content/uploads/2019/05/dvdrental.zip"
 tmpfile="/tmp/dump.zip"
 pause=5
 .SILENT:
