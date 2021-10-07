@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### ⚙️ Changed
 
 ### 🛠 Fixed
+- Fix demo docker environment [#109](https://github.com/datanymizer/datanymizer/pull/109) ([@mgrachev](https://github.com/mgrachev))
 
 ## [v0.3.1] - 2021-09-20
 ### 🚀 Added
