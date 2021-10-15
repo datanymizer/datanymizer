@@ -1,5 +1,6 @@
 use super::{column::PgColumn, dumper::PgDumper, row::PgRow, sequence::PgSequence};
 use crate::Table;
+use anyhow::{anyhow, Result};
 use datanymizer_engine::{Query as QueryCfg, Table as TableCfg};
 use postgres::{types::Type, Row as PostgresRow};
 use std::{
@@ -10,7 +11,7 @@ use std::{
 #[derive(Debug, Clone, Eq)]
 pub struct PgTable {
     pub tablename: String,
-    pub schemaname: Option<String>,
+    pub schemaname: String,
     pub columns: Vec<PgColumn>,
     pub sequences: Vec<PgSequence>,
     column_indexes: HashMap<String, usize>,
@@ -42,13 +43,7 @@ impl Table<Type> for PgTable {
 
     // Returns table name with the schema or other prefix, based on database type
     fn get_full_name(&self) -> String {
-        let mut full_name = String::from("");
-        if let Some(schema) = self.schemaname.clone() {
-            full_name.push_str(&schema);
-            full_name.push('.');
-        }
-        full_name.push_str(&self.tablename);
-        full_name
+        format!("{}.{}", self.schemaname, self.tablename)
     }
 
     fn get_columns(&self) -> Vec<Self::Column> {
@@ -69,7 +64,7 @@ impl Table<Type> for PgTable {
 }
 
 impl PgTable {
-    pub fn new(tablename: String, schemaname: Option<String>) -> Self {
+    pub fn new(tablename: String, schemaname: String) -> Self {
         Self {
             tablename,
             schemaname,
@@ -78,6 +73,19 @@ impl PgTable {
             column_indexes: HashMap::new(),
             size: 0,
         }
+    }
+
+    pub fn quote_table_name(name: &str) -> Result<String> {
+        let parts: Vec<_> = name.split('.').collect();
+        match parts.len() {
+            1 => Ok(format!(r#""{}""#, name)),
+            2 => Ok(format!(r#""{}"."{}""#, parts[0], parts[1])),
+            _ => Err(anyhow!("Invalid table name {}", name)),
+        }
+    }
+
+    pub fn quoted_full_name(&self) -> String {
+        format!(r#""{}"."{}""#, self.schemaname, self.tablename)
     }
 
     pub fn set_columns(&mut self, columns: Vec<PgColumn>) {
@@ -142,7 +150,7 @@ impl PgTable {
     pub fn query_from(&self) -> String {
         format!(
             "COPY {}({}) FROM STDIN;",
-            self.get_full_name(),
+            self.quoted_full_name(),
             self.quoted_columns().join(", "),
         )
     }
@@ -171,7 +179,7 @@ impl PgTable {
     fn default_query(&self) -> String {
         format!(
             "COPY {}({}) TO STDOUT",
-            self.get_full_name(),
+            self.quoted_full_name(),
             self.quoted_columns().join(", ")
         )
     }
@@ -179,7 +187,7 @@ impl PgTable {
     fn query_with_select(&self, cs: Vec<Option<String>>, limit: Option<u64>) -> String {
         format!(
             "COPY (SELECT * FROM {}{}{}) TO STDOUT",
-            self.get_full_name(),
+            self.quoted_full_name(),
             Self::sql_conditions(cs),
             Self::sql_limit(limit),
         )
@@ -208,7 +216,7 @@ impl PgTable {
 
 impl From<PostgresRow> for PgTable {
     fn from(row: PostgresRow) -> Self {
-        Self::new(row.get("tablename"), row.try_get("schemaname").ok())
+        Self::new(row.get("tablename"), row.get("schemaname"))
     }
 }
 
@@ -219,21 +227,32 @@ mod tests {
 
     #[test]
     fn table_full_name() {
-        let table = PgTable::new(String::from("name"), Some(String::from("public")));
+        let table = PgTable::new(String::from("name"), String::from("public"));
         assert_eq!(table.get_name(), String::from("name"));
         assert_eq!(table.get_full_name(), String::from("public.name"));
     }
 
     #[test]
-    fn table_without_scheme() {
-        let table = PgTable::new(String::from("name"), None);
-        assert_eq!(table.get_name(), String::from("name"));
-        assert_eq!(table.get_full_name(), String::from("name"));
+    fn quote_table_name() {
+        let name = PgTable::quote_table_name("table").unwrap();
+        assert_eq!(name, "\"table\"");
+
+        let name = PgTable::quote_table_name("public.table").unwrap();
+        assert_eq!(name, "\"public\".\"table\"");
+
+        let name = PgTable::quote_table_name("public.name.");
+        assert!(name.is_err());
+    }
+
+    #[test]
+    fn quoted_full_name() {
+        let table = PgTable::new(String::from("name"), String::from("public2"));
+        assert_eq!(table.quoted_full_name(), r#""public2"."name""#)
     }
 
     #[test]
     fn set_columns() {
-        let mut table = PgTable::new(String::from("name"), None);
+        let mut table = PgTable::new(String::from("name"), String::from("public"));
 
         let col1 = PgColumn {
             position: 1,
@@ -290,7 +309,7 @@ mod tests {
         }
 
         fn table() -> PgTable {
-            let mut table = PgTable::new(table_name(), None);
+            let mut table = PgTable::new(table_name(), String::from("public"));
             table.set_columns(columns());
             table.size = 1000;
             table
@@ -310,7 +329,7 @@ mod tests {
             assert_eq!(table().transformed_query_to(None, 0), None);
             assert_eq!(
                 table().untransformed_query_to(None, 0).unwrap(),
-                "COPY some_table(\"col1\", \"col2\") TO STDOUT"
+                "COPY \"public\".\"some_table\"(\"col1\", \"col2\") TO STDOUT"
             );
             assert_eq!(table().count_of_query_to(None), 1000);
         }
@@ -321,7 +340,7 @@ mod tests {
 
             assert_eq!(
                 table().transformed_query_to(Some(&cfg), 0).unwrap(),
-                "COPY some_table(\"col1\", \"col2\") TO STDOUT"
+                "COPY \"public\".\"some_table\"(\"col1\", \"col2\") TO STDOUT"
             );
             assert_eq!(table().untransformed_query_to(Some(&cfg), 0), None);
             assert_eq!(table().count_of_query_to(Some(&cfg)), 1000);
@@ -337,7 +356,7 @@ mod tests {
 
             assert_eq!(
                 table().transformed_query_to(Some(&cfg), 0).unwrap(),
-                "COPY (SELECT * FROM some_table LIMIT 100) TO STDOUT"
+                "COPY (SELECT * FROM \"public\".\"some_table\" LIMIT 100) TO STDOUT"
             );
             assert_eq!(table().untransformed_query_to(Some(&cfg), 0), None);
             assert_eq!(table().count_of_query_to(Some(&cfg)), 100);
@@ -353,7 +372,7 @@ mod tests {
 
             assert_eq!(
                 table().transformed_query_to(Some(&cfg), 0).unwrap(),
-                "COPY (SELECT * FROM some_table WHERE (col1 = 'value')) TO STDOUT"
+                "COPY (SELECT * FROM \"public\".\"some_table\" WHERE (col1 = 'value')) TO STDOUT"
             );
             assert_eq!(table().untransformed_query_to(Some(&cfg), 0), None);
             assert_eq!(table().count_of_query_to(Some(&cfg)), 1000);
@@ -369,11 +388,11 @@ mod tests {
 
             assert_eq!(
                 table().transformed_query_to(Some(&cfg), 0).unwrap(),
-                "COPY (SELECT * FROM some_table WHERE (col1 = 'value')) TO STDOUT"
+                "COPY (SELECT * FROM \"public\".\"some_table\" WHERE (col1 = 'value')) TO STDOUT"
             );
             assert_eq!(
                 table().untransformed_query_to(Some(&cfg), 0).unwrap(),
-                "COPY (SELECT * FROM some_table WHERE NOT (col1 = 'value')) TO STDOUT"
+                "COPY (SELECT * FROM \"public\".\"some_table\" WHERE NOT (col1 = 'value')) TO STDOUT"
             );
             assert_eq!(table().count_of_query_to(Some(&cfg)), 1000);
         }
@@ -388,12 +407,12 @@ mod tests {
 
             assert_eq!(
                 table().transformed_query_to(Some(&cfg), 0).unwrap(),
-                "COPY (SELECT * FROM some_table \
+                "COPY (SELECT * FROM \"public\".\"some_table\" \
                 WHERE (col1 = 'value') AND (col2 <> 'other_value') LIMIT 500) TO STDOUT"
             );
             assert_eq!(
                 table().untransformed_query_to(Some(&cfg), 0).unwrap(),
-                "COPY (SELECT * FROM some_table \
+                "COPY (SELECT * FROM \"public\".\"some_table\" \
                 WHERE (col1 = 'value') AND NOT (col2 <> 'other_value') LIMIT 500) TO STDOUT"
             );
             assert_eq!(table().count_of_query_to(Some(&cfg)), 500);
@@ -412,11 +431,11 @@ mod tests {
 
                 assert_eq!(
                     table().transformed_query_to(Some(&cfg), 100).unwrap(),
-                    "COPY (SELECT * FROM some_table WHERE (col1 = 'value')) TO STDOUT"
+                    "COPY (SELECT * FROM \"public\".\"some_table\" WHERE (col1 = 'value')) TO STDOUT"
                 );
                 assert_eq!(
                     table().untransformed_query_to(Some(&cfg), 100).unwrap(),
-                    "COPY (SELECT * FROM some_table WHERE NOT (col1 = 'value')) TO STDOUT"
+                    "COPY (SELECT * FROM \"public\".\"some_table\" WHERE NOT (col1 = 'value')) TO STDOUT"
                 );
             }
 
@@ -430,11 +449,11 @@ mod tests {
 
                 assert_eq!(
                     table().transformed_query_to(Some(&cfg), 100).unwrap(),
-                    "COPY (SELECT * FROM some_table WHERE (col1 = 'value') LIMIT 50) TO STDOUT"
+                    "COPY (SELECT * FROM \"public\".\"some_table\" WHERE (col1 = 'value') LIMIT 50) TO STDOUT"
                 );
                 assert_eq!(
                     table().untransformed_query_to(Some(&cfg), 100).unwrap(),
-                    "COPY (SELECT * FROM some_table WHERE NOT (col1 = 'value') LIMIT 50) TO STDOUT"
+                    "COPY (SELECT * FROM \"public\".\"some_table\" WHERE NOT (col1 = 'value') LIMIT 50) TO STDOUT"
                 );
             }
 

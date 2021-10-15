@@ -52,7 +52,7 @@ impl PgDumper {
     fn run_pg_dump(&mut self, section: &str) -> Result<()> {
         let program = &self.pg_dump_location;
         let args = vec!["--section", section];
-        let table_args = Self::table_args(&self.engine.settings.filter);
+        let table_args = Self::table_args(&self.engine.settings.filter)?;
         let db_url = self.engine.settings.source.get_database_url();
 
         let dump_output = Command::new(program)
@@ -95,23 +95,22 @@ impl PgDumper {
         );
     }
 
-    fn table_args(filter: &Option<Filter>) -> Vec<String> {
+    fn table_args(filter: &Option<Filter>) -> Result<Vec<String>> {
+        let mut args = vec![];
         if let Some(f) = filter {
             if let Some(list) = &f.schema {
                 let flag = match list {
                     TableList::Only(_) => "-t",
                     TableList::Except(_) => "-T",
                 };
-
-                return list
-                    .tables()
-                    .iter()
-                    .flat_map(|table| vec![String::from(flag), table.clone()])
-                    .collect();
+                for table in list.tables() {
+                    args.push(String::from(flag));
+                    args.push(PgTable::quote_table_name(table.as_str())?);
+                }
             }
         }
 
-        Vec::new()
+        Ok(args)
     }
 
     fn dump_table(&mut self, table: &PgTable, qw: &mut QueryWrapper) -> Result<()> {
@@ -124,7 +123,7 @@ impl PgDumper {
         self.dump_writer.write_all(table.query_from().as_bytes())?;
         self.dump_writer.write_all(b"\n")?;
 
-        let cfg = settings.get_table(table.get_name().as_str());
+        let cfg = settings.find_table(&[table.get_full_name().as_str(), table.get_name().as_str()]);
 
         self.init_progress_bar(table.count_of_query_to(cfg), &table.get_full_name());
 
@@ -255,22 +254,22 @@ mod tests {
     #[test]
     fn table_args() {
         let empty: Vec<String> = vec![];
-        assert_eq!(PgDumper::table_args(&None), empty);
+        assert_eq!(PgDumper::table_args(&None).unwrap(), empty);
 
         let filter = Filter {
             schema: Some(TableList::Except(vec![String::from("table1")])),
             data: None,
         };
         assert_eq!(
-            PgDumper::table_args(&Some(filter)),
-            vec![String::from("-T"), String::from("table1")]
+            PgDumper::table_args(&Some(filter)).unwrap(),
+            vec![String::from("-T"), String::from("\"table1\"")]
         );
 
         let filter = Filter {
             schema: None,
             data: Some(TableList::Except(vec![String::from("table1")])),
         };
-        assert_eq!(PgDumper::table_args(&Some(filter)), empty);
+        assert_eq!(PgDumper::table_args(&Some(filter)).unwrap(), empty);
 
         let filter = Filter {
             schema: Some(TableList::Only(vec![
@@ -280,12 +279,12 @@ mod tests {
             data: None,
         };
         assert_eq!(
-            PgDumper::table_args(&Some(filter)),
+            PgDumper::table_args(&Some(filter)).unwrap(),
             vec![
                 String::from("-t"),
-                String::from("table1"),
+                String::from("\"table1\""),
                 String::from("-t"),
-                String::from("table2")
+                String::from("\"table2\"")
             ]
         );
     }

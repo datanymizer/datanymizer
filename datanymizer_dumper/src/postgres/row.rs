@@ -72,7 +72,7 @@ mod tests {
         "#;
         let settings = Settings::from_yaml(config, String::new()).unwrap();
 
-        let mut table = PgTable::new("table_name".to_string(), None);
+        let mut table = PgTable::new("table_name".to_string(), "public".to_string());
 
         let col1 = PgColumn {
             position: 1,

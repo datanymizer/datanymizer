@@ -92,6 +92,16 @@ impl Settings {
         self.tables.iter().find(|t| t.name == name)
     }
 
+    pub fn find_table(&self, names: &[&str]) -> Option<&Table> {
+        for name in names {
+            let table = self.get_table(name);
+            if table.is_some() {
+                return table;
+            }
+        }
+        None
+    }
+
     pub fn destination(&self) -> Result<String> {
         self.destination
             .clone()
@@ -155,6 +165,38 @@ mod tests {
                 locale: Some(LocaleConfig::EN)
             })
         );
+    }
+
+    #[test]
+    fn find_table() {
+        let config = r#"
+            tables:
+              - name: companies
+                rules:
+                  name:
+                    company_name: {}
+              - name: users
+                rules:
+                  name:
+                    person_name: {}
+              - name: other_schema.users
+                rules:
+                  other_name:
+                    person_name: {}
+            "#;
+        let s = Settings::from_yaml(config, String::new()).unwrap();
+
+        let t = s.find_table(&["some_table"]);
+        assert!(t.is_none());
+
+        let t = s.find_table(&["some_table", "users"]);
+        assert_eq!(t.unwrap().name, "users");
+
+        let t = s.find_table(&["users", "other_schema.users"]);
+        assert_eq!(t.unwrap().name, "users");
+
+        let t = s.find_table(&["other_schema.users", "users"]);
+        assert_eq!(t.unwrap().name, "other_schema.users");
     }
 
     mod transformers_for {
