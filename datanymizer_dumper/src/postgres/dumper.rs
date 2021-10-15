@@ -128,18 +128,20 @@ impl PgDumper {
         self.init_progress_bar(table.count_of_query_to(cfg), &table.get_full_name());
 
         let mut count: u64 = 0;
-        if let Some(transformed_query) = table.transformed_query_to(cfg, count) {
-            let reader = qw.copy_out(transformed_query.as_str())?;
-            for line in reader.lines() {
-                // Tick for bar
-                self.progress_bar.inc(1);
+        if let Some(cfg) = cfg {
+            if let Some(transformed_query) = table.transformed_query_to(Some(cfg), count) {
+                let reader = qw.copy_out(transformed_query.as_str())?;
+                for line in reader.lines() {
+                    // Tick for bar
+                    self.progress_bar.inc(1);
 
-                let row = PgRow::from_string_row(line?, table.clone());
-                let transformed = row.transform(&self.engine)?;
-                self.dump_writer.write_all(transformed.as_bytes())?;
-                self.dump_writer.write_all(b"\n")?;
+                    let row = PgRow::from_string_row(line?, table.clone());
+                    let transformed = row.transform(&self.engine, cfg.name.as_str())?;
+                    self.dump_writer.write_all(transformed.as_bytes())?;
+                    self.dump_writer.write_all(b"\n")?;
 
-                count += 1;
+                    count += 1;
+                }
             }
         }
 

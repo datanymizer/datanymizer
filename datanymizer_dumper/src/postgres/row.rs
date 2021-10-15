@@ -27,11 +27,11 @@ where
 
     /// Applies the transform engine to every column in the row
     /// Returns a new StringRecord for store in the dump
-    pub fn transform(&self, engine: &Engine) -> Result<String> {
+    pub fn transform(&self, engine: &Engine, cfg_tbl_name: &str) -> Result<String> {
         let split_char: char = char::from_u32(0x0009).unwrap();
         let values: Vec<_> = self.source.split(split_char).collect();
         let mut transformed_values = engine.process_row(
-            self.table.get_name(),
+            String::from(cfg_tbl_name),
             self.table.get_column_indexes(),
             &values,
         )?;
@@ -103,7 +103,7 @@ mod tests {
         let row = PgRow::from_string_row("first\tmiddle\tlast\t".to_string(), table);
 
         assert_eq!(
-            row.transform(&Engine::new(settings)).unwrap(),
+            row.transform(&Engine::new(settings), "table_name").unwrap(),
             "First\tMiddle\tLast\tMulti\\nline\\n"
         );
     }
