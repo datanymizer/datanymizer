@@ -8,7 +8,7 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  release-linux:
+  release-linux-gnu:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
@@ -23,7 +23,25 @@ jobs:
           chmod +x pg_datanymizer
           tar -czf pg_datanymizer-linux-x86_64.tar.gz pg_datanymizer
           rm pg_datanymizer
+      - name: Publish release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: pg_datanymizer-*
+          draft: true
+          body_path: CHANGELOG.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  release-linux-musl:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+      - name: Build
+        run: |
           rustup target add x86_64-unknown-linux-musl
           sudo sh -c 'apt-get install musl-tools && \
               ln -s /usr/include/x86_64-linux-gnu/asm /usr/include/x86_64-linux-musl/asm && \
