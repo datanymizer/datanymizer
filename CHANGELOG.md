@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### 🚀 Added
 
 ### ⚙️ Changed
+- Change edition to 2021 [#113](https://github.com/datanymizer/datanymizer/pull/113)
+  ([@mgrachev](https://github.com/mgrachev))
 
 ### 🛠 Fixed
 - Replace `unwrap_or_else` with `unwrap_or_default` [#112](https://github.com/datanymizer/datanymizer/pull/112)
