@@ -6,18 +6,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### 🚀 Added
+
+### ⚙️ Changed
+
+### 🛠 Fixed
+
+## [v0.4.0] - 2021-10-19
+### 🚀 Added
 - Implement returning NULL values for PostgreSQL from transformers
   [#98](https://github.com/datanymizer/datanymizer/pull/98) ([@evgeniy-r](https://github.com/evgeniy-r))
 - Configurable dump transaction (whether to use, an isolation level)
   [#96](https://github.com/datanymizer/datanymizer/pull/96) ([@evgeniy-r](https://github.com/evgeniy-r))
 
-### ⚙️ Changed
-
 ### 🛠 Fixed
 - Fix problems with different table names [#102](https://github.com/datanymizer/datanymizer/pull/102)
   ([@evgeniy-r](https://github.com/evgeniy-r))
 - Fix demo docker environment [#109](https://github.com/datanymizer/datanymizer/pull/109)
-  ([@mgrachev](https://github.com/mgrachev)) 
+  ([@mgrachev](https://github.com/mgrachev))
 
 ## [v0.3.1] - 2021-09-20
 ### 🚀 Added
