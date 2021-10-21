@@ -35,7 +35,7 @@ pub trait LocalizedFaker<V>: Localized {
     fn fake<L: ExtData>(&self, l: L) -> V;
 
     fn localized_fake(&self) -> V {
-        match self.locale().unwrap_or_else(LocaleConfig::default) {
+        match self.locale().unwrap_or_default() {
             LocaleConfig::EN => self.fake(EN {}),
             LocaleConfig::RU => self.fake(RU {}),
             LocaleConfig::ZH_TW => self.fake(ZH_TW {}),

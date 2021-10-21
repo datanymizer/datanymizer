@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### ⚙️ Changed
 
 ### 🛠 Fixed
+- Replace `unwrap_or_else` with `unwrap_or_default` [#112](https://github.com/datanymizer/datanymizer/pull/112)
+  ([@mgrachev](https://github.com/mgrachev))
 
 ## [v0.4.0] - 2021-10-19
 ### 🚀 Added
