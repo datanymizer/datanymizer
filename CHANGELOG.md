@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### 🚀 Added
+- Testing the demo [#114](https://github.com/datanymizer/datanymizer/pull/114)
+  ([@evgeniy-r](https://github.com/evgeniy-r))
 - Add support for `postgresql` scheme [#115](https://github.com/datanymizer/datanymizer/pull/115)
   ([@mgrachev](https://github.com/mgrachev))
 

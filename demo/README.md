@@ -24,3 +24,9 @@ make dump
 It makes new `/tmp/fake_dump.sql` file with fake rows in tables from `dvdrental.yml` configuration.
 
 You can change configuration file and try again.
+
+4. For restoring this dump to the database `dvdrental_fake`, please run:
+
+```shell
+make restore_dump
+```
