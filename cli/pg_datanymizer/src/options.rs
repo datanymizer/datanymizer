@@ -19,7 +19,7 @@ impl Default for TransactionConfig {
     }
 }
 
-#[derive(StructOpt, Debug, Clone)]
+#[derive(StructOpt, Debug, Clone, Default)]
 #[structopt(name = "pg_datanymizer")]
 pub struct Options {
     #[structopt(name = "DBNAME")]
@@ -104,11 +104,10 @@ pub struct Options {
 impl Options {
     pub fn database_url(&self) -> Result<Url> {
         if let Ok(url) = Url::parse(self.database.as_str()) {
-            if url.scheme() == "postgres" {
-                return Ok(url);
-            } else {
-                return Err(anyhow!("Scheme url error"));
-            }
+            return match url.scheme() {
+                "postgres" | "postgresql" => Ok(url),
+                _ => Err(anyhow!("Scheme url error")),
+            };
         }
         self.build_url(Some(self.database.to_string()).filter(|x| !x.is_empty()))
     }
@@ -144,17 +143,10 @@ mod tests {
         let cfg = Options {
             database: "postgres://hostname/test".to_string(),
             config: "./config.yml".to_string(),
-            file: None,
             db_name: "test".to_string(),
             host: "localhost".to_string(),
-            port: None,
-            username: None,
-            password: None,
-            dump_transaction: TransactionConfig::default(),
             pg_dump_location: "pg_dump".to_string(),
-            accept_invalid_hostnames: false,
-            accept_invalid_certs: false,
-            pg_dump_args: vec![],
+            ..Default::default()
         };
 
         let expected = "postgres://hostname/test".to_string();
@@ -164,19 +156,11 @@ mod tests {
     #[test]
     fn parse_empty_url() {
         let cfg1 = Options {
-            database: String::default(),
             config: "./config.yml".to_string(),
-            file: None,
             db_name: "test".to_string(),
             host: "hostname".to_string(),
-            port: None,
-            username: None,
-            password: None,
-            dump_transaction: TransactionConfig::default(),
             pg_dump_location: "pg_dump".to_string(),
-            accept_invalid_hostnames: false,
-            accept_invalid_certs: false,
-            pg_dump_args: vec![],
+            ..Default::default()
         };
 
         let cfg2 = Options {
@@ -224,5 +208,23 @@ mod tests {
         assert_eq!(options.config, "some_config.yml");
         assert_eq!(options.file, Some("some_file.sql".to_string()));
         assert_eq!(options.pg_dump_args, vec!["--no-owner", "--no-acl"]);
+    }
+
+    #[test]
+    fn support_multiple_schemes() {
+        let scheme1 = "postgres://user@hostname/test";
+        let scheme2 = "postgresql://user@hostname/test";
+
+        let opts1 = Options {
+            database: scheme1.to_string(),
+            ..Default::default()
+        };
+        let opts2 = Options {
+            database: scheme2.to_string(),
+            ..Default::default()
+        };
+
+        assert_eq!(opts1.database_url().unwrap().to_string(), scheme1);
+        assert_eq!(opts2.database_url().unwrap().to_string(), scheme2);
     }
 }
