@@ -17,7 +17,7 @@ up:
 
 download: clean_file
 	echo -e "\n==> Download DVDRENTAL database"
-	curl $(example_database_url) -o "$(tmpfile)" && unzip $(tmpfile) -d /tmp
+	curl $(example_database_url) -o "$(tmpfile)" --retry 5 && unzip $(tmpfile) -d /tmp
 
 clean_file:
 	echo -e "\n==> Clean all temporary files"
