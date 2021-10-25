@@ -2,7 +2,7 @@
 name = "pg_datanymizer"
 version = "0.4.0"
 authors = ["Aleksandr Kirillov <saratovsource@gmail.com>"]
-edition = "2018"
+edition = "2021"
 description = "Powerful database anonymizer with flexible rules"
 homepage = "https://github.com/datanymizer/datanymizer"
 license = "MIT"
