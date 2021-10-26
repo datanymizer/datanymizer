@@ -139,6 +139,23 @@ jobs:
           args: --package pg_datanymizer
         if: steps.cache-target.outputs.cache-hit != 'true'
 
+  test_demo:
+    name: Test demo
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Bootstrap demo, make a dump file, ensure that it is not empty
+        run: |
+          cd demo
+          make bootstrap
+          make dump
+          ([[ -s /tmp/fake_dump.sql ]] && echo "The dump file exists and is not empty") || (echo "No dump file or it is empty" && exit 1)
+      - name: Restore the dump and check the data
+        run: |
+          cd demo
+          make restore_dump
+          make check_data
+
   linux_build:
     name: Build / Linux
     runs-on: ubuntu-latest
