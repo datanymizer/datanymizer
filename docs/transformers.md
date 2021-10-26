@@ -297,7 +297,7 @@ tables:
       name:
         template:    
           # Save a name to the store as a side effect, the key is `user_names.<USER_ID>` 
-          format: "{{ _1 }}{{ store_write key='user_names.' ~ prev.id, value=_1 }}"
+          format: "{{ _1 }}{{ store_write(key='user_names.' ~ prev.id, value=_1) }}"
           rules:
             - person_name: {}
   - name: user_operations
@@ -305,7 +305,7 @@ tables:
       user_name:          
         template:
           # Using the saved value again  
-          format: "{{ store_read key='user_names.' ~ prev.user_id }}"
+          format: "{{ store_read(key='user_names.' ~ prev.user_id) }}"
 ```
 
 The full list of functions for working with the store:
