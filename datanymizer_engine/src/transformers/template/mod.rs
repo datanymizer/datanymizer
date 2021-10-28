@@ -226,7 +226,9 @@ mod tests {
                                 name: Alex
                           "#;
 
-        let transformer: Transformers = serde_yaml::from_str(config).unwrap();
+        let mut transformer: Transformers = serde_yaml::from_str(config).unwrap();
+        transformer.init(&TransformerInitContext::default());
+
         let res = transformer.transform(
             "",
             "Mr",
@@ -285,7 +287,10 @@ mod tests {
                                      template:
                                        format: "Hello, {{ prev.first_name }} {{ prev.last_name }}!"
                                   "#;
-                serde_yaml::from_str(config).unwrap()
+                let mut t: Transformers = serde_yaml::from_str(config).unwrap();
+                t.init(&TransformerInitContext::default());
+
+                return t
             }
 
             #[test]
@@ -317,7 +322,10 @@ mod tests {
                                  template:
                                    format: "Hello, {{ final.first_name }} {{ final.last_name }}!"
                               "#;
-                serde_yaml::from_str(config).unwrap()
+                let mut t: Transformers = serde_yaml::from_str(config).unwrap();
+                t.init(&TransformerInitContext::default());
+
+                return t
             }
 
             #[test]
@@ -361,7 +369,8 @@ mod tests {
                                      - template:
                                          format: "{{ final.last_name }}"
                               "#;
-                let t: Transformers = serde_yaml::from_str(config).unwrap();
+                let mut t: Transformers = serde_yaml::from_str(config).unwrap();
+                t.init(&TransformerInitContext::default());
 
                 let res = t.transform(
                     "",
@@ -415,7 +424,10 @@ mod tests {
                                      template:
                                        format: "Hello, {{ prev.first_name }} {{ final.last_name }}!"
                                   "#;
-                serde_yaml::from_str(config).unwrap()
+                let mut t: Transformers = serde_yaml::from_str(config).unwrap();
+                t.init(&TransformerInitContext::default());
+
+                return t;
             }
 
             #[test]
