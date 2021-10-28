@@ -1,5 +1,4 @@
 example_database_url="https://www.postgresqltutorial.com/wp-content/uploads/2019/05/dvdrental.zip"
-tmpfile="/tmp/dump.zip"
 dump_file="/tmp/fake_dump.sql"
 count_query="SELECT COUNT(*) FROM actor;"
 data_query="SELECT first_name, last_name FROM actor LIMIT 1;"
@@ -15,9 +14,9 @@ up:
 	echo -e "\n==> Pause ${pause}s after starting Postgresql"
 	sleep ${pause}
 
-download: clean_file
-	echo -e "\n==> Download DVDRENTAL database"
-	curl $(example_database_url) -o "$(tmpfile)" --retry 5 && unzip $(tmpfile) -d /tmp
+unzip: clean_file
+	echo -e "\n==> Unzip DVDRENTAL database"
+	unzip ./dvdrental.zip -d /tmp
 
 clean_file:
 	echo -e "\n==> Clean all temporary files"
@@ -43,7 +42,7 @@ restore_db:
 	echo -e "\n==> Restore database from dump file"
 	docker-compose run --rm -v /tmp/dvdrental.tar:/tmp/dvdrental.tar -e PGPASSWORD=postgres pg_database pg_restore -h pg_database -Upostgres -d dvdrental /tmp/dvdrental.tar
 
-bootstrap: download create_db restore_db clean_file
+bootstrap: unzip create_db restore_db clean_file
 
 dump:
 	echo -e "\n==> Create the dump"

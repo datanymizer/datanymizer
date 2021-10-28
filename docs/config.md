@@ -613,6 +613,32 @@ filter:
 
 If you need only a subset of the data, please refer to the [query](#query) section.
 
+## templates
+You can specify some templates in config to reuse them in you [template](#template) rules.
+There are different kinds of templates:
+
+- `raw` templates is named templates which may be imported or included by name into your field template, you can use macros to extend complex template.
+- `files` templates is array of paths to files with template context.
+
+```yaml
+tables:
+  - name: some_page
+    rules:
+      some_column:
+        template:
+          format: >
+            {% import "base" as macros -%}
+            {{ macros::decrement(n=10) }}
+templates:
+  raw:
+    base: >
+      {% macro decrement(n) -%}
+      {% if n > 1 %}{{ n }}-{{ self::decrement(n=n-1) }}{% else %}1{% endif -%}
+      {% endmacro decrement -%}"#;
+  files:
+    - ./templates/button.html
+```
+
 ## globals
 
 You can specify global variables available in all [template](#template) rules.

@@ -60,8 +60,8 @@ impl TemplateTransformer {
         rules: Option<Vec<Transformers>>,
         variables: Option<HashMap<String, Value>>,
     ) -> Self {
-        let mut renderer = Tera::default();
-        renderer.add_raw_template(TEMPLATE_NAME, &format).unwrap();
+        let renderer = Tera::default();
+        // renderer.add_raw_template(TEMPLATE_NAME, &format).unwrap();
 
         Self {
             format,
@@ -154,11 +154,31 @@ impl Transformer for TemplateTransformer {
     fn init(&mut self, ctx: &TransformerInitContext) {
         store_functions::register(&mut self.renderer, ctx.template_store.clone());
 
+        let mut ext_renderer = Tera::default();
+
+        if let Some(templates) = &ctx.template_collection.raw {
+            for (name, body) in templates {
+                ext_renderer.add_raw_template(name, body).unwrap();
+            }
+        }
+
+        if let Some(files) = &ctx.template_collection.files {
+            for file in files.iter() {
+                ext_renderer.add_template_file(&file, None).unwrap();
+            }
+        }
+
+        self.renderer.extend(&ext_renderer).unwrap();
+
         if let Some(ts) = &mut self.rules {
             for t in ts {
                 t.init(ctx);
             }
         }
+
+        self.renderer
+            .add_raw_template(TEMPLATE_NAME, &self.format)
+            .unwrap();
     }
 }
 
@@ -206,7 +226,9 @@ mod tests {
                                 name: Alex
                           "#;
 
-        let transformer: Transformers = serde_yaml::from_str(config).unwrap();
+        let mut transformer: Transformers = serde_yaml::from_str(config).unwrap();
+        transformer.init(&TransformerInitContext::default());
+
         let res = transformer.transform(
             "",
             "Mr",
@@ -265,7 +287,10 @@ mod tests {
                                      template:
                                        format: "Hello, {{ prev.first_name }} {{ prev.last_name }}!"
                                   "#;
-                serde_yaml::from_str(config).unwrap()
+                let mut t: Transformers = serde_yaml::from_str(config).unwrap();
+                t.init(&TransformerInitContext::default());
+
+                return t;
             }
 
             #[test]
@@ -297,7 +322,10 @@ mod tests {
                                  template:
                                    format: "Hello, {{ final.first_name }} {{ final.last_name }}!"
                               "#;
-                serde_yaml::from_str(config).unwrap()
+                let mut t: Transformers = serde_yaml::from_str(config).unwrap();
+                t.init(&TransformerInitContext::default());
+
+                return t;
             }
 
             #[test]
@@ -341,7 +369,8 @@ mod tests {
                                      - template:
                                          format: "{{ final.last_name }}"
                               "#;
-                let t: Transformers = serde_yaml::from_str(config).unwrap();
+                let mut t: Transformers = serde_yaml::from_str(config).unwrap();
+                t.init(&TransformerInitContext::default());
 
                 let res = t.transform(
                     "",
@@ -395,7 +424,10 @@ mod tests {
                                      template:
                                        format: "Hello, {{ prev.first_name }} {{ final.last_name }}!"
                                   "#;
-                serde_yaml::from_str(config).unwrap()
+                let mut t: Transformers = serde_yaml::from_str(config).unwrap();
+                t.init(&TransformerInitContext::default());
+
+                return t;
             }
 
             #[test]
@@ -560,6 +592,36 @@ mod tests {
 
             let value = r.transform("field", "key", &None).unwrap().unwrap();
             assert_eq!(value, "Read: 1.5");
+        }
+    }
+
+    mod extended_templates {
+        use crate::settings::TemplatesCollection;
+
+        use super::*;
+
+        #[test]
+        fn using_macros() {
+            let config = r#"
+                template:
+                    format: >
+                      {% import "base" as macros -%}
+                      {{ macros::decrement(n=10) }}"#;
+            let macro_config = r#"
+                  raw:
+                    base: >
+                      {% macro decrement(n) -%}
+                      {% if n > 1 %}{{ n }}-{{ self::decrement(n=n-1) }}{% else %}1{% endif -%}
+                      {% endmacro decrement -%}"#;
+            let templates_collection: TemplatesCollection =
+                serde_yaml::from_str(macro_config).unwrap();
+            let mut t: Transformers = serde_yaml::from_str(config).unwrap();
+            let mut context = TransformerInitContext::default();
+            context.template_collection = templates_collection;
+            t.init(&context);
+
+            let value = t.transform("field", "", &None).unwrap().unwrap();
+            assert_eq!(value, "10-9-8-7-6-5-4-3-2-1");
         }
     }
 }
