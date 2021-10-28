@@ -233,7 +233,8 @@ mod tests {
         use super::*;
 
         fn user_and_domain(config: &str) -> Vec<String> {
-            let transformer: EmailTransformer = serde_yaml::from_str(config).unwrap();
+            let mut transformer: EmailTransformer = serde_yaml::from_str(config).unwrap();
+            UniqTransformer::init(&mut transformer, &TransformerInitContext::default());
             let result = transformer
                 .transform("field", "orig@domain.com", &None)
                 .unwrap()

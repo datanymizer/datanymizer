@@ -3,7 +3,7 @@ use serde::Deserialize;
 use std::collections::HashMap;
 
 /// Shared templates for all instances of `TemplateTransformer`
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Default)]
 pub struct TemplatesCollection {
     /// Raw named templates.
     /// Example:
@@ -30,16 +30,6 @@ pub struct TemplatesCollection {
     ///     - ./templates/base.html
     ///     - ./templates/user_data_json
     pub files: Option<Vec<String>>,
-}
-
-/// Default value for `TemplatesCollection`
-impl Default for TemplatesCollection {
-    fn default() -> Self {
-        Self {
-            raw: None,
-            files: None,
-        }
-    }
 }
 
 #[cfg(test)]
