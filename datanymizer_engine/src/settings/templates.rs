@@ -57,7 +57,6 @@ mod tests {
             assert_eq!(t.files, None);
         }
 
-
         #[test]
         fn ext_templates() {
             let config = r#"

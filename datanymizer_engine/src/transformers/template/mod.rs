@@ -176,7 +176,9 @@ impl Transformer for TemplateTransformer {
             }
         }
 
-        self.renderer.add_raw_template(TEMPLATE_NAME, &self.format).unwrap();
+        self.renderer
+            .add_raw_template(TEMPLATE_NAME, &self.format)
+            .unwrap();
     }
 }
 
@@ -599,7 +601,8 @@ mod tests {
                       {% macro decrement(n) -%}
                       {% if n > 1 %}{{ n }}-{{ self::decrement(n=n-1) }}{% else %}1{% endif -%}
                       {% endmacro decrement -%}"#;
-            let templates_collection: TemplatesCollection = serde_yaml::from_str(macro_config).unwrap();
+            let templates_collection: TemplatesCollection =
+                serde_yaml::from_str(macro_config).unwrap();
             let mut t: Transformers = serde_yaml::from_str(config).unwrap();
             let mut context = TransformerInitContext::default();
             context.template_collection = templates_collection;

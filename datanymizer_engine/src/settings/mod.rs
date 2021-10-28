@@ -267,7 +267,8 @@ mod tests {
         use super::*;
 
         fn get_raw_templates(s: &Settings) -> Vec<String> {
-            s.templates.clone()
+            s.templates
+                .clone()
                 .unwrap()
                 .raw
                 .unwrap()

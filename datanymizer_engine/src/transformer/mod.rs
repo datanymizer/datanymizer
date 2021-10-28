@@ -16,7 +16,7 @@ use std::{
     sync::{Arc, RwLock},
 };
 
-use crate::{LocaleConfig, settings::TemplatesCollection};
+use crate::{settings::TemplatesCollection, LocaleConfig};
 
 pub type TransformResult = result::Result<Option<String>, TransformError>;
 pub type Globals = HashMap<String, Value>;
