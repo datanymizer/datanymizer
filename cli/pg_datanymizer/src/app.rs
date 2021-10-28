@@ -1,17 +1,13 @@
 use anyhow::Result;
-use native_tls::TlsConnector;
-use postgres::{Client, IsolationLevel, NoTls};
-use postgres_native_tls::MakeTlsConnector;
-use std::borrow::Cow;
 use url::Url;
 
 use crate::options::{Options, TransactionConfig};
 
-use datanymizer_dumper::{postgres::dumper::PgDumper, Dumper};
+use datanymizer_dumper::{
+    postgres::{connector::Connector, dumper::PgDumper, IsolationLevel},
+    Dumper,
+};
 use datanymizer_engine::{Engine, Settings};
-
-const SSL_MODE_PARAM: &str = "sslmode";
-const NO_SSL_MODE: &str = "disable";
 
 pub struct App {
     options: Options,
@@ -29,10 +25,19 @@ impl App {
     }
 
     pub fn run(&self) -> Result<()> {
-        let mut client = self.client()?;
         let mut dumper = self.dumper()?;
+        let mut client = self.connector().connect()?;
 
         dumper.dump(&mut client)
+    }
+
+    fn connector(&self) -> Connector {
+        let options = &self.options;
+        Connector::new(
+            self.database_url.clone(),
+            options.accept_invalid_hostnames,
+            options.accept_invalid_certs,
+        )
     }
 
     fn dumper(&self) -> Result<PgDumper> {
@@ -52,48 +57,6 @@ impl App {
         Ok(Engine::new(settings))
     }
 
-    fn client(&self) -> Result<Client> {
-        let url = self.database_url.to_string();
-        let client = match self.tls_connector()? {
-            Some(c) => Client::connect(&url, c)?,
-            None => Client::connect(&url, NoTls)?,
-        };
-
-        Ok(client)
-    }
-
-    fn tls_connector(&self) -> Result<Option<MakeTlsConnector>> {
-        let ssl_mode = self
-            .database_url
-            .query_pairs()
-            .find_map(|(key, value)| {
-                if key == SSL_MODE_PARAM {
-                    Some(value)
-                } else {
-                    None
-                }
-            })
-            .unwrap_or(Cow::Borrowed(NO_SSL_MODE));
-
-        let connector = if ssl_mode == NO_SSL_MODE {
-            None
-        } else {
-            let mut builder = TlsConnector::builder();
-
-            if self.options.accept_invalid_hostnames {
-                builder.danger_accept_invalid_hostnames(true);
-            }
-            if self.options.accept_invalid_certs {
-                builder.danger_accept_invalid_certs(true);
-            }
-
-            let connector = builder.build()?;
-            Some(MakeTlsConnector::new(connector))
-        };
-
-        Ok(connector)
-    }
-
     fn dump_isolation_level(&self) -> Option<IsolationLevel> {
         match self.options.dump_transaction {
             TransactionConfig::NoTransaction => None,
@@ -109,40 +72,6 @@ impl App {
 mod tests {
     use super::*;
     use structopt::StructOpt;
-
-    mod tls_connector {
-        use super::*;
-
-        fn connector(db_str: &str) -> Option<MakeTlsConnector> {
-            let options = Options::from_iter(vec!["DBNAME", db_str]);
-            let app = App::from_options(options).unwrap();
-            app.tls_connector().unwrap()
-        }
-
-        #[test]
-        fn default() {
-            let connector = connector("postgres://postgres@localhost/dbname");
-            assert!(connector.is_none());
-        }
-
-        #[test]
-        fn ssl_disable() {
-            let connector = connector("postgres://postgres@localhost/dbname?sslmode=disable");
-            assert!(connector.is_none());
-        }
-
-        #[test]
-        fn ssl_prefer() {
-            let connector = connector("postgres://postgres@localhost/dbname?sslmode=prefer");
-            assert!(connector.is_some());
-        }
-
-        #[test]
-        fn ssl_require() {
-            let connector = connector("postgres://postgres@localhost/dbname?sslmode=require");
-            assert!(connector.is_some());
-        }
-    }
 
     mod isolation_level {
         use super::*;
