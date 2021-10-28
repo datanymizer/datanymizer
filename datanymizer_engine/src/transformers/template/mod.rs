@@ -290,7 +290,7 @@ mod tests {
                 let mut t: Transformers = serde_yaml::from_str(config).unwrap();
                 t.init(&TransformerInitContext::default());
 
-                return t
+                return t;
             }
 
             #[test]
@@ -325,7 +325,7 @@ mod tests {
                 let mut t: Transformers = serde_yaml::from_str(config).unwrap();
                 t.init(&TransformerInitContext::default());
 
-                return t
+                return t;
             }
 
             #[test]
