@@ -1,5 +1,6 @@
 mod filter;
 mod table;
+mod templates;
 
 use crate::{
     transformer::{TransformerDefaults, TransformerInitContext},
@@ -14,6 +15,7 @@ use std::collections::HashMap;
 
 pub use filter::{Filter, TableList};
 pub use table::{Query, Table};
+pub use templates::TemplatesCollection;
 
 pub type Tables = Vec<Table>;
 
@@ -52,6 +54,8 @@ pub struct Settings {
     /// Global values. Visible in any template.
     /// They may be shadowed by template variables.
     pub globals: Option<HashMap<String, JsonValue>>,
+
+    pub templates: Option<TemplatesCollection>,
 
     #[serde(skip)]
     transform_map: Option<HashMap<String, TransformList>>,
@@ -109,7 +113,12 @@ impl Settings {
     }
 
     fn preprocess(&mut self) {
-        let init_ctx = TransformerInitContext::from_defaults(self.default.clone());
+        let mut init_ctx = TransformerInitContext::from_defaults(self.default.clone());
+
+        // Assign extend templates to context
+        if let Some(collection) = &self.templates {
+            init_ctx.template_collection = collection.clone();
+        }
 
         for table in self.tables.iter_mut() {
             for (_name, rule) in table.rules.iter_mut() {
@@ -251,6 +260,44 @@ mod tests {
             assert!(names.contains(&"last_name".to_string()));
 
             assert_eq!(s.transformers_for("table3"), None);
+        }
+    }
+
+    mod templates_for {
+        use super::*;
+
+        fn get_raw_templates(s: &Settings) -> Vec<String> {
+            s.templates.clone()
+                .unwrap()
+                .raw
+                .unwrap()
+                .iter()
+                .map(|(name, _)| name.to_string())
+                .collect()
+        }
+
+        fn get_files_templates(s: &Settings) -> Vec<String> {
+            s.templates.clone().unwrap().files.unwrap()
+        }
+
+        #[test]
+        fn read_templates() {
+            let config = r#"
+                tables: []
+                templates:
+                  raw:
+                    template1: "template1"
+                    template2: |
+                      template2-line-1
+                      template2-line-2
+                  files:
+                    - ./templates/path1
+                    - ./templates/path2
+                "#;
+            let s = Settings::from_yaml(config, String::new()).unwrap();
+
+            assert_eq!(get_raw_templates(&s).len(), 2);
+            assert_eq!(get_files_templates(&s).len(), 2);
         }
     }
 }

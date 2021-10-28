@@ -16,7 +16,7 @@ use std::{
     sync::{Arc, RwLock},
 };
 
-use crate::LocaleConfig;
+use crate::{LocaleConfig, settings::TemplatesCollection};
 
 pub type TransformResult = result::Result<Option<String>, TransformError>;
 pub type Globals = HashMap<String, Value>;
@@ -39,6 +39,7 @@ pub struct TransformerDefaults {
 pub struct TransformerInitContext {
     pub defaults: TransformerDefaults,
     pub template_store: TemplateStore,
+    pub template_collection: TemplatesCollection,
 }
 
 impl TransformerInitContext {
@@ -46,6 +47,7 @@ impl TransformerInitContext {
         Self {
             defaults,
             template_store: TemplateStore::default(),
+            template_collection: TemplatesCollection::default(),
         }
     }
 }
