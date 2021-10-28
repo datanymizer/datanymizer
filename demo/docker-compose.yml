@@ -15,7 +15,7 @@ services:
     depends_on:
       - pg_datanymizer
     ports:
-      - "5432:5432"
+      - "5436:5432"
     volumes:
       - demo-volume:/demo/:rw
 
