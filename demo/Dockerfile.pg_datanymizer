@@ -18,7 +18,7 @@ WORKDIR /usr/src
 
 RUN cargo install cargo-chef
 COPY --from=planner /usr/src/recipe.json recipe.json
-RUN cargo chef cook --target x86_64-unknown-linux-gnu --release --recipe-path recipe.json
+RUN cargo chef cook --release --recipe-path recipe.json
 
 FROM cargo-chef as builder
 WORKDIR /usr/src
@@ -27,10 +27,10 @@ COPY . .
 # Copy over the cached dependencies
 COPY --from=cacher /usr/src/target target
 COPY --from=cacher $CARGO_HOME $CARGO_HOME
-RUN cargo build --target x86_64-unknown-linux-gnu --release
+RUN cargo build --release
 
 FROM postgres:latest
 WORKDIR /
-COPY --from=builder /usr/src/target/x86_64-unknown-linux-gnu/release/pg_datanymizer .
+COPY --from=builder /usr/src/target/release/pg_datanymizer .
 USER 1000
 ENTRYPOINT ["./pg_datanymizer"]
