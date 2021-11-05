@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### ⚙️ Changed
 - Remove arch-specific argument in Demo [#121](https://github.com/datanymizer/datanymizer/pull/121)
+  ([@akirill0v](https://github.com/akirill0v)) 
 - Change edition to 2021 [#113](https://github.com/datanymizer/datanymizer/pull/113)
   ([@mgrachev](https://github.com/mgrachev))
 
