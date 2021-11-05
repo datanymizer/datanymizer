@@ -123,7 +123,7 @@ impl PgDumper {
         self.dump_writer.write_all(table.query_from().as_bytes())?;
         self.dump_writer.write_all(b"\n")?;
 
-        let cfg = settings.find_table(&[table.get_full_name().as_str(), table.get_name().as_str()]);
+        let cfg = settings.find_table(&table.get_names());
 
         self.init_progress_bar(table.count_of_query_to(cfg), &table.get_full_name());
 
@@ -179,6 +179,13 @@ impl PgDumper {
 
         Ok(())
     }
+
+    fn apply_table_order(tables: &mut Vec<(<Self as Dumper>::Table, i32)>, order: &[String]) {
+        tables.sort_by_cached_key(|(tbl, weight)| {
+            let position = order.iter().position(|i| tbl.get_names().contains(i));
+            (position, -weight)
+        });
+    }
 }
 
 impl Dumper for PgDumper {
@@ -197,8 +204,13 @@ impl Dumper for PgDumper {
         let settings = self.settings();
         self.write_log("Start dumping data".into())?;
         self.debug("Fetch tables metadata...".into());
+
         let mut tables = self.schema_inspector().ordered_tables(connection);
-        tables.sort_by(|a, b| b.1.cmp(&a.1));
+        Self::apply_table_order(
+            &mut tables,
+            settings.table_order.as_ref().unwrap_or(&vec![]),
+        );
+
         let all_tables_count = tables.len();
 
         let mut query_wrapper =
@@ -289,5 +301,37 @@ mod tests {
                 String::from("\"table2\"")
             ]
         );
+    }
+
+    #[test]
+    fn apply_table_order() {
+        let order = vec!["table2".to_string(), "public.table1".to_string()];
+
+        let mut tables = vec![
+            (PgTable::new("table1".to_string(), "public".to_string()), 0),
+            (PgTable::new("table2".to_string(), "public".to_string()), 1),
+            (PgTable::new("table3".to_string(), "public".to_string()), 2),
+            (PgTable::new("table4".to_string(), "public".to_string()), 3),
+            (PgTable::new("table1".to_string(), "other".to_string()), 4),
+            (PgTable::new("table2".to_string(), "other".to_string()), 5),
+        ];
+
+        PgDumper::apply_table_order(&mut tables, &order);
+
+        let ordered_names: Vec<_> = tables
+            .iter()
+            .map(|(t, w)| (t.get_full_name(), *w))
+            .collect();
+        assert_eq!(
+            ordered_names,
+            vec![
+                ("other.table1".to_string(), 4),
+                ("public.table4".to_string(), 3),
+                ("public.table3".to_string(), 2),
+                ("other.table2".to_string(), 5),
+                ("public.table2".to_string(), 1),
+                ("public.table1".to_string(), 0),
+            ]
+        )
     }
 }
