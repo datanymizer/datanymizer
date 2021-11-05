@@ -219,7 +219,7 @@ tables:
             # random street name
             - street_name: {}
             # random building number
-            - building_number: {}   
+            - building_number: {}
 ```
 
 ### table
