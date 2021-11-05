@@ -316,7 +316,7 @@ mod tests {
             (PgTable::new("table2".to_string(), "other".to_string()), 5),
         ];
 
-        PgDumper::apply_table_order(&mut tables, &order);
+        PgDumper::set_table_order(&mut tables, &order);
 
         let ordered_names: Vec<_> = tables
             .iter()
