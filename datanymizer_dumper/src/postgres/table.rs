@@ -46,6 +46,10 @@ impl Table<Type> for PgTable {
         format!("{}.{}", self.schemaname, self.tablename)
     }
 
+    fn get_names(&self) -> Vec<String> {
+        vec![self.get_full_name(), self.get_name()]
+    }
+
     fn get_columns(&self) -> Vec<Self::Column> {
         self.columns.clone()
     }

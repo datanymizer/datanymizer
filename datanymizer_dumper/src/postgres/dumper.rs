@@ -180,7 +180,7 @@ impl PgDumper {
         Ok(())
     }
 
-    fn set_table_order(tables: &mut Vec<(<Self as Dumper>::Table, i32)>, order: &[String]) {
+    fn sort_tables(tables: &mut Vec<(<Self as Dumper>::Table, i32)>, order: &[String]) {
         tables.sort_by_cached_key(|(tbl, weight)| {
             let position = order.iter().position(|i| tbl.get_names().contains(i));
             (position, -weight)
@@ -206,7 +206,7 @@ impl Dumper for PgDumper {
         self.debug("Fetch tables metadata...".into());
 
         let mut tables = self.schema_inspector().ordered_tables(connection);
-        Self::set_table_order(
+        Self::sort_tables(
             &mut tables,
             settings.table_order.as_ref().unwrap_or(&vec![]),
         );
@@ -304,7 +304,7 @@ mod tests {
     }
 
     #[test]
-    fn set_table_order() {
+    fn sort_tables() {
         let order = vec!["table2".to_string(), "public.table1".to_string()];
 
         let mut tables = vec![
@@ -316,7 +316,7 @@ mod tests {
             (PgTable::new("table2".to_string(), "other".to_string()), 5),
         ];
 
-        PgDumper::set_table_order(&mut tables, &order);
+        PgDumper::sort_tables(&mut tables, &order);
 
         let ordered_names: Vec<_> = tables
             .iter()
