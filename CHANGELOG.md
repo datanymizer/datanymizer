@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   ([@mgrachev](https://github.com/mgrachev))
 
 ### ⚙️ Changed
+- Remove the PostgreSQL dependency from the CLI application [#123](https://github.com/datanymizer/datanymizer/pull/123)
+  ([@evgeniy-r](https://github.com/evgeniy-r))
 - Remove arch-specific argument in Demo [#121](https://github.com/datanymizer/datanymizer/pull/121)
 - Change edition to 2021 [#113](https://github.com/datanymizer/datanymizer/pull/113)
   ([@mgrachev](https://github.com/mgrachev))
