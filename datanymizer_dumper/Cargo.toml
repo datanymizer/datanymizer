@@ -9,6 +9,9 @@ edition = "2021"
 [dependencies]
 datanymizer_engine = { path= "../datanymizer_engine" }
 anyhow = "1.0"
-postgres = "0.19.1"
-solvent = "0.8.2"
 indicatif = "0.15.0"
+native-tls = "0.2.7"
+postgres = "0.19.1"
+postgres-native-tls = "0.5.0"
+solvent = "0.8.2"
+url = "2.2"

@@ -1,14 +1,18 @@
 use crate::{Dumper, SchemaInspector};
 
 pub mod column;
+pub mod connector;
 pub mod dumper;
-mod escaper;
 pub mod foreign_key;
-mod query_wrapper;
 pub mod row;
 pub mod schema_inspector;
-mod sequence;
 pub mod table;
 pub mod writer;
+
+mod escaper;
+mod query_wrapper;
+mod sequence;
+
+pub use postgres::IsolationLevel;
 
 pub struct PostgresDatabase;
