@@ -28,10 +28,9 @@ impl PgDumper {
         engine: Engine,
         dump_isolation_level: Option<IsolationLevel>,
         pg_dump_location: String,
-        target: Option<String>,
+        dump_writer: DumpWriter,
         pg_dump_args: Vec<String>,
     ) -> Result<Self> {
-        let dump_writer = DumpWriter::new(target)?;
         let pb: ProgressBar = if dump_writer.can_log_to_stdout() {
             ProgressBar::new(0)
         } else {

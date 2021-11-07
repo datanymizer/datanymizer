@@ -1,10 +1,14 @@
 use anyhow::Result;
-use std::fs::File as StdFile;
-use std::io::{self, Stdout as StdStdout, Write};
+use std::{
+    fs::File as StdFile,
+    io::{self, Stdout as StdStdout, Write},
+    process::ChildStdin as StdChildStdin,
+};
 
 enum WriterDestination {
     File(StdFile),
     Stdout(StdStdout),
+    ChildStdin(StdChildStdin),
 }
 
 pub struct DumpWriter {
@@ -21,10 +25,16 @@ impl DumpWriter {
         Ok(Self { writer_destination })
     }
 
+    pub fn for_child(stdin: StdChildStdin) -> Result<Self> {
+        let writer_destination = WriterDestination::ChildStdin(stdin);
+        Ok(Self { writer_destination })
+    }
+
     pub fn write_all(&mut self, data: &[u8]) -> Result<()> {
         match self.writer_destination {
             WriterDestination::File(ref mut f) => f.write_all(data).map_err(|e| e.into()),
             WriterDestination::Stdout(ref mut s) => s.write_all(data).map_err(|e| e.into()),
+            WriterDestination::ChildStdin(ref mut s) => s.write_all(data).map_err(|e| e.into()),
         }
     }
 

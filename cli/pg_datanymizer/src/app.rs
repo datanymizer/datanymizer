@@ -4,7 +4,7 @@ use url::Url;
 use crate::options::{Options, TransactionConfig};
 
 use datanymizer_dumper::{
-    postgres::{connector::Connector, dumper::PgDumper, IsolationLevel},
+    postgres::{connector::Connector, dumper::PgDumper, writer::DumpWriter, IsolationLevel},
     Dumper,
 };
 use datanymizer_engine::{Engine, Settings};
@@ -47,7 +47,7 @@ impl App {
             engine,
             self.dump_isolation_level(),
             self.options.pg_dump_location.clone(),
-            self.options.file.clone(),
+            DumpWriter::new(self.options.file.clone())?,
             self.options.pg_dump_args.clone(),
         )
     }
