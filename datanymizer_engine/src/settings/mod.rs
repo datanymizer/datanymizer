@@ -45,6 +45,9 @@ pub struct Settings {
     /// Tables list with transformation rules
     pub tables: Tables,
 
+    /// Table order. All tables not listed are dumping at the beginning
+    pub table_order: Option<Vec<String>>,
+
     /// Default transformers configuration
     #[serde(default)]
     pub default: TransformerDefaults,
@@ -96,9 +99,9 @@ impl Settings {
         self.tables.iter().find(|t| t.name == name)
     }
 
-    pub fn find_table(&self, names: &[&str]) -> Option<&Table> {
+    pub fn find_table<T: AsRef<str>>(&self, names: &[T]) -> Option<&Table> {
         for name in names {
-            let table = self.get_table(name);
+            let table = self.get_table(name.as_ref());
             if table.is_some() {
                 return table;
             }

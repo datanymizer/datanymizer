@@ -123,6 +123,8 @@ pub trait Table<T>: Sized + Send + Clone + Eq + Hash {
     fn get_name(&self) -> String;
     /// Returns table name with schema or other prefix, based on database type
     fn get_full_name(&self) -> String;
+    /// Returns possible table names (e.g. full and short)
+    fn get_names(&self) -> Vec<String>;
     /// Get table columns
     fn get_columns(&self) -> Vec<Self::Column>;
     /// Get columns names (needed in the future for SQL)

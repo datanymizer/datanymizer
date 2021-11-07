@@ -172,12 +172,13 @@ globals:
 
 The config file contains following sections:
 
-| Section             | Mandatory | YAML type  | Description
-|---                  |---        |---         |---
-| [tables](#tables)   | yes       | list       | A list of anonymized tables  
-| [default](#default) | no        | dictionary | Default values for different anonymization rules
-| [filter](#filter)   | no        | dictionary | A filter for tables schema and data (what to skip when dumping)
-| [globals](#globals) | no        | dictionary | Some global values (they are available in anonymization templates)
+| Section                     | Mandatory | YAML type  | Description
+|---                          |---        |---         |---
+| [tables](#tables)           | yes       | list       | A list of anonymized tables
+| [table_order](#table_order) | no        | list       | An order of table dumping
+| [default](#default)         | no        | dictionary | Default values for different anonymization rules
+| [filter](#filter)           | no        | dictionary | A filter for tables schema and data (what to skip when dumping)
+| [globals](#globals)         | no        | dictionary | Some global values (they are available in anonymization templates)
 
 ## tables
 
@@ -490,7 +491,7 @@ The order of column processing will be as follows:
 
 _You only need the `rule_order` section when using the `template` transformer with the `final` special template variable._ 
 
-For additional information please refer to the [template](#template) transformer documentation.
+For additional information please refer to the [template](transformers.md#template) transformer documentation.
 
 #### query
 
@@ -532,6 +533,37 @@ You can use the `dump_condition`, `transform_condition` and `limit` options in a
 `transform_condition`; `transform_condition` and `limit`; etc).
 
 If you don't need data from a particular table at all, please refer to the [filter](#filter) section.
+
+## table_order
+
+A list of tables that will be dumped in the specified order (after all tables that are not in the list).
+The order of execution for other tables depends on foreign keys.
+
+Look at this configuration example:
+
+```yaml
+tables:
+  - name: "table1"
+    rules: {}
+  - name: "table2"
+    rules: {}
+  - name: "table3"
+    rules: {}    
+table_order:
+  - "table1"
+  - "table2"
+```
+
+The order of table dumping will be as follows:
+
+1. `table3`
+2. `table1`
+3. `table2`
+
+You may need this section when using the built-in key-value store in the `template` transformer for sharing data between
+tables.
+
+For additional information please refer to the [template](transformers.md#template) transformer documentation.
 
 ## default
 
@@ -614,7 +646,7 @@ filter:
 If you need only a subset of the data, please refer to the [query](#query) section.
 
 ## templates
-You can specify some templates in config to reuse them in you [template](#template) rules.
+You can specify some templates in config to reuse them in you [template](transformers.md#template) rules.
 There are different kinds of templates:
 
 - `raw` templates is named templates which may be imported or included by name into your field template, you can use macros to extend complex template.
@@ -641,7 +673,7 @@ templates:
 
 ## globals
 
-You can specify global variables available in all [template](#template) rules.
+You can specify global variables available in all [template](transformers.md#template) rules.
 
 ```yaml
 tables:
