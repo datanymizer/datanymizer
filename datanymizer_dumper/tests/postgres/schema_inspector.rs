@@ -1,7 +1,7 @@
 use super::helpers;
 
 use datanymizer_dumper::{
-    postgres::{schema_inspector::PgSchemaInspector, table::PgTable},
+    postgres::{connector::Connection, schema_inspector::PgSchemaInspector, table::PgTable},
     SchemaInspector, Table,
 };
 
@@ -14,7 +14,7 @@ fn find_table<'a>(tables: &'a [PgTable], full_name: &str) -> &'a PgTable {
 
 #[test]
 fn get_tables() {
-    let mut connection = helpers::src_connection();
+    let mut connection = Connection::new(helpers::src_client(), helpers::src_database_url());
     let inspector = PgSchemaInspector;
     let tables = inspector.get_tables(&mut connection).unwrap();
 

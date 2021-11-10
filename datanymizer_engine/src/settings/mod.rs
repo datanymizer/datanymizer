@@ -7,7 +7,7 @@ use crate::{
     transformers::Transformers,
     Transformer,
 };
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use config::{Config, ConfigError, File, FileFormat};
 use serde::Deserialize;
 use serde_json::Value as JsonValue;
@@ -19,29 +19,10 @@ pub use templates::TemplatesCollection;
 
 pub type Tables = Vec<Table>;
 
-#[derive(Debug, Deserialize, Clone)]
-pub struct Connection {
-    pub database_url: Option<String>,
-}
-
-impl Connection {
-    pub fn get_database_url(&self) -> String {
-        self.database_url
-            .clone()
-            .unwrap_or_else(|| String::from(""))
-    }
-}
-
 type TransformList = Vec<(String, Transformers)>;
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct Settings {
-    /// Source database connection
-    pub source: Connection,
-
-    /// Can be file only
-    pub destination: Option<String>,
-
     /// Tables list with transformation rules
     pub tables: Tables,
 
@@ -65,20 +46,19 @@ pub struct Settings {
 }
 
 impl Settings {
-    pub fn new(path: String, database_url: String) -> Result<Self, ConfigError> {
-        Self::from_source(File::with_name(&path), database_url)
+    pub fn new(path: String) -> Result<Self, ConfigError> {
+        Self::from_source(File::with_name(&path))
     }
 
-    pub fn from_yaml(config: &str, database_url: String) -> Result<Self, ConfigError> {
-        Self::from_source(File::from_str(config, FileFormat::Yaml), database_url)
+    pub fn from_yaml(config: &str) -> Result<Self, ConfigError> {
+        Self::from_source(File::from_str(config, FileFormat::Yaml))
     }
 
-    fn from_source<S: 'static>(source: S, database_url: String) -> Result<Self, ConfigError>
+    fn from_source<S: 'static>(source: S) -> Result<Self, ConfigError>
     where
         S: config::Source + Send + Sync,
     {
         let mut s = Config::new();
-        s.set("source.database_url", database_url)?;
         s.merge(source)?;
 
         let mut settings: Self = s.try_into()?;
@@ -107,12 +87,6 @@ impl Settings {
             }
         }
         None
-    }
-
-    pub fn destination(&self) -> Result<String> {
-        self.destination
-            .clone()
-            .ok_or_else(|| anyhow!("Destination path is empty"))
     }
 
     fn preprocess(&mut self) {
@@ -162,7 +136,7 @@ mod tests {
               locale: RU
             "#;
 
-        let s = Settings::from_yaml(config, String::new()).unwrap();
+        let s = Settings::from_yaml(config).unwrap();
         let rules = &s.tables.first().unwrap().rules;
 
         assert_eq!(
@@ -196,7 +170,7 @@ mod tests {
                   other_name:
                     person_name: {}
             "#;
-        let s = Settings::from_yaml(config, String::new()).unwrap();
+        let s = Settings::from_yaml(config).unwrap();
 
         let t = s.find_table(&["some_table"]);
         assert!(t.is_none());
@@ -248,7 +222,7 @@ mod tests {
                       last_name:
                         last_name: {}
                 "#;
-            let s = Settings::from_yaml(config, String::new()).unwrap();
+            let s = Settings::from_yaml(config).unwrap();
 
             let names = rule_names(&s, "table1");
             assert_eq!(names.len(), 4);
@@ -298,7 +272,7 @@ mod tests {
                     - ./templates/path1
                     - ./templates/path2
                 "#;
-            let s = Settings::from_yaml(config, String::new()).unwrap();
+            let s = Settings::from_yaml(config).unwrap();
 
             assert_eq!(get_raw_templates(&s).len(), 2);
             assert_eq!(get_files_templates(&s).len(), 2);

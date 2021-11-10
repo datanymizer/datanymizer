@@ -77,7 +77,7 @@ mod tests {
                     from: 1990-01-01T00:00:00+00:00
                     to: 2010-12-31T00:00:00+00:00
         "#;
-        let settings = Settings::from_yaml(config, String::new()).unwrap();
+        let settings = Settings::from_yaml(config).unwrap();
 
         let table = String::from("actor");
         let values = vec!["", "", "", "", ""];
@@ -136,7 +136,7 @@ mod tests {
                       template:
                         format: "{greeting: \"{{ final.greeting }}\"}"
             "#;
-            let settings = Settings::from_yaml(config, String::new()).unwrap();
+            let settings = Settings::from_yaml(config).unwrap();
 
             let table = String::from("some_table");
             let values = vec!["", "", "", "", ""];
@@ -179,7 +179,7 @@ mod tests {
                       template:
                         format: "{greeting: \"{{ final.greeting }}\"}"
             "#;
-            let settings = Settings::from_yaml(config, String::new()).unwrap();
+            let settings = Settings::from_yaml(config).unwrap();
 
             let table = String::from("some_table");
             let values = vec!["", "", "", "", ""];
@@ -223,7 +223,7 @@ mod tests {
                       template:
                         format: "{greeting: \"{{ final.greeting }}\"}"
             "#;
-            let settings = Settings::from_yaml(config, String::new()).unwrap();
+            let settings = Settings::from_yaml(config).unwrap();
 
             let table = String::from("some_table");
             let values = vec!["orig_name", "orig_middle_name", "", "", ""];

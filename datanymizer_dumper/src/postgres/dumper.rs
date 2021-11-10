@@ -1,12 +1,12 @@
 use super::{
-    query_wrapper::QueryWrapper, row::PgRow, schema_inspector::PgSchemaInspector, table::PgTable,
-    writer::DumpWriter,
+    connector, query_wrapper::QueryWrapper, row::PgRow, schema_inspector::PgSchemaInspector,
+    table::PgTable, writer::DumpWriter,
 };
 use crate::{Dumper, SchemaInspector, Table};
 use anyhow::Result;
 use datanymizer_engine::{Engine, Filter, Settings, TableList};
 use indicatif::{HumanDuration, ProgressBar, ProgressStyle};
-use postgres::{Client, IsolationLevel};
+use postgres::IsolationLevel;
 use std::{
     io::{self, prelude::*},
     process::{self, Command},
@@ -48,11 +48,10 @@ impl PgDumper {
         })
     }
 
-    fn run_pg_dump(&mut self, section: &str) -> Result<()> {
+    fn run_pg_dump(&mut self, section: &str, db_url: &str) -> Result<()> {
         let program = &self.pg_dump_location;
         let args = vec!["--section", section];
         let table_args = Self::table_args(&self.engine.settings.filter)?;
-        let db_url = self.engine.settings.source.get_database_url();
 
         let dump_output = Command::new(program)
             .args(&self.pg_dump_args)
@@ -189,13 +188,13 @@ impl PgDumper {
 
 impl Dumper for PgDumper {
     type Table = PgTable;
-    type Connection = Client;
+    type Connection = connector::Connection;
     type SchemaInspector = PgSchemaInspector;
 
     // Stage before dumping data. It makes dump schema with any options
-    fn pre_data(&mut self, _connection: &mut Self::Connection) -> Result<()> {
+    fn pre_data(&mut self, connection: &mut Self::Connection) -> Result<()> {
         self.debug("Prepare data scheme...".into());
-        self.run_pg_dump("pre-data")
+        self.run_pg_dump("pre-data", connection.url.as_str())
     }
 
     // This stage makes dump data only
@@ -213,7 +212,7 @@ impl Dumper for PgDumper {
         let all_tables_count = tables.len();
 
         let mut query_wrapper =
-            QueryWrapper::with_isolation_level(connection, self.dump_isolation_level)?;
+            QueryWrapper::with_isolation_level(&mut connection.client, self.dump_isolation_level)?;
         for (ind, (table, _weight)) in tables.iter().enumerate() {
             self.debug(format!(
                 "[{} / {}] Prepare to dump table: {}",
@@ -234,9 +233,9 @@ impl Dumper for PgDumper {
     }
 
     // This stage makes dump foreign keys, indices and other...
-    fn post_data(&mut self, _connection: &mut Self::Connection) -> Result<()> {
+    fn post_data(&mut self, connection: &mut Self::Connection) -> Result<()> {
         self.debug("Finishing with indexes...".into());
-        self.run_pg_dump("post-data")
+        self.run_pg_dump("post-data", connection.url.as_str())
     }
 
     fn schema_inspector(&self) -> Self::SchemaInspector {

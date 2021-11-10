@@ -70,7 +70,7 @@ mod tests {
                       Multi
                       line
         "#;
-        let settings = Settings::from_yaml(config, String::new()).unwrap();
+        let settings = Settings::from_yaml(config).unwrap();
 
         let mut table = PgTable::new("table_name".to_string(), "public".to_string());
 

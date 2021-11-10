@@ -59,13 +59,13 @@ pub fn create_src_db() {
     });
 }
 
-pub fn src_connection() -> Client {
+pub fn src_client() -> Client {
     create_src_db();
-    connection(&src_database_url())
+    client(&src_database_url())
 }
 
-pub fn dst_connection(name: &str) -> Client {
-    connection(&dst_database_url(name))
+pub fn dst_client(name: &str) -> Client {
+    client(&dst_database_url(name))
 }
 
 pub fn dst_wrapper(name: &str) -> DstWrapper {
@@ -127,6 +127,6 @@ fn run_sql(cmd: &str, db_url: &str) {
         );
 }
 
-fn connection(url: &Url) -> Client {
+fn client(url: &Url) -> Client {
     Client::connect(url.as_str(), NoTls).unwrap()
 }

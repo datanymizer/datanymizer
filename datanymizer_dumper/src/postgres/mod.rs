@@ -14,5 +14,3 @@ mod query_wrapper;
 mod sequence;
 
 pub use postgres::IsolationLevel;
-
-pub struct PostgresDatabase;
