@@ -1,4 +1,4 @@
-use super::{column::PgColumn, dumper::PgDumper, row::PgRow, sequence::PgSequence};
+use super::{column::PgColumn, row::PgRow, sequence::PgSequence};
 use crate::Table;
 use anyhow::{anyhow, Result};
 use datanymizer_engine::{Query as QueryCfg, Table as TableCfg};
@@ -32,7 +32,6 @@ impl Hash for PgTable {
 }
 
 impl Table<Type> for PgTable {
-    type Dumper = PgDumper;
     type Column = PgColumn;
     type Row = PgRow<Self>;
 

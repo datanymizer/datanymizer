@@ -1,7 +1,8 @@
 use super::helpers;
 
 use datanymizer_dumper::{
-    postgres::{connector::Connection, dumper::PgDumper, writer::DumpWriter},
+    indicator::SilentIndicator,
+    postgres::{connector::Connection, dumper::PgDumper},
     Dumper,
 };
 use datanymizer_engine::{Engine, Settings};
@@ -12,8 +13,15 @@ fn dump(name: &str) {
     let cfg_filename = format!("tests/postgres/configs/{}.yml", name);
     let settings = Settings::new(cfg_filename).unwrap();
     let engine = Engine::new(settings);
-    let writer = DumpWriter::for_child(dst.io()).unwrap();
-    let mut dumper = PgDumper::new(engine, None, helpers::pg_dump_path(), writer, vec![]).unwrap();
+    let mut dumper = PgDumper::new(
+        engine,
+        None,
+        helpers::pg_dump_path(),
+        dst.io(),
+        SilentIndicator,
+        vec![],
+    )
+    .unwrap();
     let mut connection = Connection::new(helpers::src_client(), helpers::src_database_url());
     dumper.dump(&mut connection).unwrap();
 

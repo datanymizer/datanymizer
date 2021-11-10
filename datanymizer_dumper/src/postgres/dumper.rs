@@ -1,11 +1,10 @@
 use super::{
     connector, query_wrapper::QueryWrapper, row::PgRow, schema_inspector::PgSchemaInspector,
-    table::PgTable, writer::DumpWriter,
+    table::PgTable,
 };
-use crate::{Dumper, SchemaInspector, Table};
+use crate::{indicator::Indicator, Dumper, SchemaInspector, Table};
 use anyhow::Result;
 use datanymizer_engine::{Engine, Filter, Settings, TableList};
-use indicatif::{HumanDuration, ProgressBar, ProgressStyle};
 use postgres::IsolationLevel;
 use std::{
     io::{self, prelude::*},
@@ -13,37 +12,32 @@ use std::{
     time::Instant,
 };
 
-pub struct PgDumper {
+pub struct PgDumper<W: Write + Send, I: Indicator + Send> {
     schema_inspector: PgSchemaInspector,
     engine: Engine,
-    dump_writer: DumpWriter,
+    dump_writer: W,
+    indicator: I,
     dump_isolation_level: Option<IsolationLevel>,
     pg_dump_location: String,
     pg_dump_args: Vec<String>,
-    progress_bar: ProgressBar,
 }
 
-impl PgDumper {
+impl<W: 'static + Write + Send, I: 'static + Indicator + Send> PgDumper<W, I> {
     pub fn new(
         engine: Engine,
         dump_isolation_level: Option<IsolationLevel>,
         pg_dump_location: String,
-        dump_writer: DumpWriter,
+        dump_writer: W,
+        indicator: I,
         pg_dump_args: Vec<String>,
     ) -> Result<Self> {
-        let pb: ProgressBar = if dump_writer.can_log_to_stdout() {
-            ProgressBar::new(0)
-        } else {
-            ProgressBar::hidden()
-        };
-
         Ok(Self {
             engine,
             dump_writer,
+            indicator,
             dump_isolation_level,
             pg_dump_location,
             schema_inspector: PgSchemaInspector {},
-            progress_bar: pb,
             pg_dump_args,
         })
     }
@@ -51,7 +45,7 @@ impl PgDumper {
     fn run_pg_dump(&mut self, section: &str, db_url: &str) -> Result<()> {
         let program = &self.pg_dump_location;
         let args = vec!["--section", section];
-        let table_args = Self::table_args(&self.engine.settings.filter)?;
+        let table_args = table_args(&self.engine.settings.filter)?;
 
         let dump_output = Command::new(program)
             .args(&self.pg_dump_args)
@@ -76,39 +70,7 @@ impl PgDumper {
 
         self.dump_writer
             .write_all(&dump_output.stdout)
-            .map_err(|e| e)
-    }
-
-    fn init_progress_bar(&self, tsize: u64, prefix: &str) {
-        let delta = tsize / 100;
-        self.progress_bar.set_length(tsize);
-        self.progress_bar.set_draw_delta(delta);
-        self.progress_bar.set_prefix(prefix);
-        self.progress_bar.set_style(
-            ProgressStyle::default_bar()
-                .template(
-                    "[Dumping: {prefix}] [|{bar:50}|] {pos} of {len} rows [{percent}%] ({eta})",
-                )
-                .progress_chars("#>-"),
-        );
-    }
-
-    fn table_args(filter: &Option<Filter>) -> Result<Vec<String>> {
-        let mut args = vec![];
-        if let Some(f) = filter {
-            if let Some(list) = &f.schema {
-                let flag = match list {
-                    TableList::Only(_) => "-t",
-                    TableList::Except(_) => "-T",
-                };
-                for table in list.tables() {
-                    args.push(String::from(flag));
-                    args.push(PgTable::quote_table_name(table.as_str())?);
-                }
-            }
-        }
-
-        Ok(args)
+            .map_err(|e| e.into())
     }
 
     fn dump_table(&mut self, table: &PgTable, qw: &mut QueryWrapper) -> Result<()> {
@@ -123,15 +85,15 @@ impl PgDumper {
 
         let cfg = settings.find_table(&table.get_names());
 
-        self.init_progress_bar(table.count_of_query_to(cfg), &table.get_full_name());
+        self.indicator
+            .start_pb(table.count_of_query_to(cfg), &table.get_full_name());
 
         let mut count: u64 = 0;
         if let Some(cfg) = cfg {
             if let Some(transformed_query) = table.transformed_query_to(Some(cfg), count) {
                 let reader = qw.copy_out(transformed_query.as_str())?;
                 for line in reader.lines() {
-                    // Tick for bar
-                    self.progress_bar.inc(1);
+                    self.indicator.inc_pb(1);
 
                     let row = PgRow::from_string_row(line?, table.clone());
                     let transformed = row.transform(&self.engine, cfg.name.as_str())?;
@@ -146,8 +108,7 @@ impl PgDumper {
         if let Some(untransformed_query) = table.untransformed_query_to(cfg, count) {
             let reader = qw.copy_out(untransformed_query.as_str())?;
             for line in reader.lines() {
-                // Tick for bar
-                self.progress_bar.inc(1);
+                self.indicator.inc_pb(1);
 
                 self.dump_writer.write_all(line?.as_bytes())?;
                 self.dump_writer.write_all(b"\n")?;
@@ -165,28 +126,15 @@ impl PgDumper {
             self.dump_writer.write_all(b"\n")?;
         }
 
-        self.progress_bar.finish();
-        self.progress_bar.reset();
-
         let finished = started.elapsed();
-        self.debug(format!(
-            "[Dumping: {}] Finished in {}",
-            table.get_full_name(),
-            HumanDuration(finished),
-        ));
+        self.indicator
+            .finish_pb(table.get_full_name().as_str(), finished);
 
         Ok(())
     }
-
-    fn sort_tables(tables: &mut Vec<(<Self as Dumper>::Table, i32)>, order: &[String]) {
-        tables.sort_by_cached_key(|(tbl, weight)| {
-            let position = order.iter().position(|i| tbl.get_names().contains(i));
-            (position, -weight)
-        });
-    }
 }
 
-impl Dumper for PgDumper {
+impl<W: 'static + Write + Send, I: 'static + Indicator + Send> Dumper for PgDumper<W, I> {
     type Table = PgTable;
     type Connection = connector::Connection;
     type SchemaInspector = PgSchemaInspector;
@@ -204,7 +152,7 @@ impl Dumper for PgDumper {
         self.debug("Fetch tables metadata...".into());
 
         let mut tables = self.schema_inspector().ordered_tables(connection);
-        Self::sort_tables(
+        sort_tables(
             &mut tables,
             settings.table_order.as_ref().unwrap_or(&vec![]),
         );
@@ -249,14 +197,37 @@ impl Dumper for PgDumper {
     fn write_log(&mut self, message: String) -> Result<()> {
         self.dump_writer
             .write_all(format!("\n---\n--- {}\n---\n", message).as_bytes())
-            .map_err(|e| e)
+            .map_err(|e| e.into())
     }
 
     fn debug(&self, message: String) {
-        if self.dump_writer.can_log_to_stdout() {
-            println!("{}", message)
+        self.indicator.debug_msg(message.as_str());
+    }
+}
+
+fn table_args(filter: &Option<Filter>) -> Result<Vec<String>> {
+    let mut args = vec![];
+    if let Some(f) = filter {
+        if let Some(list) = &f.schema {
+            let flag = match list {
+                TableList::Only(_) => "-t",
+                TableList::Except(_) => "-T",
+            };
+            for table in list.tables() {
+                args.push(String::from(flag));
+                args.push(PgTable::quote_table_name(table.as_str())?);
+            }
         }
     }
+
+    Ok(args)
+}
+
+fn sort_tables(tables: &mut Vec<(PgTable, i32)>, order: &[String]) {
+    tables.sort_by_cached_key(|(tbl, weight)| {
+        let position = order.iter().position(|i| tbl.get_names().contains(i));
+        (position, -weight)
+    });
 }
 
 #[cfg(test)]
@@ -264,16 +235,16 @@ mod tests {
     use super::*;
 
     #[test]
-    fn table_args() {
+    fn test_table_args() {
         let empty: Vec<String> = vec![];
-        assert_eq!(PgDumper::table_args(&None).unwrap(), empty);
+        assert_eq!(table_args(&None).unwrap(), empty);
 
         let filter = Filter {
             schema: Some(TableList::Except(vec![String::from("table1")])),
             data: None,
         };
         assert_eq!(
-            PgDumper::table_args(&Some(filter)).unwrap(),
+            table_args(&Some(filter)).unwrap(),
             vec![String::from("-T"), String::from("\"table1\"")]
         );
 
@@ -281,7 +252,7 @@ mod tests {
             schema: None,
             data: Some(TableList::Except(vec![String::from("table1")])),
         };
-        assert_eq!(PgDumper::table_args(&Some(filter)).unwrap(), empty);
+        assert_eq!(table_args(&Some(filter)).unwrap(), empty);
 
         let filter = Filter {
             schema: Some(TableList::Only(vec![
@@ -291,7 +262,7 @@ mod tests {
             data: None,
         };
         assert_eq!(
-            PgDumper::table_args(&Some(filter)).unwrap(),
+            table_args(&Some(filter)).unwrap(),
             vec![
                 String::from("-t"),
                 String::from("\"table1\""),
@@ -302,7 +273,7 @@ mod tests {
     }
 
     #[test]
-    fn sort_tables() {
+    fn test_sort_tables() {
         let order = vec!["table2".to_string(), "public.table1".to_string()];
 
         let mut tables = vec![
@@ -314,7 +285,7 @@ mod tests {
             (PgTable::new("table2".to_string(), "other".to_string()), 5),
         ];
 
-        PgDumper::sort_tables(&mut tables, &order);
+        sort_tables(&mut tables, &order);
 
         let ordered_names: Vec<_> = tables
             .iter()

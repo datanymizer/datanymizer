@@ -1,10 +1,12 @@
 use anyhow::Result;
+use std::{fs::File, io};
 use url::Url;
 
 use crate::options::{Options, TransactionConfig};
 
 use datanymizer_dumper::{
-    postgres::{connector::Connector, dumper::PgDumper, writer::DumpWriter, IsolationLevel},
+    indicator::{ConsoleIndicator, SilentIndicator},
+    postgres::{connector::Connector, dumper::PgDumper, IsolationLevel},
     Dumper,
 };
 use datanymizer_engine::{Engine, Settings};
@@ -25,10 +27,30 @@ impl App {
     }
 
     pub fn run(&self) -> Result<()> {
-        let mut dumper = self.dumper()?;
         let mut connection = self.connector().connect()?;
+        let engine = self.engine()?;
 
-        dumper.dump(&mut connection)
+        match &self.options.file {
+            Some(filename) => PgDumper::new(
+                engine,
+                self.dump_isolation_level(),
+                self.options.pg_dump_location.clone(),
+                File::create(filename)?,
+                ConsoleIndicator::new(),
+                self.options.pg_dump_args.clone(),
+            )?
+            .dump(&mut connection),
+
+            None => PgDumper::new(
+                engine,
+                self.dump_isolation_level(),
+                self.options.pg_dump_location.clone(),
+                io::stdout(),
+                SilentIndicator,
+                self.options.pg_dump_args.clone(),
+            )?
+            .dump(&mut connection),
+        }
     }
 
     fn connector(&self) -> Connector {
@@ -37,18 +59,6 @@ impl App {
             self.database_url.clone(),
             options.accept_invalid_hostnames,
             options.accept_invalid_certs,
-        )
-    }
-
-    fn dumper(&self) -> Result<PgDumper> {
-        let engine = self.engine()?;
-
-        PgDumper::new(
-            engine,
-            self.dump_isolation_level(),
-            self.options.pg_dump_location.clone(),
-            DumpWriter::new(self.options.file.clone())?,
-            self.options.pg_dump_args.clone(),
         )
     }
 
