@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### 🚀 Added
+- Add the `default` arg for `store_read` template function [#133](https://github.com/datanymizer/datanymizer/pull/133)
+  ([@evgeniy-r](https://github.com/evgeniy-r))
 - Add the configurable table order [#127](https://github.com/datanymizer/datanymizer/pull/127)
   ([@evgeniy-r](https://github.com/evgeniy-r))
 - Extend template transformer with shared templates and macros
