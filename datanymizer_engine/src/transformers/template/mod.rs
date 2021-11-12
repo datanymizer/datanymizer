@@ -554,6 +554,33 @@ mod tests {
         }
 
         #[test]
+        fn condition() {
+            let config = r#"
+                                template:
+                                  format: |
+                                    {%- set c = store_read(key=_0, default=false) -%}
+                                    {%- if c -%}
+                                      {{ c }}
+                                    {%- endif -%}
+                              "#;
+            let mut t: Transformers = serde_yaml::from_str(config).unwrap();
+            let mut w = write_transformer();
+            let ctx = TransformerInitContext::default();
+
+            t.init(&ctx);
+            w.init(&ctx);
+
+            let value = w.transform("field", "a", &None).unwrap().unwrap();
+            assert_eq!(value, "Write: value_a into key_a");
+
+            let value = t.transform("field", "key_a", &None).unwrap().unwrap();
+            assert_eq!(value, "value_a");
+
+            let value = t.transform("field", "b", &None).unwrap().unwrap();
+            assert_eq!(value, "");
+        }
+
+        #[test]
         fn overwrite() {
             let config = r#"
                   template:
