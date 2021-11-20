@@ -469,6 +469,14 @@ mod tests {
             serde_yaml::from_str(config).unwrap()
         }
 
+        fn read_default_transformer() -> Transformers {
+            let config = r#"
+                                template:
+                                  format: "Read: {{ store_read(key=_0, default='def key') }}"
+                              "#;
+            serde_yaml::from_str(config).unwrap()
+        }
+
         fn write_transformer() -> Transformers {
             let config = r#"
                   template:
@@ -485,10 +493,12 @@ mod tests {
         #[test]
         fn basic() {
             let mut r = read_transformer();
+            let mut rd = read_default_transformer();
             let mut w = write_transformer();
             let ctx = TransformerInitContext::default();
 
             r.init(&ctx);
+            rd.init(&ctx);
             w.init(&ctx);
 
             let value = w.transform("field", "a", &None).unwrap().unwrap();
@@ -508,15 +518,23 @@ mod tests {
 
             let value = r.transform("field", "key_c", &None).unwrap().unwrap();
             assert_eq!(value, "Read: value_c");
+
+            let value = rd.transform("field", "key_a", &None).unwrap().unwrap();
+            assert_eq!(value, "Read: value_a");
+
+            let value = rd.transform("field", "key_d", &None).unwrap().unwrap();
+            assert_eq!(value, "Read: def key");
         }
 
         #[test]
         fn repeatable_read() {
             let mut r = read_transformer();
+            let mut rd = read_default_transformer();
             let mut w = write_transformer();
             let ctx = TransformerInitContext::default();
 
             r.init(&ctx);
+            rd.init(&ctx);
             w.init(&ctx);
 
             let value = w.transform("field", "a", &None).unwrap().unwrap();
@@ -527,6 +545,39 @@ mod tests {
 
             let value = r.transform("field", "key_a", &None).unwrap().unwrap();
             assert_eq!(value, "Read: value_a");
+
+            let value = rd.transform("field", "key_d", &None).unwrap().unwrap();
+            assert_eq!(value, "Read: def key");
+
+            let value = rd.transform("field", "key_d", &None).unwrap().unwrap();
+            assert_eq!(value, "Read: def key");
+        }
+
+        #[test]
+        fn condition() {
+            let config = r#"
+                                template:
+                                  format: |
+                                    {%- set c = store_read(key=_0, default=false) -%}
+                                    {%- if c -%}
+                                      {{ c }}
+                                    {%- endif -%}
+                              "#;
+            let mut t: Transformers = serde_yaml::from_str(config).unwrap();
+            let mut w = write_transformer();
+            let ctx = TransformerInitContext::default();
+
+            t.init(&ctx);
+            w.init(&ctx);
+
+            let value = w.transform("field", "a", &None).unwrap().unwrap();
+            assert_eq!(value, "Write: value_a into key_a");
+
+            let value = t.transform("field", "key_a", &None).unwrap().unwrap();
+            assert_eq!(value, "value_a");
+
+            let value = t.transform("field", "b", &None).unwrap().unwrap();
+            assert_eq!(value, "");
         }
 
         #[test]

@@ -310,8 +310,9 @@ tables:
 
 The full list of functions for working with the store:
 
-* `store_read` - returns a value by a key, raises an error when no such key.<br/>
-  Arguments: `key`.
+* `store_read` - returns a value by key, when no such key returns a default value or raises an error 
+  if no default value is provided.<br/>
+  Arguments: `key`, `default` (the `default` arg is optional).
 
 * `store_write` - stores a value in a key, raises an error when the key is already present.<br/>
   Arguments: `key`, `value`.
