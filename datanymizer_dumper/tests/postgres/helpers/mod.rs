@@ -1,7 +1,6 @@
 use postgres::{Client, NoTls};
 use std::{
     env,
-    fs::File,
     process::{Child, ChildStdin, Command, Stdio},
     sync::Once,
 };
@@ -11,8 +10,9 @@ static CREATE_SRC_DB: Once = Once::new();
 
 const DB_ENV_KEY: &str = "DATANYMIZER_TEST_PG_DB";
 const PG_DUMP_PATH_KEY: &str = "DATANYMIZER_TEST_PG_DUMP_PATH";
+const PG_RESTORE_PATH_KEY: &str = "DATANYMIZER_TEST_PG_RESTORE_PATH";
 const PSQL_PATH_KEY: &str = "DATANYMIZER_TEST_PSQL_PATH";
-const SRC_DUMP_PATH: &str = "tests/postgres/dumps/common.sql";
+const SRC_DUMP_PATH: &str = "tests/postgres/dumps/common.dump";
 
 pub struct DstWrapper(Child);
 
@@ -36,7 +36,7 @@ pub fn src_database_url() -> Url {
             .expect(format!("No {} environment variable", DB_ENV_KEY).as_str())
             .as_str(),
     )
-    .expect("Invalid database URL")
+        .expect("Invalid database URL")
 }
 
 pub fn dst_database_url(name: &str) -> Url {
@@ -49,15 +49,11 @@ pub fn dst_database_url(name: &str) -> Url {
 
 pub fn create_src_db() {
     CREATE_SRC_DB.call_once(|| {
-        let file =
-            File::open(SRC_DUMP_PATH).expect(format!("No dump file at {}", SRC_DUMP_PATH).as_str());
         let database_url = src_database_url();
-
         create_db(&database_url);
-
-        psql_command()
-            .arg(database_url.as_str())
-            .stdin(file)
+        pg_restore_command()
+            .args(&["-d", database_url.as_str()])
+            .arg(SRC_DUMP_PATH)
             .status()
             .expect("Error when restoring the test source database");
     });
@@ -110,6 +106,13 @@ fn psql_command() -> Command {
     cmd
 }
 
+fn pg_restore_command() -> Command {
+    let pg_restore_path = env::var(PG_RESTORE_PATH_KEY).unwrap_or("pg_restore".to_string());
+    let mut cmd = Command::new(pg_restore_path);
+    cmd.stdout(Stdio::null());
+    cmd
+}
+
 fn run_sql(cmd: &str, db_url: &str) {
     psql_command()
         .args(&["-c", cmd])
@@ -120,7 +123,7 @@ fn run_sql(cmd: &str, db_url: &str) {
                 "Error when running sql command, db: {}, cmd: {}",
                 db_url, cmd
             )
-            .as_str(),
+                .as_str(),
         );
 }
 
