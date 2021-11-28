@@ -412,6 +412,8 @@ tables:
 
 * [pg_datanymizer](docs/pg_datanymizer.md) CLI application manual.
 * [config.yml](docs/config.md) file specification.
+* [Full list](docs/transformers.md) of transformation rules.
+* [Integration testing](docs/integration_tests.md) manual.
 
 ## Sponsors
 

@@ -9,3 +9,6 @@ jobs:
       - uses: reviewdog/action-misspell@v1
         with:
           locale: "US"
+          path: |
+            !datanymizer_dumper/tests/postgres/dumps
+

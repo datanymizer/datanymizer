@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### 🚀 Added
+- Add integration tests [#130](https://github.com/datanymizer/datanymizer/pull/130)
+  ([@evgeniy-r](https://github.com/evgeniy-r))
 - Add the `default` arg for `store_read` template function [#133](https://github.com/datanymizer/datanymizer/pull/133)
   ([@evgeniy-r](https://github.com/evgeniy-r))
 - Add the configurable table order [#127](https://github.com/datanymizer/datanymizer/pull/127)
@@ -105,7 +107,7 @@ The release was yanked.
   [#41](https://github.com/datanymizer/datanymizer/pull/41) ([@evgeniy-r](https://github.com/evgeniy-r))
 - Add a config-wide default locale (and the method to set defaults for transformers)
   [#36](https://github.com/datanymizer/datanymizer/pull/36) ([@evgeniy-r](https://github.com/evgeniy-r))
-- Implement the most of fakers from the `fake` crate. Add the option for locale configuration
+- Implement most of the fakers from the `fake` crate. Add the option for locale configuration
   [#23](https://github.com/datanymizer/datanymizer/pull/23) ([@evgeniy-r](https://github.com/evgeniy-r))
 
 ### ⚙️ Changed

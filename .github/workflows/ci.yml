@@ -90,7 +90,16 @@ jobs:
   test:
     name: Test and coverage / Linux
     runs-on: ubuntu-latest
+    env:
+      postgres_password: 'pgpass'
+      postgres_port: 5432
+      postgres_version: 14
     steps:
+      - name: Run Postges (with Docker)
+        # requires the `server.crt` file for TLS support
+        run: |
+          docker run -d -p 127.0.0.1:${{ env.postgres_port }}:5432 -e POSTGRES_PASSWORD=${{ env.postgres_password }} \
+            postgres:${{ env.postgres_version }}
       - uses: actions/checkout@v1
       - uses: actions-rs/toolchain@v1
         id: toolchain
@@ -123,9 +132,11 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --all-features --no-fail-fast
+          args: --all-features #--no-fail-fast
         env:
           CARGO_INCREMENTAL: '0'
+          DATANYMIZER_TEST_PG_DB: |
+            postgres://postgres:${{ env.postgres_password }}@localhost:${{ env.postgres_port }}/datanymizer_test
           RUSTFLAGS: |
             -Zprofile -Zpanic_abort_tests -Ccodegen-units=1 -Clink-dead-code -Coverflow-checks=off
       - uses: actions-rs/grcov@v0.1
