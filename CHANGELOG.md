@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   ([@mgrachev](https://github.com/mgrachev))
 
 ### ⚙️ Changed
+- Refactoring: generic indicator and writer [#132](https://github.com/datanymizer/datanymizer/pull/132)
+  ([@evgeniy-r](https://github.com/evgeniy-r))
 - Refactoring: remove unrelated code from Engine [#131](https://github.com/datanymizer/datanymizer/pull/131)
   ([@evgeniy-r](https://github.com/evgeniy-r))
 - Remove the PostgreSQL dependency from the CLI application [#123](https://github.com/datanymizer/datanymizer/pull/123)

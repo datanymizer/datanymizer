@@ -5,13 +5,14 @@ use indicatif::HumanDuration;
 use solvent::DepGraph;
 use std::{collections::HashMap, hash::Hash, time::Instant};
 
+pub mod indicator;
 pub mod postgres;
 
 // Dumper makes dump with same stages
 pub trait Dumper: 'static + Sized + Send {
     type Table;
     type Connection;
-    type SchemaInspector: SchemaInspector<Dumper = Self>;
+    type SchemaInspector: SchemaInspector<Connection = Self::Connection>;
 
     /// Process steps
     fn dump(&mut self, connection: &mut Self::Connection) -> Result<()> {
@@ -52,34 +53,25 @@ pub trait Dumper: 'static + Sized + Send {
 
 pub trait SchemaInspector: 'static + Sized + Send + Clone {
     type Type;
-    type Dumper: Dumper;
+    type Connection;
     type Table: Table<Self::Type>;
     type Column: ColumnData<Self::Type>;
 
     /// Get all tables in the database
-    fn get_tables(
-        &self,
-        connection: &mut <Self::Dumper as Dumper>::Connection,
-    ) -> Result<Vec<Self::Table>>;
+    fn get_tables(&self, connection: &mut Self::Connection) -> Result<Vec<Self::Table>>;
 
     /// Get table size
-    fn get_table_size(
-        &self,
-        connection: &mut <Self::Dumper as Dumper>::Connection,
-        table: &Self::Table,
-    ) -> Result<i64>;
+    fn get_table_size(&self, connection: &mut Self::Connection, table: &Self::Table)
+        -> Result<i64>;
 
     /// Get all dependencies (by FK) for `table` in database
     fn get_dependencies(
         &self,
-        connection: &mut <Self::Dumper as Dumper>::Connection,
+        connection: &mut Self::Connection,
         table: &Self::Table,
     ) -> Result<Vec<Self::Table>>;
 
-    fn ordered_tables(
-        &self,
-        connection: &mut <Self::Dumper as Dumper>::Connection,
-    ) -> Vec<(Self::Table, i32)> {
+    fn ordered_tables(&self, connection: &mut Self::Connection) -> Vec<(Self::Table, i32)> {
         let mut res: HashMap<Self::Table, i32> = HashMap::new();
         let mut depgraph: DepGraph<Self::Table> = DepGraph::new();
         if let Ok(tables) = self.get_tables(connection) {
@@ -108,14 +100,13 @@ pub trait SchemaInspector: 'static + Sized + Send + Clone {
     /// Get columns for table
     fn get_columns(
         &self,
-        connection: &mut <Self::Dumper as Dumper>::Connection,
+        connection: &mut Self::Connection,
         table: &Self::Table,
     ) -> Result<Vec<Self::Column>>;
 }
 
 /// Table trait for all databases
 pub trait Table<T>: Sized + Send + Clone + Eq + Hash {
-    type Dumper: Dumper;
     type Column: ColumnData<T>;
     type Row;
 

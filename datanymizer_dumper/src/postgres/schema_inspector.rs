@@ -1,6 +1,6 @@
 use super::{
-    column::PgColumn, dumper::PgDumper, foreign_key::ForeignKey, sequence::PgSequence,
-    table::PgTable, Dumper, SchemaInspector,
+    column::PgColumn, connector, foreign_key::ForeignKey, sequence::PgSequence, table::PgTable,
+    SchemaInspector,
 };
 use crate::Table;
 use anyhow::Result;
@@ -51,15 +51,12 @@ pub struct PgSchemaInspector;
 
 impl SchemaInspector for PgSchemaInspector {
     type Type = Type;
-    type Dumper = PgDumper;
+    type Connection = connector::Connection;
     type Table = PgTable;
     type Column = PgColumn;
 
     // Get all tables in the database
-    fn get_tables(
-        &self,
-        connection: &mut <Self::Dumper as Dumper>::Connection,
-    ) -> Result<Vec<Self::Table>> {
+    fn get_tables(&self, connection: &mut Self::Connection) -> Result<Vec<Self::Table>> {
         let mut counter = 0;
         let items: Vec<Self::Table> = connection
             .client
@@ -90,7 +87,7 @@ impl SchemaInspector for PgSchemaInspector {
     /// Get table size
     fn get_table_size(
         &self,
-        connection: &mut <Self::Dumper as Dumper>::Connection,
+        connection: &mut Self::Connection,
         table: &Self::Table,
     ) -> Result<i64> {
         let row = connection
@@ -103,7 +100,7 @@ impl SchemaInspector for PgSchemaInspector {
     // Get all dependencies (by FK) for `table` in database
     fn get_dependencies(
         &self,
-        connection: &mut <Self::Dumper as Dumper>::Connection,
+        connection: &mut Self::Connection,
         table: &Self::Table,
     ) -> Result<Vec<Self::Table>> {
         let fkeys_iterator = connection
@@ -140,7 +137,7 @@ impl SchemaInspector for PgSchemaInspector {
     /// Get columns for table
     fn get_columns(
         &self,
-        connection: &mut <Self::Dumper as Dumper>::Connection,
+        connection: &mut Self::Connection,
         table: &Self::Table,
     ) -> Result<Vec<Self::Column>> {
         let items: Vec<Self::Column> = connection
@@ -156,7 +153,7 @@ impl SchemaInspector for PgSchemaInspector {
 impl PgSchemaInspector {
     pub fn get_sequences(
         &self,
-        connection: &mut <<Self as SchemaInspector>::Dumper as Dumper>::Connection,
+        connection: &mut <Self as SchemaInspector>::Connection,
         table: &<Self as SchemaInspector>::Table,
     ) -> Result<Vec<PgSequence>> {
         let mut sequences = vec![];
