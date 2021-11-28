@@ -62,6 +62,7 @@ impl SchemaInspector for PgSchemaInspector {
     ) -> Result<Vec<Self::Table>> {
         let mut counter = 0;
         let items: Vec<Self::Table> = connection
+            .client
             .query(PG_CATALOG_SCHEMA, &[])?
             .into_iter()
             .map(|row| row.into())
@@ -92,7 +93,9 @@ impl SchemaInspector for PgSchemaInspector {
         connection: &mut <Self::Dumper as Dumper>::Connection,
         table: &Self::Table,
     ) -> Result<i64> {
-        let row = connection.query_one(TABLE_SIZE_QUERY, &[&table.tablename, &table.schemaname])?;
+        let row = connection
+            .client
+            .query_one(TABLE_SIZE_QUERY, &[&table.tablename, &table.schemaname])?;
         let size: i64 = row.get("len");
         Ok(size)
     }
@@ -104,6 +107,7 @@ impl SchemaInspector for PgSchemaInspector {
         table: &Self::Table,
     ) -> Result<Vec<Self::Table>> {
         let fkeys_iterator = connection
+            .client
             .query(TABLE_FOREIGN_KEYS, &[&table.get_name()])?
             .into_iter()
             .map(|row| row.into());
@@ -140,6 +144,7 @@ impl SchemaInspector for PgSchemaInspector {
         table: &Self::Table,
     ) -> Result<Vec<Self::Column>> {
         let items: Vec<Self::Column> = connection
+            .client
             .query(TABLE_COLUMNS_QUERY, &[&table.schemaname, &table.tablename])?
             .into_iter()
             .map(|row| row.into())
@@ -157,6 +162,7 @@ impl PgSchemaInspector {
         let mut sequences = vec![];
         for col in table.columns.iter() {
             let full_name: Option<String> = connection
+                .client
                 .query_one(
                     "SELECT pg_catalog.pg_get_serial_sequence($1, $2)",
                     &[&table.quoted_full_name(), &col.name],

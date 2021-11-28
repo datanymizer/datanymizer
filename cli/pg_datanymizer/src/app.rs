@@ -26,9 +26,9 @@ impl App {
 
     pub fn run(&self) -> Result<()> {
         let mut dumper = self.dumper()?;
-        let mut client = self.connector().connect()?;
+        let mut connection = self.connector().connect()?;
 
-        dumper.dump(&mut client)
+        dumper.dump(&mut connection)
     }
 
     fn connector(&self) -> Connector {
@@ -53,7 +53,7 @@ impl App {
     }
 
     fn engine(&self) -> Result<Engine> {
-        let settings = Settings::new(self.options.config.clone(), self.database_url.to_string())?;
+        let settings = Settings::new(self.options.config.clone())?;
         Ok(Engine::new(settings))
     }
 

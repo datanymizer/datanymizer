@@ -8,6 +8,17 @@ use url::Url;
 const SSL_MODE_PARAM: &str = "sslmode";
 const NO_SSL_MODE: &str = "disable";
 
+pub struct Connection {
+    pub client: Client,
+    pub url: Url,
+}
+
+impl Connection {
+    pub fn new(client: Client, url: Url) -> Self {
+        Self { client, url }
+    }
+}
+
 pub struct Connector {
     url: Url,
     accept_invalid_hostnames: bool,
@@ -23,14 +34,14 @@ impl Connector {
         }
     }
 
-    pub fn connect(&self) -> Result<Client> {
-        let url = self.url.to_string();
+    pub fn connect(&self) -> Result<Connection> {
+        let url_str = self.url.as_str();
         let client = match self.tls_connector()? {
-            Some(c) => Client::connect(&url, c)?,
-            None => Client::connect(&url, NoTls)?,
+            Some(c) => Client::connect(url_str, c)?,
+            None => Client::connect(url_str, NoTls)?,
         };
 
-        Ok(client)
+        Ok(Connection::new(client, self.url.clone()))
     }
 
     fn tls_connector(&self) -> Result<Option<MakeTlsConnector>> {

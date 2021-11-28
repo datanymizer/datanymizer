@@ -6,13 +6,15 @@ fn test_connection(tls_mode: &str) {
     let mut database_url = helpers::src_database_url();
     database_url.set_query(Some(format!("sslmode={}", tls_mode).as_str()));
 
-    let connector = Connector::new(database_url, true, true);
+    let connector = Connector::new(database_url.clone(), true, true);
     let mut connection = connector.connect().unwrap();
     let count: i64 = connection
+        .client
         .query_one("SELECT COUNT(*) FROM actor", &[])
         .unwrap()
         .get(0);
     assert!(count > 0);
+    assert_eq!(connection.url, database_url);
 }
 
 #[test]
