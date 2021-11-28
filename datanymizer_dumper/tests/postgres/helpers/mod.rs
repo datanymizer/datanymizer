@@ -36,7 +36,7 @@ pub fn src_database_url() -> Url {
             .expect(format!("No {} environment variable", DB_ENV_KEY).as_str())
             .as_str(),
     )
-        .expect("Invalid database URL")
+    .expect("Invalid database URL")
 }
 
 pub fn dst_database_url(name: &str) -> Url {
@@ -123,7 +123,7 @@ fn run_sql(cmd: &str, db_url: &str) {
                 "Error when running sql command, db: {}, cmd: {}",
                 db_url, cmd
             )
-                .as_str(),
+            .as_str(),
         );
 }
 
