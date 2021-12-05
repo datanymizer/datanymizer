@@ -35,7 +35,7 @@ use std::char;
 /// The transformer will collect information about generated numbers and check their uniqueness.
 /// If such a number already exists in the list, then the transformer will try to generate the value again.
 /// The number of attempts is limited by the number of available invariants based on the `format`.
-#[derive(Serialize, Deserialize, PartialEq, Eq, Hash, Debug, Clone)]
+#[derive(Serialize, Deserialize, PartialEq, Eq, Hash, Debug, Clone, Default)]
 pub struct PhoneTransformer {
     #[serde(deserialize_with = "deserialize_phone_format", default)]
     pub format: Option<PhoneFormat>,
@@ -47,15 +47,6 @@ pub struct PhoneTransformer {
 impl PhoneTransformer {
     fn phone_format(&self) -> PhoneFormat {
         self.format.clone().unwrap_or_default()
-    }
-}
-
-impl Default for PhoneTransformer {
-    fn default() -> Self {
-        Self {
-            format: None,
-            uniq: Uniqueness::default(),
-        }
     }
 }
 

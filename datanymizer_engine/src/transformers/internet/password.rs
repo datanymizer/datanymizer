@@ -30,7 +30,7 @@ pub struct MaxValue(usize);
 ///       min: 5
 ///       max: 10
 /// ```
-#[derive(Serialize, Deserialize, PartialEq, Eq, Hash, Clone, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Eq, Hash, Clone, Debug, Default)]
 pub struct PasswordTransformer {
     /// Minimum password length
     #[serde(default, rename = "min")]
@@ -38,15 +38,6 @@ pub struct PasswordTransformer {
     /// Maximum password length
     #[serde(default, rename = "max")]
     pub max: MaxValue,
-}
-
-impl Default for PasswordTransformer {
-    fn default() -> Self {
-        Self {
-            min: MinValue::default(),
-            max: MaxValue::default(),
-        }
-    }
 }
 
 impl Default for MinValue {

@@ -47,7 +47,7 @@ pub struct Format(String);
 ///       to: 2010-12-31T00:00:00+00:00
 ///       format: %Y-%m-%dT%H:%M:%S%.f%:z
 /// ```
-#[derive(Serialize, Deserialize, PartialEq, Eq, Hash, Clone, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Eq, Hash, Clone, Debug, Default)]
 pub struct RandomDateTimeTransformer {
     #[serde(default)]
     pub from: FromValue,
@@ -72,16 +72,6 @@ impl Default for ToValue {
 impl Default for Format {
     fn default() -> Self {
         Self(String::from("%Y-%m-%dT%H:%M:%S%.f%:z"))
-    }
-}
-
-impl Default for RandomDateTimeTransformer {
-    fn default() -> Self {
-        Self {
-            from: FromValue::default(),
-            to: ToValue::default(),
-            format: Format::default(),
-        }
     }
 }
 

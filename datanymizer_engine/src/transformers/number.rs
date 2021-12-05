@@ -30,7 +30,7 @@ pub struct MaxValue(usize);
 ///       min: 10
 ///       max: 20
 /// ```
-#[derive(Serialize, Deserialize, PartialEq, Eq, Hash, Clone, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Eq, Hash, Clone, Debug, Default)]
 pub struct RandomNumberTransformer {
     #[serde(default)]
     pub min: MinValue,
@@ -51,16 +51,6 @@ impl Default for MinValue {
 impl Default for MaxValue {
     fn default() -> Self {
         Self(usize::MAX)
-    }
-}
-
-impl Default for RandomNumberTransformer {
-    fn default() -> Self {
-        Self {
-            min: MinValue::default(),
-            max: MaxValue::default(),
-            uniq: Uniqueness::default(),
-        }
     }
 }
 
