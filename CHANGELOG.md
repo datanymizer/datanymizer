@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### 🚀 Added
+
+### ⚙️ Changed
+
+### 🛠 Fixed
+
+## [v0.5.0] - 2021-12-05
+### 🚀 Added
 - Add integration tests [#130](https://github.com/datanymizer/datanymizer/pull/130)
   ([@evgeniy-r](https://github.com/evgeniy-r))
 - Add the `default` arg for `store_read` template function [#133](https://github.com/datanymizer/datanymizer/pull/133)
@@ -27,7 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Remove the PostgreSQL dependency from the CLI application [#123](https://github.com/datanymizer/datanymizer/pull/123)
   ([@evgeniy-r](https://github.com/evgeniy-r))
 - Remove arch-specific argument in Demo [#121](https://github.com/datanymizer/datanymizer/pull/121)
-  ([@akirill0v](https://github.com/akirill0v)) 
+  ([@akirill0v](https://github.com/akirill0v))
 - Change edition to 2021 [#113](https://github.com/datanymizer/datanymizer/pull/113)
   ([@mgrachev](https://github.com/mgrachev))
 
