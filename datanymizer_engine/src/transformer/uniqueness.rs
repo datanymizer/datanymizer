@@ -38,19 +38,10 @@ enum Config {
     Full(FullConfig),
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Default)]
 struct FullConfig {
     required: bool,
     try_count: Option<i64>,
-}
-
-impl Default for FullConfig {
-    fn default() -> Self {
-        Self {
-            required: false,
-            try_count: None,
-        }
-    }
 }
 
 impl From<bool> for FullConfig {
