@@ -151,11 +151,18 @@ impl PgTable {
     }
 
     pub fn query_from(&self) -> String {
-        format!(
-            "COPY {}({}) FROM STDIN;",
-            self.quoted_full_name(),
-            self.quoted_columns().join(", "),
-        )
+        if self.quoted_columns().len() > 0 {
+            format!(
+                "COPY {}({}) FROM STDIN;",
+                self.quoted_full_name(),
+                self.quoted_columns().join(", "),
+            )
+        } else {
+            format!(
+                "COPY {} FROM STDIN;",
+                self.quoted_full_name(),
+            )
+        }
     }
 
     fn query_unless_already_dumped(
@@ -180,11 +187,18 @@ impl PgTable {
     }
 
     fn default_query(&self) -> String {
-        format!(
-            "COPY {}({}) TO STDOUT",
-            self.quoted_full_name(),
-            self.quoted_columns().join(", ")
-        )
+        if self.quoted_columns().len() > 0 {
+            format!(
+                "COPY {}({}) TO STDOUT",
+                self.quoted_full_name(),
+                self.quoted_columns().join(", "),
+            )
+        } else {
+            format!(
+                "COPY {} TO STDOUT",
+                self.quoted_full_name(),
+            )    
+        }
     }
 
     fn query_with_select(&self, cs: Vec<Option<String>>, limit: Option<u64>) -> String {
