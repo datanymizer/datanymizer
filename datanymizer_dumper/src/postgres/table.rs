@@ -151,7 +151,7 @@ impl PgTable {
     }
 
     pub fn query_from(&self) -> String {
-        if self.quoted_columns().len() > 0 {
+        if !self.quoted_columns().is_empty() {
             format!(
                 "COPY {}({}) FROM STDIN;",
                 self.quoted_full_name(),
@@ -184,7 +184,7 @@ impl PgTable {
     }
 
     fn default_query(&self) -> String {
-        if self.quoted_columns().len() > 0 {
+        if !self.quoted_columns().is_empty() {
             format!(
                 "COPY {}({}) TO STDOUT",
                 self.quoted_full_name(),
