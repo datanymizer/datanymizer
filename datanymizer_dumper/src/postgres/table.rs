@@ -158,10 +158,7 @@ impl PgTable {
                 self.quoted_columns().join(", "),
             )
         } else {
-            format!(
-                "COPY {} FROM STDIN;",
-                self.quoted_full_name(),
-            )
+            format!("COPY {} FROM STDIN;", self.quoted_full_name())
         }
     }
 
@@ -194,10 +191,7 @@ impl PgTable {
                 self.quoted_columns().join(", "),
             )
         } else {
-            format!(
-                "COPY {} TO STDOUT",
-                self.quoted_full_name(),
-            )    
+            format!("COPY {} TO STDOUT", self.quoted_full_name())
         }
     }
 
