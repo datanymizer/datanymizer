@@ -151,11 +151,15 @@ impl PgTable {
     }
 
     pub fn query_from(&self) -> String {
-        format!(
-            "COPY {}({}) FROM STDIN;",
-            self.quoted_full_name(),
-            self.quoted_columns().join(", "),
-        )
+        if !self.quoted_columns().is_empty() {
+            format!(
+                "COPY {}({}) FROM STDIN;",
+                self.quoted_full_name(),
+                self.quoted_columns().join(", "),
+            )
+        } else {
+            format!("COPY {} FROM STDIN;", self.quoted_full_name())
+        }
     }
 
     fn query_unless_already_dumped(
@@ -180,11 +184,15 @@ impl PgTable {
     }
 
     fn default_query(&self) -> String {
-        format!(
-            "COPY {}({}) TO STDOUT",
-            self.quoted_full_name(),
-            self.quoted_columns().join(", ")
-        )
+        if !self.quoted_columns().is_empty() {
+            format!(
+                "COPY {}({}) TO STDOUT",
+                self.quoted_full_name(),
+                self.quoted_columns().join(", "),
+            )
+        } else {
+            format!("COPY {} TO STDOUT", self.quoted_full_name())
+        }
     }
 
     fn query_with_select(&self, cs: Vec<Option<String>>, limit: Option<u64>) -> String {
@@ -318,6 +326,17 @@ mod tests {
             table
         }
 
+        fn columns_empty() -> Vec<PgColumn> {
+            vec![]
+        }
+
+        fn table_no_columns() -> PgTable {
+            let mut table = PgTable::new(table_name(), String::from("public"));
+            table.set_columns(columns_empty());
+            table.size = 500;
+            table
+        }
+
         fn cfg(query: Option<QueryCfg>) -> TableCfg {
             TableCfg {
                 name: table_name(),
@@ -335,6 +354,16 @@ mod tests {
                 "COPY \"public\".\"some_table\"(\"col1\", \"col2\") TO STDOUT"
             );
             assert_eq!(table().count_of_query_to(None), 1000);
+        }
+
+        #[test]
+        fn no_columns() {
+            assert_eq!(table_no_columns().transformed_query_to(None, 0), None);
+            assert_eq!(
+                table_no_columns().untransformed_query_to(None, 0).unwrap(),
+                "COPY \"public\".\"some_table\" TO STDOUT"
+            );
+            assert_eq!(table_no_columns().count_of_query_to(None), 500);
         }
 
         #[test]
