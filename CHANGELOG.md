@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### ⚙️ Changed
 
 ### 🛠 Fixed
+- Use pg_namespace to deconflict duplicate field names [#149](https://github.com/datanymizer/datanymizer/pull/149)
+  ([@mbeynon](https://github.com/mbeynon))
 
 ## [v0.5.1] - 2021-12-05
 ### 🚀 Added
