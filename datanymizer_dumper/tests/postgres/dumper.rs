@@ -52,10 +52,11 @@ fn simple_dump() {
 
         let src_first_name: String = src_row.get("first_name");
         let dst_first_name: String = dst_row.get("first_name");
-        assert_ne!(src_first_name, dst_first_name);
-
         let src_last_name: String = src_row.get("last_name");
         let dst_last_name: String = dst_row.get("last_name");
-        assert_ne!(src_last_name, dst_last_name);
+        assert_ne!(
+            format!("{} {}", src_first_name, src_last_name),
+            format!("{} {}", dst_first_name, dst_last_name)
+        );
     }
 }

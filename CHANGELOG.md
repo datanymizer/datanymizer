@@ -10,7 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### ⚙️ Changed
 
 ### 🛠 Fixed
-- Fix Postgres COPY syntax when dumping a table with zero defined fields [#147](https://github.com/datanymizer/datanymizer/pull/147)  ([@mbeynon](https://github.com/mbeynon))
+- Fix Postgres COPY syntax when dumping a table with zero defined fields
+  [#147](https://github.com/datanymizer/datanymizer/pull/147) ([@mbeynon](https://github.com/mbeynon))
+- Fix the bug with a datetime format [#150](https://github.com/datanymizer/datanymizer/pull/150)
+  ([@evgeniy-r](https://github.com/evgeniy-r))
 
 ## [v0.5.1] - 2021-12-05
 ### 🚀 Added
