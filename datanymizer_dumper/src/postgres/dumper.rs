@@ -20,6 +20,7 @@ pub struct PgDumper<W: Write + Send, I: Indicator + Send> {
     dump_isolation_level: Option<IsolationLevel>,
     pg_dump_location: String,
     pg_dump_args: Vec<String>,
+    tables: Vec<PgTable>,
 }
 
 impl<W: 'static + Write + Send, I: 'static + Indicator + Send> PgDumper<W, I> {
@@ -39,6 +40,7 @@ impl<W: 'static + Write + Send, I: 'static + Indicator + Send> PgDumper<W, I> {
             pg_dump_location,
             schema_inspector: PgSchemaInspector {},
             pg_dump_args,
+            tables: Vec::new(),
         })
     }
 
@@ -74,7 +76,6 @@ impl<W: 'static + Write + Send, I: 'static + Indicator + Send> PgDumper<W, I> {
     }
 
     fn dump_table(&mut self, table: &PgTable, qw: &mut QueryWrapper) -> Result<()> {
-        let settings = self.settings();
         let started = Instant::now();
 
         self.write_log(format!("Dump table: {}", &table.get_full_name()))?;
@@ -83,7 +84,7 @@ impl<W: 'static + Write + Send, I: 'static + Indicator + Send> PgDumper<W, I> {
         self.dump_writer.write_all(table.query_from().as_bytes())?;
         self.dump_writer.write_all(b"\n")?;
 
-        let cfg = settings.find_table(&table.get_names());
+        let cfg = self.engine.settings.find_table(&table.get_names());
 
         self.indicator
             .start_pb(table.count_of_query_to(cfg), &table.get_full_name());
@@ -141,27 +142,32 @@ impl<W: 'static + Write + Send, I: 'static + Indicator + Send> Dumper for PgDump
 
     // Stage before dumping data. It makes dump schema with any options
     fn pre_data(&mut self, connection: &mut Self::Connection) -> Result<()> {
+        self.debug("Fetch tables metadata...".into());
+        let mut tables = self.schema_inspector().ordered_tables(connection);
+
+        sort_tables(
+            &mut tables,
+            self.engine.settings.table_order.as_ref().unwrap_or(&vec![]),
+        );
+        self.tables = tables.into_iter().map(|(t, _)| t).collect();
+
+        if let Some(filter) = &mut self.engine.settings.filter {
+            filter.load_tables(self.tables.iter().map(|t| t.get_full_name()).collect());
+        }
+
         self.debug("Prepare data scheme...".into());
         self.run_pg_dump("pre-data", connection.url.as_str())
     }
 
     // This stage makes dump data only
     fn data(&mut self, connection: &mut Self::Connection) -> Result<()> {
-        let settings = self.settings();
         self.write_log("Start dumping data".into())?;
-        self.debug("Fetch tables metadata...".into());
 
-        let mut tables = self.schema_inspector().ordered_tables(connection);
-        sort_tables(
-            &mut tables,
-            settings.table_order.as_ref().unwrap_or(&vec![]),
-        );
-
-        let all_tables_count = tables.len();
+        let all_tables_count = self.tables.len();
 
         let mut query_wrapper =
             QueryWrapper::with_isolation_level(&mut connection.client, self.dump_isolation_level)?;
-        for (ind, (table, _weight)) in tables.iter().enumerate() {
+        for (ind, table) in self.tables.clone().iter().enumerate() {
             self.debug(format!(
                 "[{} / {}] Prepare to dump table: {}",
                 ind + 1,
@@ -169,7 +175,7 @@ impl<W: 'static + Write + Send, I: 'static + Indicator + Send> Dumper for PgDump
                 table.get_full_name(),
             ));
 
-            if self.filter_table(table.get_full_name(), &settings.filter) {
+            if self.filter_table(table.get_full_name()) {
                 self.dump_table(table, &mut query_wrapper)?;
             } else {
                 self.debug(format!("[Dumping: {}] --- SKIP ---", table.get_full_name()));
@@ -190,8 +196,8 @@ impl<W: 'static + Write + Send, I: 'static + Indicator + Send> Dumper for PgDump
         self.schema_inspector.clone()
     }
 
-    fn settings(&mut self) -> Settings {
-        self.engine.settings.clone()
+    fn settings(&self) -> &Settings {
+        &self.engine.settings
     }
 
     fn write_log(&mut self, message: String) -> Result<()> {
@@ -208,15 +214,14 @@ impl<W: 'static + Write + Send, I: 'static + Indicator + Send> Dumper for PgDump
 fn table_args(filter: &Option<Filter>) -> Result<Vec<String>> {
     let mut args = vec![];
     if let Some(f) = filter {
-        if let Some(list) = &f.schema {
-            let flag = match list {
-                TableList::Only(_) => "-t",
-                TableList::Except(_) => "-T",
-            };
-            for table in list.tables() {
-                args.push(String::from(flag));
-                args.push(PgTable::quote_table_name(table.as_str())?);
-            }
+        let list = f.schema_match_list();
+        let flag = match list {
+            TableList::Only(_) => "-t",
+            TableList::Except(_) => "-T",
+        };
+        for table in list.tables() {
+            args.push(String::from(flag));
+            args.push(PgTable::quote_table_name(table.as_str())?);
         }
     }
 
@@ -236,31 +241,48 @@ mod tests {
 
     #[test]
     fn test_table_args() {
+        let tables = vec![String::from("table1"), String::from("table2")];
+
         let empty: Vec<String> = vec![];
         assert_eq!(table_args(&None).unwrap(), empty);
 
-        let filter = Filter {
-            schema: Some(TableList::Except(vec![String::from("table1")])),
-            data: None,
-        };
+        let mut filter = Filter::new(
+            TableList::Except(vec![String::from("table1")]),
+            TableList::default(),
+        );
+        filter.load_tables(tables.clone());
         assert_eq!(
             table_args(&Some(filter)).unwrap(),
             vec![String::from("-T"), String::from("\"table1\"")]
         );
 
-        let filter = Filter {
-            schema: None,
-            data: Some(TableList::Except(vec![String::from("table1")])),
-        };
+        let mut filter = Filter::new(
+            TableList::default(),
+            TableList::Except(vec![String::from("table1")]),
+        );
+        filter.load_tables(tables.clone());
         assert_eq!(table_args(&Some(filter)).unwrap(), empty);
 
-        let filter = Filter {
-            schema: Some(TableList::Only(vec![
-                String::from("table1"),
-                String::from("table2"),
-            ])),
-            data: None,
-        };
+        let mut filter = Filter::new(
+            TableList::Only(vec![String::from("table1"), String::from("table2")]),
+            TableList::default(),
+        );
+        filter.load_tables(tables.clone());
+        assert_eq!(
+            table_args(&Some(filter)).unwrap(),
+            vec![
+                String::from("-t"),
+                String::from("\"table1\""),
+                String::from("-t"),
+                String::from("\"table2\"")
+            ]
+        );
+
+        let mut filter = Filter::new(
+            TableList::Only(vec![String::from("table*")]),
+            TableList::default(),
+        );
+        filter.load_tables(tables);
         assert_eq!(
             table_args(&Some(filter)).unwrap(),
             vec![

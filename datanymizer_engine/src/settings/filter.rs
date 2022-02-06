@@ -1,11 +1,14 @@
 use serde::Deserialize;
+use wildmatch::WildMatch;
 
 /// Filter for include or exclude tables
 #[derive(Clone, Debug, Deserialize, PartialEq)]
 #[serde(from = "Config")]
 pub struct Filter {
-    pub schema: Option<TableList>,
-    pub data: Option<TableList>,
+    schema: TableList,
+    matched_schema: TableList,
+    data: TableList,
+    matched_data: TableList,
 }
 
 impl From<Config> for Filter {
@@ -19,28 +22,34 @@ impl From<Config> for Filter {
 
 impl From<FullConfig> for Filter {
     fn from(full_config: FullConfig) -> Self {
-        Self {
-            schema: full_config.schema,
-            data: full_config.data,
-        }
+        Self::new(full_config.schema, full_config.data)
     }
 }
 
 impl Filter {
-    pub fn filter_schema(&self, table: &str) -> bool {
-        Self::filter(&self.schema, table)
-    }
+    pub fn new(schema: TableList, data: TableList) -> Self {
+        let matched_schema = TableList::default();
+        let matched_data = TableList::default();
 
-    pub fn filter_data(&self, table: &str) -> bool {
-        Self::filter(&self.data, table)
-    }
-
-    fn filter(list: &Option<TableList>, table: &str) -> bool {
-        if let Some(l) = list {
-            l.filter(table)
-        } else {
-            true
+        Self {
+            schema,
+            matched_schema,
+            data,
+            matched_data,
         }
+    }
+
+    pub fn load_tables(&mut self, tables: Vec<String>) {
+        self.matched_schema = self.schema.match_with_wildcards(tables.clone());
+        self.matched_data = self.data.match_with_wildcards(tables);
+    }
+
+    pub fn schema_match_list(&self) -> &TableList {
+        &self.matched_schema
+    }
+
+    pub fn filter_table(&self, table: &str) -> bool {
+        self.matched_schema.filter(table) && self.matched_data.filter(table)
     }
 }
 
@@ -52,18 +61,41 @@ pub enum TableList {
     Except(Vec<String>),
 }
 
-impl TableList {
-    pub fn filter(&self, table: &str) -> bool {
-        match self {
-            Self::Only(tables) => tables.iter().any(|t| t == table),
-            Self::Except(tables) => !tables.iter().any(|t| t == table),
-        }
+impl Default for TableList {
+    fn default() -> Self {
+        Self::Except(Vec::new())
     }
+}
 
+impl TableList {
     pub fn tables(&self) -> &Vec<String> {
         match self {
             Self::Only(tables) => tables,
             Self::Except(tables) => tables,
+        }
+    }
+
+    fn match_with_wildcards(&self, tables: Vec<String>) -> Self {
+        let matchers: Vec<_> = self
+            .tables()
+            .iter()
+            .map(|t| WildMatch::new(t.as_str()))
+            .collect();
+        let matched_tables = tables
+            .into_iter()
+            .filter(|t| matchers.iter().any(|m| m.matches(t)))
+            .collect();
+
+        match self {
+            Self::Only(_) => Self::Only(matched_tables),
+            Self::Except(_) => Self::Except(matched_tables),
+        }
+    }
+
+    fn filter(&self, table: &str) -> bool {
+        match self {
+            Self::Only(tables) => tables.iter().any(|t| t == table),
+            Self::Except(tables) => !tables.iter().any(|t| t == table),
         }
     }
 }
@@ -77,15 +109,17 @@ enum Config {
 
 #[derive(Deserialize)]
 struct FullConfig {
-    schema: Option<TableList>,
-    data: Option<TableList>,
+    #[serde(default)]
+    schema: TableList,
+    #[serde(default)]
+    data: TableList,
 }
 
 impl From<TableList> for FullConfig {
     fn from(list: TableList) -> Self {
         Self {
-            schema: None,
-            data: Some(list),
+            schema: TableList::default(),
+            data: list,
         }
     }
 }
@@ -193,13 +227,10 @@ mod tests {
                 "#;
             assert_eq!(
                 deserialize(config),
-                Filter {
-                    schema: None,
-                    data: Some(TableList::Only(vec![
-                        String::from("table1"),
-                        String::from("table2")
-                    ])),
-                }
+                Filter::new(
+                    TableList::default(),
+                    TableList::Only(vec![String::from("table1"), String::from("table2")])
+                )
             );
         }
 
@@ -214,13 +245,10 @@ mod tests {
 
             assert_eq!(
                 deserialize(config),
-                Filter {
-                    schema: None,
-                    data: Some(TableList::Except(vec![
-                        String::from("table1"),
-                        String::from("table2")
-                    ])),
-                }
+                Filter::new(
+                    TableList::default(),
+                    TableList::Except(vec![String::from("table1"), String::from("table2")])
+                )
             );
         }
 
@@ -235,13 +263,10 @@ mod tests {
 
             assert_eq!(
                 deserialize(config),
-                Filter {
-                    schema: Some(TableList::Only(vec![
-                        String::from("table1"),
-                        String::from("table2")
-                    ])),
-                    data: None,
-                }
+                Filter::new(
+                    TableList::Only(vec![String::from("table1"), String::from("table2")]),
+                    TableList::default(),
+                )
             );
         }
 
@@ -259,48 +284,169 @@ mod tests {
 
             assert_eq!(
                 deserialize(config),
-                Filter {
-                    schema: Some(TableList::Except(vec![
-                        String::from("table1"),
-                        String::from("table2")
-                    ])),
-                    data: Some(TableList::Only(vec![String::from("table1"),])),
-                }
+                Filter::new(
+                    TableList::Except(vec![String::from("table1"), String::from("table2")]),
+                    TableList::Only(vec![String::from("table1"),]),
+                )
             );
         }
 
-        #[test]
-        fn filter_schema() {
-            let filter = Filter {
-                schema: Some(TableList::Except(vec![String::from("table1")])),
-                data: None,
-            };
-            assert!(!filter.filter_schema(&String::from("table1")));
-            assert!(filter.filter_schema(&String::from("table2")));
+        mod load_tables {
+            use super::*;
 
-            let filter = Filter {
-                schema: None,
-                data: Some(TableList::Except(vec![String::from("table1")])),
-            };
-            assert!(filter.filter_schema(&String::from("table1")));
-            assert!(filter.filter_schema(&String::from("table2")));
+            #[test]
+            fn wildcards() {
+                let schema =
+                    TableList::Except(vec![String::from("public.table1"), String::from("other.*")]);
+                let data = TableList::Only(vec![
+                    String::from("public.table2"),
+                    String::from("public.table1?"),
+                    String::from("other.*"),
+                ]);
+                let tables = vec![
+                    String::from("public.table1"),
+                    String::from("public.table2"),
+                    String::from("public.table3"),
+                    String::from("public.table10"),
+                    String::from("public.table11"),
+                    String::from("other.table1"),
+                    String::from("other.table2"),
+                    String::from("another.table1"),
+                ];
+
+                let mut filter = Filter::new(schema.clone(), data.clone());
+                filter.load_tables(tables);
+
+                assert_eq!(
+                    filter,
+                    Filter {
+                        schema,
+                        matched_schema: TableList::Except(vec![
+                            String::from("public.table1"),
+                            String::from("other.table1"),
+                            String::from("other.table2"),
+                        ]),
+                        data,
+                        matched_data: TableList::Only(vec![
+                            String::from("public.table2"),
+                            String::from("public.table10"),
+                            String::from("public.table11"),
+                            String::from("other.table1"),
+                            String::from("other.table2"),
+                        ]),
+                    }
+                )
+            }
+
+            #[test]
+            fn match_all() {
+                let schema = TableList::Only(vec![String::from("*")]);
+                let data = TableList::Except(vec![String::from("*")]);
+                let tables = vec![
+                    String::from("public.table1"),
+                    String::from("public.table2"),
+                    String::from("other.table1"),
+                    String::from("other.table2"),
+                ];
+
+                let mut filter = Filter::new(schema.clone(), data.clone());
+                filter.load_tables(tables);
+
+                assert_eq!(
+                    filter,
+                    Filter {
+                        schema,
+                        matched_schema: TableList::Only(vec![
+                            String::from("public.table1"),
+                            String::from("public.table2"),
+                            String::from("other.table1"),
+                            String::from("other.table2"),
+                        ]),
+                        data,
+                        matched_data: TableList::Except(vec![
+                            String::from("public.table1"),
+                            String::from("public.table2"),
+                            String::from("other.table1"),
+                            String::from("other.table2"),
+                        ]),
+                    }
+                )
+            }
         }
 
-        #[test]
-        fn filter_data() {
-            let filter = Filter {
-                schema: Some(TableList::Except(vec![String::from("table1")])),
-                data: None,
-            };
-            assert!(filter.filter_data(&String::from("table1")));
-            assert!(filter.filter_data(&String::from("table2")));
+        mod filter_table {
+            use super::*;
 
-            let filter = Filter {
-                schema: None,
-                data: Some(TableList::Only(vec![String::from("table1")])),
-            };
-            assert!(filter.filter_data(&String::from("table1")));
-            assert!(!filter.filter_data(&String::from("table2")));
+            #[test]
+            fn only_schema() {
+                let mut filter = Filter::new(
+                    TableList::Except(vec![String::from("table1")]),
+                    TableList::default(),
+                );
+                filter.load_tables(vec![String::from("table1"), String::from("table2")]);
+                assert!(!filter.filter_table("table1"));
+                assert!(filter.filter_table("table2"));
+            }
+
+            #[test]
+            fn only_data() {
+                let mut filter = Filter::new(
+                    TableList::default(),
+                    TableList::Only(vec![String::from("table1")]),
+                );
+                filter.load_tables(vec![String::from("table1"), String::from("table2")]);
+                assert!(filter.filter_table("table1"));
+                assert!(!filter.filter_table("table2"));
+            }
+
+            #[test]
+            fn schema_and_data() {
+                let mut filter = Filter::new(
+                    TableList::Except(vec![String::from("table1")]),
+                    TableList::Only(vec![String::from("table1"), String::from("table2")]),
+                );
+                filter.load_tables(vec![String::from("table1"), String::from("table2")]);
+                assert!(!filter.filter_table("table1"));
+                assert!(filter.filter_table("table2"));
+            }
+
+            #[test]
+            fn missed_tables() {
+                let mut filter = Filter::new(
+                    TableList::default(),
+                    TableList::Only(vec![String::from("table1"), String::from("table2")]),
+                );
+                filter.load_tables(vec![String::from("table1")]);
+                assert!(filter.filter_table("table1"));
+                assert!(!filter.filter_table("table2"));
+            }
+
+            #[test]
+            fn wildcards() {
+                let mut filter = Filter::new(
+                    TableList::Except(vec![String::from("table1*")]),
+                    TableList::Only(vec![
+                        String::from("table1"),
+                        String::from("table2?1"),
+                        String::from("table3"),
+                    ]),
+                );
+                filter.load_tables(vec![
+                    String::from("table1"),
+                    String::from("table10"),
+                    String::from("table2"),
+                    String::from("table201"),
+                    String::from("table3"),
+                    String::from("table301"),
+                ]);
+
+                assert!(!filter.filter_table("table1"));
+                assert!(!filter.filter_table("table10"));
+                assert!(!filter.filter_table("table2"));
+                assert!(filter.filter_table("table201"));
+                assert!(filter.filter_table("table3"));
+                assert!(!filter.filter_table("table301"));
+            }
         }
     }
 }

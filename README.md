@@ -229,6 +229,11 @@ filter:
       - public.markets
 ```
 
+You can use wildcards in the `filter` section:
+
+* `?` matches exactly one occurrence of any character;
+* `*` matches arbitrary many (including zero) occurrences of any character.
+
 ### Dump conditions and limit
 
 You can specify conditions (SQL `WHERE` statement) and limit for dumped data per table:

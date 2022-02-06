@@ -587,7 +587,13 @@ default:
 
 You can specify which tables you choose (whitelisting) or ignore (blacklisting) to dump.
 
-For now, you must use the full table names here (with schema).
+You must use the full table names here (with schema). 
+
+You can use wildcards: 
+
+* `?` matches exactly one occurrence of any character;
+* `*` matches arbitrary many (including zero) occurrences of any character.
+
 
 ### Examples
 
@@ -641,6 +647,22 @@ filter:
   schema:
     except:
       - public.markets
+```
+
+For skipping schema and data from all tables in the schema `other` (you should use the quotes):
+
+```yaml
+filter:
+  schema:
+    except:
+      - "other.*"
+```
+
+For dumping data only from `public.table1`, `public.table2`, `public.table3`, etc:
+
+```yaml
+filter:
+  - "public.table?"
 ```
 
 If you need only a subset of the data, please refer to the [query](#query) section.
