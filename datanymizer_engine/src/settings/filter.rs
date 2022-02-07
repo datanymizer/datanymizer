@@ -2,7 +2,7 @@ use serde::Deserialize;
 use wildmatch::WildMatch;
 
 /// Filter for include or exclude tables
-#[derive(Clone, Debug, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Default, Deserialize, PartialEq)]
 #[serde(from = "Config")]
 pub struct Filter {
     schema: TableList,

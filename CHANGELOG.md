@@ -6,15 +6,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### 🚀 Added
-- Add bcrypt filter to generate hashes [164](https://github.com/datanymizer/datanymizer/pull/164)
+- Add bcrypt filter to generate hashes [#164](https://github.com/datanymizer/datanymizer/pull/164)
   ([@akirill0v](https://github.com/akirill0v))
 - Add wildcards support in the filter section [#151](https://github.com/datanymizer/datanymizer/pull/151)
   ([@evgeniy-r](https://github.com/evgeniy-r))
 
 ### ⚙️ Changed
-- Remove the dependency from `crono` ([security issue](https://github.com/chronotope/chrono/pull/578)) 
+- Refactoring (more generic `Dumper` trait) [#159](https://github.com/datanymizer/datanymizer/pull/159)
+  ([@evgeniy-r](https://github.com/evgeniy-r))
+- Remove the dependency from `crono` ([security issue](https://github.com/chronotope/chrono/pull/578)).
+  Remove the `raw_date` and `raw_datetime` transformers (duplication with the `datetime` transformer)
   [#152](https://github.com/datanymizer/datanymizer/pull/152) ([@evgeniy-r](https://github.com/evgeniy-r)).
-  Remove the `raw_date` and `raw_datetime` transformers (duplication with the `datetime` transformer).
 
 ### 🛠 Fixed
 - Use pg_namespace to deconflict duplicate field names [#149](https://github.com/datanymizer/datanymizer/pull/149)
