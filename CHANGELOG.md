@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### 🚀 Added
+- Add wildcards support in the filter section [#151](https://github.com/datanymizer/datanymizer/pull/151)
+  ([@evgeniy-r](https://github.com/evgeniy-r))
 
 ### ⚙️ Changed
 
