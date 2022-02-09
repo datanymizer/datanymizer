@@ -103,9 +103,6 @@ define_transformers_enum![
 
     ("boolean", Boolean, BooleanTransformer),
 
-    ("raw_date", RawDate, RawDateTransformer),
-    ("raw_datetime", RawDateTime, RawDateTimeTransformer),
-
     ("company_suffix", CompanySuffix, CompanySuffixTransformer),
     ("company_name", CompanyName, CompanyNameTransformer),
     ("company_name_alt", CompanyNameAlt, CompanyNameAltTransformer),
