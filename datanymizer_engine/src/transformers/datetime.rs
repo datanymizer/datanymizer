@@ -1,8 +1,11 @@
 use crate::transformer::{TransformContext, TransformResult, TransformResultHelper, Transformer};
+use rand::distributions::{Distribution, Uniform};
 use serde::{Deserialize, Serialize};
 use std::hash::{Hash, Hasher};
-use rand::distributions::{Distribution, Uniform};
-use time::{Duration, format_description::{self, well_known::Rfc3339}, OffsetDateTime};
+use time::{
+    format_description::{self, well_known::Rfc3339},
+    Duration, OffsetDateTime,
+};
 
 /// https://docs.rs/chrono/0.3.1/chrono/format/strftime/index.html
 /// https://time-rs.github.io/book/api/format-description.html
