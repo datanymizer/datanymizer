@@ -7,54 +7,7 @@ use time::{
     Duration, OffsetDateTime,
 };
 
-/// https://docs.rs/chrono/0.3.1/chrono/format/strftime/index.html
-/// https://time-rs.github.io/book/api/format-description.html
-const FORMAT_REPLACEMENTS: [(&str, &str); 44] = [
-    ("%Y", "[year]"),
-    ("%y", "[year repr:last_two]"),
-    ("%m", "[month]"),
-    ("%b", "[month repr:short]"),
-    ("%B", "[month repr:long]"),
-    ("%h", "[month repr:short]"),
-    ("%d", "[day]"),
-    ("%e", "[day padding:space]"),
-    ("%a", "[weekday repr:short]"),
-    ("%A", "[weekday]"),
-    ("%w", "[weekday repr:sunday]"),
-    ("%u", "[weekday repr:monday one_indexed:true]"),
-    ("%U", "[week repr:sunday one_indexed:true]"),
-    ("%W", "[week repr:monday one_indexed:true]"),
-    ("%G", "[year base:iso_week]"),
-    ("%g", "[year repr:last_two base:iso_week]"),
-    ("%V", "[week]"),
-    ("%j", "[ordinal]"),
-    ("%D", "[month]/[day]/[year repr:last_two]"),
-    ("%x", "[day].[month].[year repr:last_two]"),
-    ("%F", "[year]-[month]-[day]"),
-    ("%v", "[day padding:space]-[month repr:short]-[year]"),
-    ("%H", "[hour]"),
-    ("%k", "[hour padding:space]"),
-    ("%I", "[hour repr:12]"),
-    ("%l", "[hour repr:12 padding:space]"),
-    ("%P", "[period]"),
-    ("%p", "[period case:upper]"),
-    ("%M", "[minute]"),
-    ("%S", "[second]"),
-    ("%f", "[second digits:9]"),
-    ("%.f", ".[second]"),
-    ("%.3f", ".[second digits:3]"),
-    ("%.6f", ".[second digits:6]"),
-    ("%.9f", ".[second digits:9]"),
-    ("%R", "[hour]:[minute]"),
-    ("%T", "[hour]:[minute]:[second]"),
-    ("%X", "[hour]:[minute]:[second]"),
-    ("%r", "[hour repr:12]:[minute]:[second] [period case:upper]"),
-    ("%z", "[offset_hour sign:mandatory][offset_minute]"),
-    ("%:z", "[offset_hour sign:mandatory]:[offset_minute]"),
-    ("%t", "\t"),
-    ("%n", "\n"),
-    ("%%", "%"), // should be the last
-];
+mod format;
 
 /// Generates random dates.
 ///
@@ -95,7 +48,7 @@ const FORMAT_REPLACEMENTS: [(&str, &str); 44] = [
 ///       format: %Y-%m-%d
 /// ```
 #[derive(Serialize, Deserialize, Eq, Clone, Debug)]
-#[serde(from = "Config")]
+#[serde(try_from = "Config")]
 pub struct RandomDateTimeTransformer {
     from: String,
     to: String,
@@ -110,15 +63,6 @@ pub struct RandomDateTimeTransformer {
 impl RandomDateTimeTransformer {
     fn parse_date(s: &str) -> Result<OffsetDateTime, time::error::Parse> {
         OffsetDateTime::parse(s, &Rfc3339)
-    }
-
-    fn prepare_format(s: &str) -> String {
-        let mut s = s.to_string();
-        for (from, to) in FORMAT_REPLACEMENTS {
-            s = s.replace(from, to);
-        }
-
-        s
     }
 }
 
@@ -136,22 +80,24 @@ impl PartialEq for RandomDateTimeTransformer {
     }
 }
 
-impl From<Config> for RandomDateTimeTransformer {
-    fn from(c: Config) -> Self {
+impl TryFrom<Config> for RandomDateTimeTransformer {
+    type Error = time::error::Parse;
+
+    fn try_from(c: Config) -> Result<Self, Self::Error> {
         let from = c.from;
         let to = c.to;
-        let format = Self::prepare_format(c.format.as_str());
+        let format = format::convert(c.format.as_str());
 
-        let parsed_from = Self::parse_date(from.as_str()).unwrap();
-        let parsed_to = Self::parse_date(to.as_str()).unwrap();
+        let parsed_from = Self::parse_date(from.as_str())?;
+        let parsed_to = Self::parse_date(to.as_str())?;
 
-        Self {
+        Ok(Self {
             from,
             to,
             format,
             parsed_from,
             parsed_to,
-        }
+        })
     }
 }
 
@@ -207,14 +153,14 @@ mod test {
     fn default_format() {
         let cfg = r#"
                           from: 2010-10-01T00:00:00+00:00
-                          to: 2010-10-31T00:00:00+00:00
+                          to: 2010-10-31T00:00:00.99+00:00
                        "#;
         let result = transformed_value(cfg);
         assert!(result.starts_with("2010-10-"));
     }
 
     #[test]
-    fn custom_format() {
+    fn custom_format_m() {
         let cfg = r#"
                           format: "%m"
                           from: 2000-12-01T00:00:00+00:00
@@ -222,5 +168,16 @@ mod test {
                        "#;
         let result = transformed_value(cfg);
         assert_eq!(result, "12");
+    }
+
+    #[test]
+    fn custom_format_h() {
+        let cfg = r#"
+                          format: "%H"
+                          from: 2000-12-31T02:00:00+00:00
+                          to: 2000-12-31T02:59:00+00:00
+                       "#;
+        let result = transformed_value(cfg);
+        assert_eq!(result, "02");
     }
 }
