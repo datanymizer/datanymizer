@@ -1,12 +1,12 @@
 use crate::transformer::{TransformContext, TransformResult, TransformResultHelper, Transformer};
 use serde::{Deserialize, Serialize};
 use std::hash::{Hash, Hasher};
-use time::{
-    format_description::{self, well_known::Rfc3339},
-    OffsetDateTime,
-};
+use rand::distributions::{Distribution, Uniform};
+use time::{Duration, format_description::{self, well_known::Rfc3339}, OffsetDateTime};
 
-const FORMAT_REPLACEMENTS: [(&str, &str); 22] = [
+/// https://docs.rs/chrono/0.3.1/chrono/format/strftime/index.html
+/// https://time-rs.github.io/book/api/format-description.html
+const FORMAT_REPLACEMENTS: [(&str, &str); 44] = [
     ("%Y", "[year]"),
     ("%y", "[year repr:last_two]"),
     ("%m", "[month]"),
@@ -29,6 +29,28 @@ const FORMAT_REPLACEMENTS: [(&str, &str); 22] = [
     ("%x", "[day].[month].[year repr:last_two]"),
     ("%F", "[year]-[month]-[day]"),
     ("%v", "[day padding:space]-[month repr:short]-[year]"),
+    ("%H", "[hour]"),
+    ("%k", "[hour padding:space]"),
+    ("%I", "[hour repr:12]"),
+    ("%l", "[hour repr:12 padding:space]"),
+    ("%P", "[period]"),
+    ("%p", "[period case:upper]"),
+    ("%M", "[minute]"),
+    ("%S", "[second]"),
+    ("%f", "[second digits:9]"),
+    ("%.f", ".[second]"),
+    ("%.3f", ".[second digits:3]"),
+    ("%.6f", ".[second digits:6]"),
+    ("%.9f", ".[second digits:9]"),
+    ("%R", "[hour]:[minute]"),
+    ("%T", "[hour]:[minute]:[second]"),
+    ("%X", "[hour]:[minute]:[second]"),
+    ("%r", "[hour repr:12]:[minute]:[second] [period case:upper]"),
+    ("%z", "[offset_hour sign:mandatory][offset_minute]"),
+    ("%:z", "[offset_hour sign:mandatory]:[offset_minute]"),
+    ("%t", "\t"),
+    ("%n", "\n"),
+    ("%%", "%"), // should be the last
 ];
 
 /// Generates random dates.
@@ -137,9 +159,12 @@ impl Transformer for RandomDateTimeTransformer {
         _field_value: &str,
         _ctx: &Option<TransformContext>,
     ) -> TransformResult {
-        // let between: chrono::DateTime<Utc> = DateTimeBetween(EN, from_dt, to_dt).fake();
+        let duration = (self.parsed_to - self.parsed_from).whole_seconds();
+        let mut rng = rand::thread_rng();
+        let rnd_duration = Uniform::new_inclusive(0, duration).sample(&mut rng);
+
         let format = format_description::parse(self.format.as_str())?;
-        let res: String = self.parsed_from.format(&format)?;
+        let res = (self.parsed_from + Duration::seconds(rnd_duration)).format(&format)?;
 
         TransformResult::present(res)
     }

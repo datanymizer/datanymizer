@@ -169,15 +169,6 @@ random_num:
     try_count: 5
 ```
 
-#### raw_date
-
-Gets a random date (without formatting).
-
-#### raw_datetime
-
-Gets a random datetime (without formatting).
-
-
 ## Special
 
 #### capitalize
