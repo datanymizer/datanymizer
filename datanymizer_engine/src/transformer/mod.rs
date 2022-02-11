@@ -97,32 +97,30 @@ impl error::Error for TransformError {
     }
 }
 
-impl From<tera::Error> for TransformError {
-    fn from(err: tera::Error) -> Self {
+impl TransformError {
+    fn from_error<E: error::Error>(err: E) -> Self {
         Self {
             field_name: "".to_string(),
             field_value: "".to_string(),
             reason: err.to_string(),
         }
+    }
+}
+
+impl From<tera::Error> for TransformError {
+    fn from(err: tera::Error) -> Self {
+        Self::from_error(err)
     }
 }
 
 impl From<time::error::Format> for TransformError {
     fn from(err: time::error::Format) -> Self {
-        Self {
-            field_name: "".to_string(),
-            field_value: "".to_string(),
-            reason: err.to_string(),
-        }
+        Self::from_error(err)
     }
 }
 
 impl From<time::error::InvalidFormatDescription> for TransformError {
     fn from(err: time::error::InvalidFormatDescription) -> Self {
-        Self {
-            field_name: "".to_string(),
-            field_value: "".to_string(),
-            reason: err.to_string(),
-        }
+        Self::from_error(err)
     }
 }
