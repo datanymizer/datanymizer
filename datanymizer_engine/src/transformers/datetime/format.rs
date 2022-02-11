@@ -61,7 +61,7 @@ pub fn convert(s: &str) -> String {
 
         if c == '%' {
             if i == last_i {
-                panic!("`%` symbol at the end of format string `{}`", s);
+                panic!("single `%` symbol at the end of format string `{}`", s);
             }
 
             if let Some((from, to)) = PATTERN_REPLACEMENTS
