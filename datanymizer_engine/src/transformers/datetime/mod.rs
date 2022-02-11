@@ -1,11 +1,9 @@
+use std::fmt::{Debug, Display, Formatter};
 use crate::transformer::{TransformContext, TransformResult, TransformResultHelper, Transformer};
 use rand::distributions::{Distribution, Uniform};
 use serde::{Deserialize, Serialize};
 use std::hash::{Hash, Hasher};
-use time::{
-    format_description::{self, well_known::Rfc3339},
-    Duration, OffsetDateTime,
-};
+use time::{format_description::{self, well_known::Rfc3339}, Duration, OffsetDateTime};
 
 mod format;
 
@@ -81,12 +79,12 @@ impl PartialEq for RandomDateTimeTransformer {
 }
 
 impl TryFrom<Config> for RandomDateTimeTransformer {
-    type Error = time::error::Parse;
+    type Error = ParseError;
 
     fn try_from(c: Config) -> Result<Self, Self::Error> {
         let from = c.from;
         let to = c.to;
-        let format = format::convert(c.format.as_str());
+        let format = format::convert(c.format.as_str())?;
 
         let parsed_from = Self::parse_date(from.as_str())?;
         let parsed_to = Self::parse_date(to.as_str())?;
@@ -134,6 +132,32 @@ impl Default for Config {
             to: String::from("9999-01-01T00:00:00+00:00"),
             format: String::from("%Y-%m-%dT%H:%M:%S%.f%:z"),
         }
+    }
+}
+
+#[derive(Debug)]
+pub enum ParseError {
+    Convert(format::ConvertError),
+    Parse(time::error::Parse)
+}
+
+impl Display for ParseError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self)
+    }
+}
+
+impl std::error::Error for ParseError {}
+
+impl From<format::ConvertError> for ParseError {
+    fn from(err: format::ConvertError) -> Self {
+        ParseError::Convert(err)
+    }
+}
+
+impl From<time::error::Parse> for ParseError {
+    fn from(err: time::error::Parse) -> Self {
+        ParseError::Parse(err)
     }
 }
 

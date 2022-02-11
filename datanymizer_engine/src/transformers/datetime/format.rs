@@ -1,3 +1,5 @@
+use std::fmt::{Display, Formatter};
+
 /// https://docs.rs/chrono/0.3.1/chrono/format/strftime/index.html
 /// https://time-rs.github.io/book/api/format-description.html
 const PATTERN_REPLACEMENTS: [(&str, &str); 44] = [
@@ -47,7 +49,24 @@ const PATTERN_REPLACEMENTS: [(&str, &str); 44] = [
     ("%", "%"),
 ];
 
-pub fn convert(s: &str) -> String {
+#[derive(Debug)]
+pub enum ConvertError {
+    UnexpectedPattern(String, usize),
+    UnexpectedEnd(String),
+}
+
+impl Display for ConvertError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::UnexpectedPattern(s, i) => write!(f, "unexpected pattern in the format string `{}` at {}", s, i),
+            Self::UnexpectedEnd(s) => write!(f, "unexpected end of format string `{}`", s),
+        }
+    }
+}
+
+impl std::error::Error for ConvertError {}
+
+pub fn convert(s: &str) -> Result<String, ConvertError> {
     // 4 is just assumption
     let mut new_s = String::with_capacity(s.len() * 4);
     let mut skip_count = 0;
@@ -72,14 +91,14 @@ pub fn convert(s: &str) -> String {
                 // there are only ASCII chars in the patterns, so we can use `len()` as chars' count
                 skip_count = from.len();
             } else {
-                panic!("unexpected pattern in the format string `{}` at {}", s, i);
+                return Err(ConvertError::UnexpectedPattern(s.to_string(), i));
             }
         } else {
-            panic!("single `%` symbol at the end of format string `{}`", s);
+            return Err(ConvertError::UnexpectedEnd(s.to_string()));
         }
     }
 
-    new_s
+    Ok(new_s)
 }
 
 #[cfg(test)]
@@ -94,14 +113,14 @@ mod tests {
     }
 
     fn strftime(dt: &OffsetDateTime, f: &str) -> String {
-        let f = convert(f);
+        let f = convert(f).unwrap();
         let f = format_description::parse(f.as_str()).unwrap();
         dt.format(&f).unwrap()
     }
 
     #[test]
     fn replacements() {
-        let all = convert(all_patterns().as_str());
+        let all = convert(all_patterns().as_str()).unwrap();
         assert_eq!(all.find("%"), Some(all.len() - 1));
     }
 
