@@ -47,35 +47,6 @@ const PATTERN_REPLACEMENTS: [(&str, &str); 44] = [
     ("%", "%"),
 ];
 
-pub fn convert2(s: &str) -> String {
-    let mut new_s = s.to_string();
-    let mut i = 0;
-
-    loop {
-        if i >= new_s.len() {
-            break;
-        }
-
-        let inc = if new_s[i..].starts_with('%') {
-            if let Some((from, to)) = PATTERN_REPLACEMENTS
-                .iter()
-                .find(|(from, _)| new_s[i + 1..].starts_with(from))
-            {
-                new_s.replace_range(i..=i + from.len(), to);
-                to.len()
-            } else {
-                panic!("Unexpected pattern in the format string `{}` at {}", s, i);
-            }
-        } else {
-            1
-        };
-
-        i += inc;
-    }
-
-    new_s
-}
-
 pub fn convert(s: &str) -> String {
     // 4 is just assumption
     let mut new_s = String::with_capacity(s.len() * 4);
