@@ -1,9 +1,12 @@
-use std::fmt::{Debug, Display, Formatter};
 use crate::transformer::{TransformContext, TransformResult, TransformResultHelper, Transformer};
 use rand::distributions::{Distribution, Uniform};
 use serde::{Deserialize, Serialize};
+use std::fmt::{Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
-use time::{format_description::{self, well_known::Rfc3339}, Duration, OffsetDateTime};
+use time::{
+    format_description::{self, well_known::Rfc3339},
+    Duration, OffsetDateTime,
+};
 
 mod format;
 
@@ -138,7 +141,7 @@ impl Default for Config {
 #[derive(Debug)]
 pub enum ParseError {
     Convert(format::ConvertError),
-    Parse(time::error::Parse)
+    Parse(time::error::Parse),
 }
 
 impl Display for ParseError {

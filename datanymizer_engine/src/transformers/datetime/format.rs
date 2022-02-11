@@ -58,7 +58,11 @@ pub enum ConvertError {
 impl Display for ConvertError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::UnexpectedPattern(s, i) => write!(f, "unexpected pattern in the format string `{}` at {}", s, i),
+            Self::UnexpectedPattern(s, i) => write!(
+                f,
+                "unexpected pattern in the format string `{}` at {}",
+                s, i
+            ),
             Self::UnexpectedEnd(s) => write!(f, "unexpected end of format string `{}`", s),
         }
     }
