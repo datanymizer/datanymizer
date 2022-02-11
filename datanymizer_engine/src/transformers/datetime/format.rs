@@ -51,6 +51,7 @@ pub fn convert(s: &str) -> String {
     // 4 is just assumption
     let mut new_s = String::with_capacity(s.len() * 4);
     let mut skip_count = 0;
+    let last_i = s.len() - 1;
 
     for (i, c) in s.char_indices() {
         if skip_count > 0 {
@@ -59,6 +60,10 @@ pub fn convert(s: &str) -> String {
         }
 
         if c == '%' {
+            if i == last_i {
+                panic!("`%` symbol at the end of format string `{}`", s);
+            }
+
             if let Some((from, to)) = PATTERN_REPLACEMENTS
                 .iter()
                 .find(|(from, _)| s[i + 1..].starts_with(from))
@@ -67,7 +72,7 @@ pub fn convert(s: &str) -> String {
                 // there are only ASCII chars in the patterns, so we can use `len()` as chars' count
                 skip_count = from.len();
             } else {
-                panic!("Unexpected pattern in the format string `{}` at {}", s, i);
+                panic!("unexpected pattern in the format string `{}` at {}", s, i);
             }
         } else {
             new_s.push(c);
@@ -97,24 +102,33 @@ mod tests {
     #[test]
     fn replacements() {
         let all = convert(all_patterns().as_str());
-        assert_eq!(all.find("%"), Some(all.len() - 1))
+        assert_eq!(all.find("%"), Some(all.len() - 1));
     }
 
     #[test]
-    fn format_all() {
-        let dt = datetime!(1995-12-22 01:02:04.7 +5);
+    fn check_all_patterns() {
+        let dt = datetime!(2010-02-04 01:02:04.7 +5);
 
         assert_eq!(
             strftime(&dt, all_patterns().as_str()),
-            "1995 95 12 Dec December Dec 22 22 Fri Friday 6 5 51 51 1995 95 51 356 12/22/95 \
-             22.12.95 1995-12-22 22-Dec-1995 01  1 01  1 am AM 02 04 700000000 .7 .700 .700000 \
+            "2010 10 02 Feb February Feb 04  4 Thu Thursday 5 4 05 05 2010 10 05 035 02/04/10 \
+             04.02.10 2010-02-04  4-Feb-2010 01  1 01  1 am AM 02 04 700000000 .7 .700 .700000 \
              .700000000 01:02 01:02:04 01:02:04 01:02:04 AM +0500 +05:00 \t \n %"
         );
     }
 
     #[test]
     fn escape_percent() {
-        let dt = datetime!(1995-12-22 00:00:00 +5);
+        let dt = OffsetDateTime::now_utc();
         assert_eq!(strftime(&dt, "%%d"), "%d");
+    }
+
+    #[test]
+    fn unicode() {
+        let dt = datetime!(1995-12-22 00:00:00 +5);
+        assert_eq!(
+            strftime(&dt, "Год: %Y, месяц: %m, день: %d"),
+            "Год: 1995, месяц: 12, день: 22"
+        );
     }
 }
