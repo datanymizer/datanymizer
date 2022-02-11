@@ -51,7 +51,6 @@ pub fn convert(s: &str) -> String {
     // 4 is just assumption
     let mut new_s = String::with_capacity(s.len() * 4);
     let mut skip_count = 0;
-    let last_i = s.len() - 1;
 
     for (i, c) in s.char_indices() {
         if skip_count > 0 {
@@ -59,14 +58,15 @@ pub fn convert(s: &str) -> String {
             continue;
         }
 
-        if c == '%' {
-            if i == last_i {
-                panic!("single `%` symbol at the end of format string `{}`", s);
-            }
+        if c != '%' {
+            new_s.push(c);
+            continue;
+        }
 
+        if let Some(substr) = s.get(i + 1..) {
             if let Some((from, to)) = PATTERN_REPLACEMENTS
                 .iter()
-                .find(|(from, _)| s[i + 1..].starts_with(from))
+                .find(|(from, _)| substr.starts_with(from))
             {
                 new_s.push_str(to);
                 // there are only ASCII chars in the patterns, so we can use `len()` as chars' count
@@ -75,7 +75,7 @@ pub fn convert(s: &str) -> String {
                 panic!("unexpected pattern in the format string `{}` at {}", s, i);
             }
         } else {
-            new_s.push(c);
+            panic!("single `%` symbol at the end of format string `{}`", s);
         }
     }
 
