@@ -1,8 +1,16 @@
 use std::fmt::{Display, Formatter};
 
-/// https://docs.rs/chrono/0.3.1/chrono/format/strftime/index.html
-/// https://time-rs.github.io/book/api/format-description.html
-const PATTERN_REPLACEMENTS: [(&str, &str); 44] = [
+/// Converts formats between Chrono crate/strftime
+/// (https://docs.rs/chrono/0.3.1/chrono/format/strftime/index.html)
+/// and Time crate (https://time-rs.github.io/book/api/format-description.html).
+///
+/// Notes:
+/// %C, %Z and %s are not supported (missing in the Time's format).
+/// %.f works like %.9f (always 9 digits). The behaviour of the %+ pattern is the same in this regard.
+/// Patterns (e.g. %x, %X, %c) are not localized (no locale support in the Time crate).
+/// Modifiers "_", "-", "0" are not supported yet (you can make a feature request).
+///
+const PATTERN_REPLACEMENTS: [(&str, &str); 46] = [
     ("Y", "[year]"),
     ("y", "[year repr:last_two]"),
     ("m", "[month]"),
@@ -22,7 +30,7 @@ const PATTERN_REPLACEMENTS: [(&str, &str); 44] = [
     ("V", "[week_number]"),
     ("j", "[ordinal]"),
     ("D", "[month]/[day]/[year repr:last_two]"),
-    ("x", "[day].[month].[year repr:last_two]"),
+    ("x", "[month]/[day]/[year repr:last_two]"),
     ("F", "[year]-[month]-[day]"),
     ("v", "[day padding:space]-[month repr:short]-[year]"),
     ("H", "[hour]"),
@@ -34,7 +42,7 @@ const PATTERN_REPLACEMENTS: [(&str, &str); 44] = [
     ("M", "[minute]"),
     ("S", "[second]"),
     ("f", "[subsecond digits:9]"),
-    (".f", ".[subsecond]"),
+    (".f", ".[subsecond digits:9]"),
     (".3f", ".[subsecond digits:3]"),
     (".6f", ".[subsecond digits:6]"),
     (".9f", ".[subsecond digits:9]"),
@@ -44,27 +52,23 @@ const PATTERN_REPLACEMENTS: [(&str, &str); 44] = [
     ("r", "[hour repr:12]:[minute]:[second] [period case:upper]"),
     ("z", "[offset_hour sign:mandatory][offset_minute]"),
     (":z", "[offset_hour sign:mandatory]:[offset_minute]"),
+    ("c", "[weekday repr:short] [month repr:short] [day padding:space] [hour]:[minute]:[second] [year]"),
+    ("+", "[year]-[month]-[day]T[hour]:[minute]:[second].[subsecond digits:9][offset_hour sign:mandatory]:[offset_minute]"),
     ("t", "\t"),
     ("n", "\n"),
     ("%", "%"),
 ];
 
 #[derive(Debug)]
-pub enum ConvertError {
-    UnexpectedPattern(String, usize),
-    UnexpectedEnd(String),
-}
+pub struct ConvertError(String, usize);
 
 impl Display for ConvertError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::UnexpectedPattern(s, i) => write!(
-                f,
-                "unexpected pattern in the format string `{}` at {}",
-                s, i
-            ),
-            Self::UnexpectedEnd(s) => write!(f, "unexpected end of format string `{}`", s),
-        }
+        write!(
+            f,
+            "unknown pattern in the format string `{}` at {}",
+            self.0, self.1
+        )
     }
 }
 
@@ -86,19 +90,16 @@ pub fn convert(s: &str) -> Result<String, ConvertError> {
             continue;
         }
 
-        if let Some(substr) = s.get(i + 1..) {
-            if let Some((from, to)) = PATTERN_REPLACEMENTS
-                .iter()
-                .find(|(from, _)| substr.starts_with(from))
-            {
-                new_s.push_str(to);
-                // there are only ASCII chars in the patterns, so we can use `len()` as chars' count
-                skip_count = from.len();
-            } else {
-                return Err(ConvertError::UnexpectedPattern(s.to_string(), i));
-            }
+        let substr = &s[i + 1..];
+        if let Some((from, to)) = PATTERN_REPLACEMENTS
+            .iter()
+            .find(|(from, _)| substr.starts_with(from))
+        {
+            new_s.push_str(to);
+            // there are only ASCII chars in the patterns, so we can use `len()` as chars' count
+            skip_count = from.len();
         } else {
-            return Err(ConvertError::UnexpectedEnd(s.to_string()));
+            return Err(ConvertError(s.to_string(), i));
         }
     }
 
@@ -129,21 +130,83 @@ mod tests {
     }
 
     #[test]
-    fn check_all_patterns() {
-        let dt = datetime!(2010-02-04 01:02:04.7 +5);
-
+    fn ymd_patterns() {
+        let f = "%Y-%m-%d %y %B %b %h %e %D %x %F %v %j";
+        let dt = datetime!(2010-02-04 00:00:00 UTC);
         assert_eq!(
-            strftime(&dt, all_patterns().as_str()),
-            "2010 10 02 Feb February Feb 04  4 Thu Thursday 5 4 05 05 2010 10 05 035 02/04/10 \
-             04.02.10 2010-02-04  4-Feb-2010 01  1 01  1 am AM 02 04 700000000 .7 .700 .700000 \
-             .700000000 01:02 01:02:04 01:02:04 01:02:04 AM +0500 +05:00 \t \n %"
+            strftime(&dt, f),
+            "2010-02-04 10 February Feb Feb  4 02/04/10 02/04/10 2010-02-04  4-Feb-2010 035"
         );
     }
 
     #[test]
-    fn escape_percent() {
+    fn week_day_patterns() {
+        let f = "%a %A %w %u";
+        let dt = datetime!(2010-02-04 00:00:00 UTC);
+        assert_eq!(strftime(&dt, f), "Thu Thursday 5 4");
+    }
+
+    #[test]
+    fn week_number_patterns() {
+        let f = "%U %W %V %G %g";
+
+        let dt = datetime!(2018-01-06 00:00:00 UTC);
+        assert_eq!(strftime(&dt, f), "00 01 01 2018 18");
+
+        let dt = datetime!(2018-01-07 00:00:00 UTC);
+        assert_eq!(strftime(&dt, f), "01 01 01 2018 18");
+
+        let dt = datetime!(2018-01-08 00:00:00 UTC);
+        assert_eq!(strftime(&dt, f), "01 02 02 2018 18");
+
+        let dt = datetime!(2017-01-01 00:00:00 UTC);
+        assert_eq!(strftime(&dt, f), "01 00 52 2016 16");
+
+        let dt = datetime!(2017-01-02 00:00:00 UTC);
+        assert_eq!(strftime(&dt, f), "01 01 01 2017 17");
+    }
+
+    #[test]
+    fn hms_patterns() {
+        let f = "%H %k %I %l %P %p %M %S %R %T %X %r";
+
+        let dt = datetime!(2018-01-06 01:02:04 UTC);
+        assert_eq!(strftime(&dt, f), "01  1 01  1 am AM 02 04 01:02 01:02:04 01:02:04 01:02:04 AM");
+
+        let dt = datetime!(2018-01-06 13:32:34 UTC);
+        assert_eq!(strftime(&dt, f), "13 13 01  1 pm PM 32 34 13:32 13:32:34 13:32:34 01:32:34 PM");
+    }
+
+    #[test]
+    fn tz_patterns() {
+        let f = "%z %:z";
+
+        let dt = datetime!(2018-01-06 01:02:04 +5);
+        assert_eq!(strftime(&dt, f), "+0500 +05:00");
+
+        let dt = datetime!(2018-01-06 01:02:04 -1:30);
+        assert_eq!(strftime(&dt, f), "-0130 -01:30");
+    }
+
+    #[test]
+    fn subsec_patterns() {
+        let f = "%f %.f %.3f %.6f %.9f";
+        let dt = datetime!(2018-01-06 01:02:04.01234567 UTC);
+        assert_eq!(strftime(&dt, f), "012345670 .012345670 .012 .012345 .012345670");
+    }
+
+    #[test]
+    fn full_patterns() {
+        let f = "%c %+";
+        let dt = datetime!(2018-01-06 01:02:04.5 -2:00);
+        assert_eq!(strftime(&dt, f), "Sat Jan  6 01:02:04 2018 2018-01-06T01:02:04.500000000-02:00");
+    }
+
+    #[test]
+    fn escape_symbols() {
+        let f = "%t%n%%d";
         let dt = OffsetDateTime::now_utc();
-        assert_eq!(strftime(&dt, "%%d"), "%d");
+        assert_eq!(strftime(&dt, f), "\t\n%d");
     }
 
     #[test]
@@ -152,6 +215,24 @@ mod tests {
         assert_eq!(
             strftime(&dt, "Год: %Y, месяц: %m, день: %d"),
             "Год: 1995, месяц: 12, день: 22"
+        );
+    }
+
+    #[test]
+    fn last_percent() {
+        let err = convert("%Y-%m-%").err().unwrap();
+        assert_eq!(
+            err.to_string(),
+            "unknown pattern in the format string `%Y-%m-%` at 6"
+        );
+    }
+
+    #[test]
+    fn unknown_pattern() {
+        let err = convert("%y-%@-%d").err().unwrap();
+        assert_eq!(
+            err.to_string(),
+            "unknown pattern in the format string `%y-%@-%d` at 3"
         );
     }
 }
