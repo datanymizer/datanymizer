@@ -38,7 +38,7 @@ mod format;
 /// For the bounds (from/to) you should use the RFC 3339 format.
 /// The default output format is also RFC 3339 (%Y-%m-%dT%H:%M:%S%.f%:z).
 /// You don't need to change the format when using this transformer with datetime SQL fields.
-/// More information about formatting is in the [format.rs](format.rs) file.
+/// More information about formatting is in the format.rs file.
 ///
 /// ```yaml
 /// #...
