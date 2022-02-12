@@ -171,10 +171,16 @@ mod tests {
         let f = "%H %k %I %l %P %p %M %S %R %T %X %r";
 
         let dt = datetime!(2018-01-06 01:02:04 UTC);
-        assert_eq!(strftime(&dt, f), "01  1 01  1 am AM 02 04 01:02 01:02:04 01:02:04 01:02:04 AM");
+        assert_eq!(
+            strftime(&dt, f),
+            "01  1 01  1 am AM 02 04 01:02 01:02:04 01:02:04 01:02:04 AM"
+        );
 
         let dt = datetime!(2018-01-06 13:32:34 UTC);
-        assert_eq!(strftime(&dt, f), "13 13 01  1 pm PM 32 34 13:32 13:32:34 13:32:34 01:32:34 PM");
+        assert_eq!(
+            strftime(&dt, f),
+            "13 13 01  1 pm PM 32 34 13:32 13:32:34 13:32:34 01:32:34 PM"
+        );
     }
 
     #[test]
@@ -192,14 +198,20 @@ mod tests {
     fn subsec_patterns() {
         let f = "%f %.f %.3f %.6f %.9f";
         let dt = datetime!(2018-01-06 01:02:04.01234567 UTC);
-        assert_eq!(strftime(&dt, f), "012345670 .012345670 .012 .012345 .012345670");
+        assert_eq!(
+            strftime(&dt, f),
+            "012345670 .012345670 .012 .012345 .012345670"
+        );
     }
 
     #[test]
     fn full_patterns() {
         let f = "%c %+";
         let dt = datetime!(2018-01-06 01:02:04.5 -2:00);
-        assert_eq!(strftime(&dt, f), "Sat Jan  6 01:02:04 2018 2018-01-06T01:02:04.500000000-02:00");
+        assert_eq!(
+            strftime(&dt, f),
+            "Sat Jan  6 01:02:04 2018 2018-01-06T01:02:04.500000000-02:00"
+        );
     }
 
     #[test]

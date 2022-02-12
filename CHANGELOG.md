@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   ([@evgeniy-r](https://github.com/evgeniy-r))
 
 ### ⚙️ Changed
+- Remove the dependency from `crono` ([security issue](https://github.com/chronotope/chrono/pull/578)) 
+  [#152](https://github.com/datanymizer/datanymizer/pull/152) ([@evgeniy-r](https://github.com/evgeniy-r)).
+  Remove the `raw_date` and `raw_datetime` transformers (duplication with the `datetime` transformer).
 
 ### 🛠 Fixed
 - Fix Postgres COPY syntax when dumping a table with zero defined fields
