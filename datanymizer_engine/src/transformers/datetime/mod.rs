@@ -38,6 +38,7 @@ mod format;
 /// For the bounds (from/to) you should use the RFC 3339 format.
 /// The default output format is also RFC 3339 (%Y-%m-%dT%H:%M:%S%.f%:z).
 /// You don't need to change the format when using this transformer with datetime SQL fields.
+/// More information about formatting is in the [format.rs](format.rs) file.
 ///
 /// ```yaml
 /// #...
@@ -206,5 +207,16 @@ mod test {
                        "#;
         let result = transformed_value(cfg);
         assert_eq!(result, "02");
+    }
+
+    #[test]
+    fn custom_format_ymd() {
+        let cfg = r#"
+                          format: "%Y-%m-%d"
+                          from: 2000-12-31T02:00:00+00:00
+                          to: 2000-12-31T02:59:00+00:00
+                       "#;
+        let result = transformed_value(cfg);
+        assert_eq!(result, "2000-12-31");
     }
 }

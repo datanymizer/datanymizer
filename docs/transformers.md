@@ -116,18 +116,35 @@ You can specify a range:
 
 ```yaml
 datetime:
-  from: 1990-01-01T00:00:00+00:00
-  to: 2010-12-31T00:00:00+00:00
+  from: "1990-01-01T00:00:00+00:00"
+  to: "2010-12-31T00:00:00+00:00"
 ```
 
-Also, you can specify datetime format 
-([available specifiers](https://docs.rs/chrono/0.4.19/chrono/format/strftime/index.html)).
-Be careful with this option
+Also, you can specify the datetime format.
 
 ```yaml
 datetime:
-  format: %Y-%m-%dT%H:%M:%S%.f%:z
+  format: "%Y-%m-%d"
 ```
+
+For the bounds (`from`/`to`) you should use the RFC 3339 format (`%Y-%m-%dT%H:%M:%S%.f%:z`).
+
+The default output format is also RFC 3339. 
+You don't need to change the format when using this transformer with datetime SQL fields.
+
+[Here](https://docs.rs/chrono/0.4.19/chrono/format/strftime/index.html) you can look at the available formatting 
+patterns.
+
+Notes:
+
+* `%C`, `%Z` and `%s` are not supported.
+* `%.f` works like `%.9f` (always 9 digits). The behaviour of the `%+` pattern is the same in this regard.
+* Patterns (e.g. `%x`, `%X`, `%c`) are not localized.
+* Modifiers `_`, `-`, `0` are not supported yet (you can make a feature request).
+
+These are due to the fact that we removed the dependency on the [chrono](https://crates.io/crates/chrono) crate and use 
+the [time](https://crates.io/crates/time) crate directly (because of 
+[security issue](https://github.com/chronotope/chrono/pull/578) in `chrono`).
 
 #### random_num
 

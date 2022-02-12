@@ -1,7 +1,7 @@
 use std::fmt::{Display, Formatter};
 
 /// Converts formats between Chrono crate/strftime
-/// (https://docs.rs/chrono/0.3.1/chrono/format/strftime/index.html)
+/// (https://docs.rs/chrono/0.4.19/chrono/format/strftime/index.html)
 /// and Time crate (https://time-rs.github.io/book/api/format-description.html).
 ///
 /// Notes:
