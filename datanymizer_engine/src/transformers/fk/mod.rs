@@ -15,7 +15,6 @@ use fake::{
     faker::{
         address::raw::*,
         boolean::raw::*,
-        chrono::raw::*,
         company::raw::*,
         currency::raw::*,
         filesystem::raw::*,
@@ -304,10 +303,6 @@ define_fk_transformers![
     ("longitude", LongitudeTransformer, Longitude, GenericFloat, Empty),
     "Gets a boolean value (TRUE/FALSE), with a given probability.",
     ("boolean", BooleanTransformer, Boolean, bool, Ratio),
-    "Gets a random date (without formatting).",
-    ("raw_date", RawDateTransformer, Date, GenericDate, Empty),
-    "Gets a random datetime (without formatting).",
-    ("raw_datetime", RawDateTimeTransformer, DateTime, GenericDateTime, Empty),
     "Gets a company name suffix (e.g., `Inc.` or `LLC`).",
     ("company_suffix", CompanySuffixTransformer, CompanySuffix, String, Empty),
     "Gets a company name.",
@@ -584,14 +579,6 @@ mod tests {
         let value = t.transform("table.field", "t", &None).unwrap().unwrap();
         let value: f32 = value.parse().unwrap();
         assert!(value < 360.0 && value > -360.0);
-    }
-
-    #[test]
-    fn datetime() {
-        let t = RawDateTimeTransformer::default();
-        let value = t.transform("table.field", "t", &None).unwrap().unwrap();
-        // yyyy-mm-dd hh:mm:ss
-        assert_eq!(value.len(), 19);
     }
 
     #[test]
