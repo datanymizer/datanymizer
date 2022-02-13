@@ -1,4 +1,4 @@
-use super::{column::PgColumn, row::PgRow, sequence::PgSequence};
+use super::{column::PgColumn, foreign_key::PgForeignKey, row::PgRow, sequence::PgSequence};
 use crate::Table;
 use anyhow::{anyhow, Result};
 use datanymizer_engine::{Query as QueryCfg, Table as TableCfg};
@@ -14,6 +14,7 @@ pub struct PgTable {
     pub schemaname: String,
     pub columns: Vec<PgColumn>,
     pub sequences: Vec<PgSequence>,
+    pub foreign_keys: Vec<PgForeignKey>,
     column_indexes: HashMap<String, usize>,
     pub size: i64,
 }
@@ -64,6 +65,13 @@ impl Table<Type> for PgTable {
     fn get_column_indexes(&self) -> &HashMap<String, usize> {
         &self.column_indexes
     }
+
+    fn get_dep_table_names(&self) -> Vec<String> {
+        self.foreign_keys
+            .iter()
+            .map(|fk| format!("{}.{}", fk.foreign_table_schema, fk.foreign_table_name))
+            .collect()
+    }
 }
 
 impl PgTable {
@@ -73,6 +81,7 @@ impl PgTable {
             schemaname,
             columns: vec![],
             sequences: vec![],
+            foreign_keys: vec![],
             column_indexes: HashMap::new(),
             size: 0,
         }
@@ -105,6 +114,10 @@ impl PgTable {
 
     pub fn set_sequences(&mut self, sequences: Vec<PgSequence>) {
         self.sequences = sequences;
+    }
+
+    pub fn set_foreign_keys(&mut self, foreign_keys: Vec<PgForeignKey>) {
+        self.foreign_keys = foreign_keys;
     }
 
     pub fn transformed_query_to(
