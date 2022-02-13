@@ -5,6 +5,7 @@ use super::{
 use crate::{indicator::Indicator, Dumper, SchemaInspector, Table};
 use anyhow::Result;
 use datanymizer_engine::{Engine, Filter, Settings, TableList};
+use indicatif::HumanDuration;
 use postgres::IsolationLevel;
 use std::{
     io::{self, prelude::*},
@@ -142,14 +143,25 @@ impl<W: 'static + Write + Send, I: 'static + Indicator + Send> Dumper for PgDump
 
     // Stage before dumping data. It makes dump schema with any options
     fn pre_data(&mut self, connection: &mut Self::Connection) -> Result<()> {
-        self.debug("Fetch tables metadata...".into());
+        let started = Instant::now();
+        self.debug("Fetching tables metadata...".into());
         let mut tables = self.schema_inspector().ordered_tables(connection);
+        self.debug(format!(
+            "Fetching completed in {}",
+            HumanDuration(started.elapsed())
+        ));
 
+        let started = Instant::now();
+        self.debug("Sorting tables...".into());
         sort_tables(
             &mut tables,
             self.engine.settings.table_order.as_ref().unwrap_or(&vec![]),
         );
         self.tables = tables.into_iter().map(|(t, _)| t).collect();
+        self.debug(format!(
+            "Sorting completed in {}",
+            HumanDuration(started.elapsed())
+        ));
 
         if let Some(filter) = &mut self.engine.settings.filter {
             filter.load_tables(self.tables.iter().map(|t| t.get_full_name()).collect());

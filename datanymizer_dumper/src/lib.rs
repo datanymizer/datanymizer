@@ -74,7 +74,18 @@ pub trait SchemaInspector: 'static + Sized + Send + Clone {
     fn ordered_tables(&self, connection: &mut Self::Connection) -> Vec<(Self::Table, i32)> {
         let mut res: HashMap<Self::Table, i32> = HashMap::new();
         let mut depgraph: DepGraph<Self::Table> = DepGraph::new();
+
+        let started = Instant::now();
+        println!("Inspecting tables ...");
+
         if let Ok(tables) = self.get_tables(connection) {
+            println!(
+                "Inspecting completed in {}",
+                HumanDuration(started.elapsed())
+            );
+
+            println!("Inspecting table dependencies...");
+            let started = Instant::now();
             for table in tables.iter() {
                 let deps: Vec<Self::Table> = self
                     .get_dependencies(connection, table)
@@ -83,7 +94,13 @@ pub trait SchemaInspector: 'static + Sized + Send + Clone {
                     .collect();
                 depgraph.register_dependencies(table.clone(), deps);
             }
+            println!(
+                "Inspecting completed in {}",
+                HumanDuration(started.elapsed())
+            );
 
+            println!("Processing table dependencies...");
+            let started = Instant::now();
             for table in tables.iter() {
                 let _ = res.entry(table.clone()).or_insert(0);
                 if let Ok(nodes) = depgraph.dependencies_of(table) {
@@ -93,6 +110,10 @@ pub trait SchemaInspector: 'static + Sized + Send + Clone {
                     }
                 }
             }
+            println!(
+                "Processing completed in {}",
+                HumanDuration(started.elapsed())
+            );
         }
         res.iter().map(|(k, b)| (k.clone(), *b)).collect()
     }
