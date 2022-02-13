@@ -54,7 +54,7 @@ impl<W: 'static + Write + Send, I: 'static + Indicator + Send> PgDumper<W, I> {
             .args(&self.pg_dump_args)
             .args(&args)
             .args(&table_args)
-            .arg(&db_url)
+            .arg(db_url)
             .output()?;
         if !dump_output.status.success() {
             eprintln!(

@@ -126,7 +126,7 @@ impl Transformer for TemplateTransformer {
                 let key = format!("_{}", i + 1);
                 let transform_result: Option<String> =
                     rule.transform(field_name, field_value, ctx)?;
-                let value = transform_result.unwrap_or_else(|| "".to_string());
+                let value = transform_result.unwrap_or_default();
                 rules_names.insert(key, Value::String(value));
             }
         }
@@ -176,7 +176,7 @@ impl Transformer for TemplateTransformer {
 
         if let Some(files) = &ctx.template_collection.files {
             for file in files.iter() {
-                ext_renderer.add_template_file(&file, None).unwrap();
+                ext_renderer.add_template_file(file, None).unwrap();
             }
         }
 

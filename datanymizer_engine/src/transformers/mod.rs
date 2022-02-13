@@ -34,6 +34,9 @@ pub use plain::PlainTransformer;
 mod uuid;
 pub use self::uuid::UuidTransformer;
 
+mod json;
+pub use json::JsonTransformer;
+
 mod fk;
 pub use fk::sql_value::AsSqlValue;
 pub use fk::*;
@@ -85,6 +88,8 @@ define_transformers_enum![
     ("password", Password, PasswordTransformer),
     ("datetime", DateTime, RandomDateTimeTransformer),
     ("plain", Plain, PlainTransformer),
+
+    ("json", Json, JsonTransformer),
 
     ("hex_token", HexToken, HexTokenTransformer),
     ("base64_token", Base64Token, Base64TokenTransformer),
