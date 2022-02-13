@@ -1,16 +1,14 @@
 use crate::transformer::{TransformContext, TransformResult, TransformResultHelper, Transformer};
+use format::Compiled;
 use rand::distributions::{Distribution, Uniform};
 use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
-use time::{
-    format_description::{self, well_known::Rfc3339},
-    Duration, OffsetDateTime,
-};
+use time::{format_description::well_known::Rfc3339, Duration, OffsetDateTime};
 
 mod format;
 
-/// Generates random dates.
+/// Generates random dates in the specified interval (granularity is a second).
 ///
 /// # Example:
 ///
@@ -60,6 +58,8 @@ pub struct RandomDateTimeTransformer {
     parsed_from: OffsetDateTime,
     #[serde(skip)]
     parsed_to: OffsetDateTime,
+    #[serde(skip)]
+    compiled: Compiled,
 }
 
 impl RandomDateTimeTransformer {
@@ -88,10 +88,11 @@ impl TryFrom<Config> for RandomDateTimeTransformer {
     fn try_from(c: Config) -> Result<Self, Self::Error> {
         let from = c.from;
         let to = c.to;
-        let format = format::convert(c.format.as_str())?;
+        let format = c.format;
 
         let parsed_from = Self::parse_date(from.as_str())?;
         let parsed_to = Self::parse_date(to.as_str())?;
+        let compiled = Compiled::compile(format.as_str())?;
 
         Ok(Self {
             from,
@@ -99,6 +100,7 @@ impl TryFrom<Config> for RandomDateTimeTransformer {
             format,
             parsed_from,
             parsed_to,
+            compiled,
         })
     }
 }
@@ -114,8 +116,8 @@ impl Transformer for RandomDateTimeTransformer {
         let mut rng = rand::thread_rng();
         let rnd_duration = Uniform::new_inclusive(0, duration).sample(&mut rng);
 
-        let format = format_description::parse(self.format.as_str())?;
-        let res = (self.parsed_from + Duration::seconds(rnd_duration)).format(&format)?;
+        let res = (self.parsed_from + Duration::seconds(rnd_duration))
+            .format(&self.compiled.format_items())?;
 
         TransformResult::present(res)
     }
@@ -141,8 +143,8 @@ impl Default for Config {
 
 #[derive(Debug)]
 pub enum ParseError {
-    Convert(format::ConvertError),
     Parse(time::error::Parse),
+    Compile(format::CompileError),
 }
 
 impl Display for ParseError {
@@ -153,15 +155,15 @@ impl Display for ParseError {
 
 impl std::error::Error for ParseError {}
 
-impl From<format::ConvertError> for ParseError {
-    fn from(err: format::ConvertError) -> Self {
-        ParseError::Convert(err)
+impl From<time::error::Parse> for ParseError {
+    fn from(err: time::error::Parse) -> Self {
+        Self::Parse(err)
     }
 }
 
-impl From<time::error::Parse> for ParseError {
-    fn from(err: time::error::Parse) -> Self {
-        ParseError::Parse(err)
+impl From<format::CompileError> for ParseError {
+    fn from(err: format::CompileError) -> Self {
+        Self::Compile(err)
     }
 }
 

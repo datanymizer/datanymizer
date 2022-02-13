@@ -102,7 +102,7 @@ boolean:
 
 #### datetime
 
-Generates random dates.
+Generates random dates in the specified interval (granularity is a second).
 
 Examples:
 

@@ -1,4 +1,5 @@
 use std::fmt::{Display, Formatter};
+use time::format_description::{self, Component, FormatItem};
 
 const PATTERN_REPLACEMENTS: [(&str, &str); 46] = [
     ("Y", "[year]"),
@@ -58,7 +59,7 @@ const PATTERN_REPLACEMENTS: [(&str, &str); 46] = [
 /// %.f works like %.9f (always 9 digits). The behaviour of the %+ pattern is the same in this regard.
 /// Patterns (e.g. %x, %X, %c) are not localized (no locale support in the Time crate).
 /// Modifiers "_", "-", "0" are not supported yet (you can make a feature request).
-pub fn convert(s: &str) -> Result<String, ConvertError> {
+fn convert(s: &str) -> Result<String, ConvertError> {
     // 4 is just assumption
     let mut new_s = String::with_capacity(s.len() * 4);
     let mut skip_count = 0;
@@ -90,6 +91,63 @@ pub fn convert(s: &str) -> Result<String, ConvertError> {
     Ok(new_s)
 }
 
+#[derive(Debug, Eq, PartialEq, Clone)]
+enum CompiledItem {
+    Literal(Vec<u8>),
+    Component(Component),
+}
+
+impl CompiledItem {
+    fn from_format_item(item: FormatItem) -> Vec<Self> {
+        match item {
+            FormatItem::Literal(bs) => vec![Self::Literal(bs.to_owned())],
+            FormatItem::Component(c) => vec![Self::Component(c)],
+            FormatItem::Optional(i) => Self::from_format_item(i.to_owned()),
+            FormatItem::Compound(nested) => Self::from_format_items(nested.to_owned()),
+            FormatItem::First(nested) => nested
+                .get(0)
+                .map(|i| Self::from_format_item(i.to_owned()))
+                .unwrap_or_default(),
+            _ => vec![],
+        }
+    }
+
+    fn from_format_items(items: Vec<FormatItem>) -> Vec<Self> {
+        items
+            .to_owned()
+            .into_iter()
+            .flat_map(Self::from_format_item)
+            .collect()
+    }
+
+    fn format_item(&self) -> FormatItem {
+        match self {
+            Self::Literal(bs) => FormatItem::Literal(bs.as_slice()),
+            Self::Component(c) => FormatItem::Component(*c),
+        }
+    }
+}
+
+#[derive(Debug, Eq, PartialEq, Clone)]
+pub struct Compiled(Vec<CompiledItem>);
+
+impl Compiled {
+    pub fn compile(f: &str) -> Result<Self, CompileError> {
+        let converted_format = convert(f)?;
+        let format_items = format_description::parse(converted_format.as_str())?;
+
+        Ok(Self::from_format_items(format_items))
+    }
+
+    pub fn format_items(&self) -> Vec<FormatItem> {
+        self.0.iter().map(CompiledItem::format_item).collect()
+    }
+
+    fn from_format_items(fi: Vec<FormatItem>) -> Self {
+        Self(CompiledItem::from_format_items(fi))
+    }
+}
+
 #[derive(Debug)]
 pub struct ConvertError(String, usize);
 
@@ -105,145 +163,269 @@ impl Display for ConvertError {
 
 impl std::error::Error for ConvertError {}
 
+#[derive(Debug)]
+pub enum CompileError {
+    Convert(ConvertError),
+    Format(time::error::InvalidFormatDescription),
+}
+
+impl Display for CompileError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self)
+    }
+}
+
+impl std::error::Error for CompileError {}
+
+impl From<ConvertError> for CompileError {
+    fn from(err: ConvertError) -> Self {
+        Self::Convert(err)
+    }
+}
+
+impl From<time::error::InvalidFormatDescription> for CompileError {
+    fn from(err: time::error::InvalidFormatDescription) -> Self {
+        Self::Format(err)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use time::{format_description, macros::datetime, OffsetDateTime};
+    use time::{macros::datetime, OffsetDateTime};
 
-    fn all_patterns() -> String {
-        PATTERN_REPLACEMENTS
-            .map(|(src, _)| format!("%{}", src))
-            .join(" ")
+    mod convert {
+        use super::*;
+
+        #[test]
+        fn replacements() {
+            let all = PATTERN_REPLACEMENTS
+                .map(|(src, _)| format!("%{}", src))
+                .join(" ");
+            let all = convert(all.as_str()).unwrap();
+
+            assert_eq!(all.find("%"), Some(all.len() - 1));
+        }
     }
 
-    fn strftime(dt: &OffsetDateTime, f: &str) -> String {
-        let f = convert(f).unwrap();
-        let f = format_description::parse(f.as_str()).unwrap();
-        dt.format(&f).unwrap()
+    mod strftime {
+        use super::*;
+
+        fn strftime(dt: &OffsetDateTime, f: &str) -> String {
+            let f = Compiled::compile(f).unwrap();
+            dt.format(&f.format_items()).unwrap()
+        }
+
+        #[test]
+        fn ymd_patterns() {
+            let f = "%Y-%m-%d %y %B %b %h %e %D %x %F %v %j";
+            let dt = datetime!(2010-02-04 00:00:00 UTC);
+            assert_eq!(
+                strftime(&dt, f),
+                "2010-02-04 10 February Feb Feb  4 02/04/10 02/04/10 2010-02-04  4-Feb-2010 035"
+            );
+        }
+
+        #[test]
+        fn week_day_patterns() {
+            let f = "%a %A %w %u";
+            let dt = datetime!(2010-02-04 00:00:00 UTC);
+            assert_eq!(strftime(&dt, f), "Thu Thursday 5 4");
+        }
+
+        #[test]
+        fn week_number_patterns() {
+            let f = "%U %W %V %G %g";
+
+            let dt = datetime!(2018-01-06 00:00:00 UTC);
+            assert_eq!(strftime(&dt, f), "00 01 01 2018 18");
+
+            let dt = datetime!(2018-01-07 00:00:00 UTC);
+            assert_eq!(strftime(&dt, f), "01 01 01 2018 18");
+
+            let dt = datetime!(2018-01-08 00:00:00 UTC);
+            assert_eq!(strftime(&dt, f), "01 02 02 2018 18");
+
+            let dt = datetime!(2017-01-01 00:00:00 UTC);
+            assert_eq!(strftime(&dt, f), "01 00 52 2016 16");
+
+            let dt = datetime!(2017-01-02 00:00:00 UTC);
+            assert_eq!(strftime(&dt, f), "01 01 01 2017 17");
+        }
+
+        #[test]
+        fn hms_patterns() {
+            let f = "%H %k %I %l %P %p %M %S %R %T %X %r";
+
+            let dt = datetime!(2018-01-06 01:02:04 UTC);
+            assert_eq!(
+                strftime(&dt, f),
+                "01  1 01  1 am AM 02 04 01:02 01:02:04 01:02:04 01:02:04 AM"
+            );
+
+            let dt = datetime!(2018-01-06 13:32:34 UTC);
+            assert_eq!(
+                strftime(&dt, f),
+                "13 13 01  1 pm PM 32 34 13:32 13:32:34 13:32:34 01:32:34 PM"
+            );
+        }
+
+        #[test]
+        fn tz_patterns() {
+            let f = "%z %:z";
+
+            let dt = datetime!(2018-01-06 01:02:04 +5);
+            assert_eq!(strftime(&dt, f), "+0500 +05:00");
+
+            let dt = datetime!(2018-01-06 01:02:04 -1:30);
+            assert_eq!(strftime(&dt, f), "-0130 -01:30");
+        }
+
+        #[test]
+        fn subsec_patterns() {
+            let f = "%f %.f %.3f %.6f %.9f";
+            let dt = datetime!(2018-01-06 01:02:04.01234567 UTC);
+            assert_eq!(
+                strftime(&dt, f),
+                "012345670 .012345670 .012 .012345 .012345670"
+            );
+        }
+
+        #[test]
+        fn full_patterns() {
+            let f = "%c %+";
+            let dt = datetime!(2018-01-06 01:02:04.5 -2:00);
+            assert_eq!(
+                strftime(&dt, f),
+                "Sat Jan  6 01:02:04 2018 2018-01-06T01:02:04.500000000-02:00"
+            );
+        }
+
+        #[test]
+        fn escape_symbols() {
+            let f = "%t%n%%d";
+            let dt = OffsetDateTime::now_utc();
+            assert_eq!(strftime(&dt, f), "\t\n%d");
+        }
+
+        #[test]
+        fn unicode() {
+            let dt = datetime!(1995-12-22 00:00:00 +5);
+            assert_eq!(
+                strftime(&dt, "Год: %Y, месяц: %m, день: %d"),
+                "Год: 1995, месяц: 12, день: 22"
+            );
+        }
+
+        #[test]
+        fn last_percent() {
+            let err = convert("%Y-%m-%").err().unwrap();
+            assert_eq!(
+                err.to_string(),
+                "unknown pattern in the format string `%Y-%m-%` at 6"
+            );
+        }
+
+        #[test]
+        fn unknown_pattern() {
+            let err = convert("%y-%@-%d").err().unwrap();
+            assert_eq!(
+                err.to_string(),
+                "unknown pattern in the format string `%y-%@-%d` at 3"
+            );
+        }
     }
 
-    #[test]
-    fn replacements() {
-        let all = convert(all_patterns().as_str()).unwrap();
-        assert_eq!(all.find("%"), Some(all.len() - 1));
-    }
+    mod from_format_item {
+        use super::*;
+        use time::format_description::modifier::{Day, Month, Year};
 
-    #[test]
-    fn ymd_patterns() {
-        let f = "%Y-%m-%d %y %B %b %h %e %D %x %F %v %j";
-        let dt = datetime!(2010-02-04 00:00:00 UTC);
-        assert_eq!(
-            strftime(&dt, f),
-            "2010-02-04 10 February Feb Feb  4 02/04/10 02/04/10 2010-02-04  4-Feb-2010 035"
-        );
-    }
+        #[test]
+        fn literal() {
+            let s = "abc";
+            let fi = FormatItem::Literal(s.as_bytes());
 
-    #[test]
-    fn week_day_patterns() {
-        let f = "%a %A %w %u";
-        let dt = datetime!(2010-02-04 00:00:00 UTC);
-        assert_eq!(strftime(&dt, f), "Thu Thursday 5 4");
-    }
+            let dt = datetime!(2018-05-06 00:00:00 UTC);
+            assert_eq!(dt.format(&fi).unwrap(), "abc");
 
-    #[test]
-    fn week_number_patterns() {
-        let f = "%U %W %V %G %g";
+            assert_eq!(
+                CompiledItem::from_format_item(fi),
+                vec![CompiledItem::Literal(s.as_bytes().to_vec())]
+            );
+        }
 
-        let dt = datetime!(2018-01-06 00:00:00 UTC);
-        assert_eq!(strftime(&dt, f), "00 01 01 2018 18");
+        #[test]
+        fn component() {
+            let year = Component::Year(Year::default());
+            let fi = FormatItem::Component(year);
 
-        let dt = datetime!(2018-01-07 00:00:00 UTC);
-        assert_eq!(strftime(&dt, f), "01 01 01 2018 18");
+            let dt = datetime!(2018-05-06 00:00:00 UTC);
+            assert_eq!(dt.format(&fi).unwrap(), "2018");
 
-        let dt = datetime!(2018-01-08 00:00:00 UTC);
-        assert_eq!(strftime(&dt, f), "01 02 02 2018 18");
+            assert_eq!(
+                CompiledItem::from_format_item(fi),
+                vec![CompiledItem::Component(year)]
+            )
+        }
 
-        let dt = datetime!(2017-01-01 00:00:00 UTC);
-        assert_eq!(strftime(&dt, f), "01 00 52 2016 16");
+        #[test]
+        fn optional() {
+            let s = "abc";
+            let child = FormatItem::Literal(s.as_bytes());
+            let fi = FormatItem::Optional(&child);
 
-        let dt = datetime!(2017-01-02 00:00:00 UTC);
-        assert_eq!(strftime(&dt, f), "01 01 01 2017 17");
-    }
+            let dt = datetime!(2018-05-06 00:00:00 UTC);
+            assert_eq!(dt.format(&fi).unwrap(), "abc");
 
-    #[test]
-    fn hms_patterns() {
-        let f = "%H %k %I %l %P %p %M %S %R %T %X %r";
+            assert_eq!(
+                CompiledItem::from_format_item(fi),
+                vec![CompiledItem::Literal(s.as_bytes().to_vec())]
+            )
+        }
 
-        let dt = datetime!(2018-01-06 01:02:04 UTC);
-        assert_eq!(
-            strftime(&dt, f),
-            "01  1 01  1 am AM 02 04 01:02 01:02:04 01:02:04 01:02:04 AM"
-        );
+        #[test]
+        fn compound() {
+            let s = "abc";
+            let month = Component::Month(Month::default());
 
-        let dt = datetime!(2018-01-06 13:32:34 UTC);
-        assert_eq!(
-            strftime(&dt, f),
-            "13 13 01  1 pm PM 32 34 13:32 13:32:34 13:32:34 01:32:34 PM"
-        );
-    }
+            let children = vec![
+                FormatItem::Literal(s.as_bytes()),
+                FormatItem::Component(month),
+            ];
 
-    #[test]
-    fn tz_patterns() {
-        let f = "%z %:z";
+            let fi = FormatItem::Compound(children.as_slice());
 
-        let dt = datetime!(2018-01-06 01:02:04 +5);
-        assert_eq!(strftime(&dt, f), "+0500 +05:00");
+            let dt = datetime!(2018-05-06 00:00:00 UTC);
+            assert_eq!(dt.format(&fi).unwrap(), "abc05");
 
-        let dt = datetime!(2018-01-06 01:02:04 -1:30);
-        assert_eq!(strftime(&dt, f), "-0130 -01:30");
-    }
+            assert_eq!(
+                CompiledItem::from_format_item(fi),
+                vec![
+                    CompiledItem::Literal(s.as_bytes().to_vec()),
+                    CompiledItem::Component(month),
+                ]
+            )
+        }
 
-    #[test]
-    fn subsec_patterns() {
-        let f = "%f %.f %.3f %.6f %.9f";
-        let dt = datetime!(2018-01-06 01:02:04.01234567 UTC);
-        assert_eq!(
-            strftime(&dt, f),
-            "012345670 .012345670 .012 .012345 .012345670"
-        );
-    }
+        #[test]
+        fn first() {
+            let s = "abc";
+            let day = Component::Day(Day::default());
 
-    #[test]
-    fn full_patterns() {
-        let f = "%c %+";
-        let dt = datetime!(2018-01-06 01:02:04.5 -2:00);
-        assert_eq!(
-            strftime(&dt, f),
-            "Sat Jan  6 01:02:04 2018 2018-01-06T01:02:04.500000000-02:00"
-        );
-    }
+            let children = vec![
+                FormatItem::Component(day),
+                FormatItem::Literal(s.as_bytes()),
+            ];
 
-    #[test]
-    fn escape_symbols() {
-        let f = "%t%n%%d";
-        let dt = OffsetDateTime::now_utc();
-        assert_eq!(strftime(&dt, f), "\t\n%d");
-    }
+            let fi = FormatItem::First(children.as_slice());
 
-    #[test]
-    fn unicode() {
-        let dt = datetime!(1995-12-22 00:00:00 +5);
-        assert_eq!(
-            strftime(&dt, "Год: %Y, месяц: %m, день: %d"),
-            "Год: 1995, месяц: 12, день: 22"
-        );
-    }
+            let dt = datetime!(2018-01-06 00:00:00 UTC);
+            assert_eq!(dt.format(&fi).unwrap(), "06");
 
-    #[test]
-    fn last_percent() {
-        let err = convert("%Y-%m-%").err().unwrap();
-        assert_eq!(
-            err.to_string(),
-            "unknown pattern in the format string `%Y-%m-%` at 6"
-        );
-    }
-
-    #[test]
-    fn unknown_pattern() {
-        let err = convert("%y-%@-%d").err().unwrap();
-        assert_eq!(
-            err.to_string(),
-            "unknown pattern in the format string `%y-%@-%d` at 3"
-        );
+            assert_eq!(
+                CompiledItem::from_format_item(fi),
+                vec![CompiledItem::Component(day)]
+            );
+        }
     }
 }
