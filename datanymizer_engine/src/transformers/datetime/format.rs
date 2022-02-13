@@ -1,15 +1,5 @@
 use std::fmt::{Display, Formatter};
 
-/// Converts formats between Chrono crate/strftime
-/// (https://docs.rs/chrono/0.4.19/chrono/format/strftime/index.html)
-/// and Time crate (https://time-rs.github.io/book/api/format-description.html).
-///
-/// Notes:
-/// %C, %Z and %s are not supported (missing in the Time's format).
-/// %.f works like %.9f (always 9 digits). The behaviour of the %+ pattern is the same in this regard.
-/// Patterns (e.g. %x, %X, %c) are not localized (no locale support in the Time crate).
-/// Modifiers "_", "-", "0" are not supported yet (you can make a feature request).
-///
 const PATTERN_REPLACEMENTS: [(&str, &str); 46] = [
     ("Y", "[year]"),
     ("y", "[year repr:last_two]"),
@@ -59,21 +49,15 @@ const PATTERN_REPLACEMENTS: [(&str, &str); 46] = [
     ("%", "%"),
 ];
 
-#[derive(Debug)]
-pub struct ConvertError(String, usize);
-
-impl Display for ConvertError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "unknown pattern in the format string `{}` at {}",
-            self.0, self.1
-        )
-    }
-}
-
-impl std::error::Error for ConvertError {}
-
+/// Converts formats between Chrono crate/strftime
+/// (https://docs.rs/chrono/0.4.19/chrono/format/strftime/index.html)
+/// and Time crate (https://time-rs.github.io/book/api/format-description.html).
+///
+/// Notes:
+/// %C, %Z and %s are not supported (missing in the Time's format).
+/// %.f works like %.9f (always 9 digits). The behaviour of the %+ pattern is the same in this regard.
+/// Patterns (e.g. %x, %X, %c) are not localized (no locale support in the Time crate).
+/// Modifiers "_", "-", "0" are not supported yet (you can make a feature request).
 pub fn convert(s: &str) -> Result<String, ConvertError> {
     // 4 is just assumption
     let mut new_s = String::with_capacity(s.len() * 4);
@@ -105,6 +89,21 @@ pub fn convert(s: &str) -> Result<String, ConvertError> {
 
     Ok(new_s)
 }
+
+#[derive(Debug)]
+pub struct ConvertError(String, usize);
+
+impl Display for ConvertError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "unknown pattern in the format string `{}` at {}",
+            self.0, self.1
+        )
+    }
+}
+
+impl std::error::Error for ConvertError {}
 
 #[cfg(test)]
 mod tests {
