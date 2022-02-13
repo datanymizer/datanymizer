@@ -166,7 +166,7 @@ impl From<time::error::Parse> for ParseError {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
 
     fn transformed_value(cfg: &str) -> String {
