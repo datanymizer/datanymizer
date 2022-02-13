@@ -31,9 +31,11 @@ const TABLE_FOREIGN_KEYS: &str = "SELECT
 
 const TABLE_COLUMNS_QUERY: &str = "SELECT cc.column_name, cc.ordinal_position, cc.data_type, pt.oid
                                    FROM information_schema.columns as cc
-                                   JOIN pg_catalog.pg_type as pt
-                                   ON cc.udt_name = pt.typname
-                                   WHERE cc.table_schema = $1 and cc.table_name = $2
+                                        JOIN pg_catalog.pg_namespace as pn
+                                        ON cc.udt_schema = pn.nspname
+                                        JOIN pg_catalog.pg_type as pt
+                                        ON cc.udt_name = pt.typname AND pn.oid = pt.typnamespace
+                                   WHERE cc.table_schema = $1 and cc.table_name = $2                                   
                                    ORDER BY cc.ordinal_position ASC";
 
 const TABLE_SIZE_QUERY: &str =

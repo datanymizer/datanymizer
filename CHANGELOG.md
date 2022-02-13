@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### ⚙️ Changed
 
 ### 🛠 Fixed
+- Use pg_namespace to deconflict duplicate field names [#149](https://github.com/datanymizer/datanymizer/pull/149)
+  ([@mbeynon](https://github.com/mbeynon))
 - Fix Postgres COPY syntax when dumping a table with zero defined fields
   [#147](https://github.com/datanymizer/datanymizer/pull/147) ([@mbeynon](https://github.com/mbeynon))
 - Fix the bug with a datetime format [#150](https://github.com/datanymizer/datanymizer/pull/150)
