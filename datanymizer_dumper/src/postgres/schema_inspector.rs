@@ -101,6 +101,19 @@ impl SchemaInspector for PgSchemaInspector {
         Ok(size)
     }
 
+    fn get_foreign_keys(
+        &self,
+        connection: &mut Self::Connection,
+        table: &Self::Table,
+    ) -> Result<Vec<Self::ForeignKey>> {
+        Ok(connection
+            .client
+            .query(TABLE_FOREIGN_KEYS, &[&table.get_name()])?
+            .into_iter()
+            .map(|row| row.into())
+            .collect())
+    }
+
     /// Get columns for table
     fn get_columns(
         &self,
@@ -114,19 +127,6 @@ impl SchemaInspector for PgSchemaInspector {
             .map(|row| row.into())
             .collect();
         Ok(items)
-    }
-
-    fn get_foreign_keys(
-        &self,
-        connection: &mut Self::Connection,
-        table: &Self::Table,
-    ) -> Result<Vec<Self::ForeignKey>> {
-        Ok(connection
-            .client
-            .query(TABLE_FOREIGN_KEYS, &[&table.get_name()])?
-            .into_iter()
-            .map(|row| row.into())
-            .collect())
     }
 }
 
