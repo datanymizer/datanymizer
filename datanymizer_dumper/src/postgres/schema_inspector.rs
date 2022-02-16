@@ -1,5 +1,5 @@
 use super::{
-    column::PgColumn, connector, foreign_key::ForeignKey, sequence::PgSequence, table::PgTable,
+    column::PgColumn, connector, foreign_key::PgForeignKey, sequence::PgSequence, table::PgTable,
     SchemaInspector,
 };
 use crate::Table;
@@ -54,6 +54,7 @@ impl SchemaInspector for PgSchemaInspector {
     type Connection = connector::Connection;
     type Table = PgTable;
     type Column = PgColumn;
+    type ForeignKey = PgForeignKey;
 
     // Get all tables in the database
     fn get_tables(&self, connection: &mut Self::Connection) -> Result<Vec<Self::Table>> {
@@ -69,6 +70,9 @@ impl SchemaInspector for PgSchemaInspector {
                 };
                 if let Ok(sequences) = self.get_sequences(connection, &table) {
                     table.set_sequences(sequences);
+                };
+                if let Ok(foreign_keys) = self.get_foreign_keys(connection, &table) {
+                    table.set_foreign_keys(foreign_keys);
                 };
 
                 match self.get_table_size(connection, &table) {
@@ -97,43 +101,6 @@ impl SchemaInspector for PgSchemaInspector {
         Ok(size)
     }
 
-    // Get all dependencies (by FK) for `table` in database
-    fn get_dependencies(
-        &self,
-        connection: &mut Self::Connection,
-        table: &Self::Table,
-    ) -> Result<Vec<Self::Table>> {
-        let fkeys_iterator = connection
-            .client
-            .query(TABLE_FOREIGN_KEYS, &[&table.get_name()])?
-            .into_iter()
-            .map(|row| row.into());
-
-        let tables: Vec<Self::Table> = fkeys_iterator
-            // Table from foreign key
-            .map(|fkey: ForeignKey| {
-                PgTable::new(fkey.foreign_table_name, fkey.foreign_table_schema)
-            })
-            // Columns for table
-            .map(|mut table| {
-                if let Ok(columns) = self.get_columns(connection, &table) {
-                    table.set_columns(columns);
-                };
-                if let Ok(sequences) = self.get_sequences(connection, &table) {
-                    table.set_sequences(sequences);
-                };
-
-                match self.get_table_size(connection, &table) {
-                    Ok(size) => table.size = size as i64,
-                    Err(e) => println!("ERR: {}", e),
-                }
-
-                table
-            })
-            .collect();
-        Ok(tables)
-    }
-
     /// Get columns for table
     fn get_columns(
         &self,
@@ -147,6 +114,19 @@ impl SchemaInspector for PgSchemaInspector {
             .map(|row| row.into())
             .collect();
         Ok(items)
+    }
+
+    fn get_foreign_keys(
+        &self,
+        connection: &mut Self::Connection,
+        table: &Self::Table,
+    ) -> Result<Vec<Self::ForeignKey>> {
+        Ok(connection
+            .client
+            .query(TABLE_FOREIGN_KEYS, &[&table.get_name()])?
+            .into_iter()
+            .map(|row| row.into())
+            .collect())
     }
 }
 

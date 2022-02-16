@@ -56,6 +56,7 @@ pub trait SchemaInspector: 'static + Sized + Send + Clone {
     type Connection;
     type Table: Table<Self::Type>;
     type Column: ColumnData<Self::Type>;
+    type ForeignKey;
 
     /// Get all tables in the database
     fn get_tables(&self, connection: &mut Self::Connection) -> Result<Vec<Self::Table>>;
@@ -64,58 +65,73 @@ pub trait SchemaInspector: 'static + Sized + Send + Clone {
     fn get_table_size(&self, connection: &mut Self::Connection, table: &Self::Table)
         -> Result<i64>;
 
-    /// Get all dependencies (by FK) for `table` in database
-    fn get_dependencies(
+    /// Get foreign keys for table
+    fn get_foreign_keys(
         &self,
         connection: &mut Self::Connection,
         table: &Self::Table,
-    ) -> Result<Vec<Self::Table>>;
+    ) -> Result<Vec<Self::ForeignKey>>;
 
-    fn ordered_tables(&self, connection: &mut Self::Connection) -> Vec<(Self::Table, i32)> {
-        let mut res: HashMap<Self::Table, i32> = HashMap::new();
-        let mut depgraph: DepGraph<Self::Table> = DepGraph::new();
+    fn ordered_tables(&self, connection: &mut Self::Connection) -> Result<Vec<(Self::Table, i32)>> {
+        let mut depgraph: DepGraph<String> = DepGraph::new();
 
         let started = Instant::now();
         println!("Inspecting tables ...");
 
-        if let Ok(tables) = self.get_tables(connection) {
-            println!(
-                "Inspecting completed in {}",
-                HumanDuration(started.elapsed())
-            );
+        let tables = self.get_tables(connection)?;
+        let mut weight_map: HashMap<String, i32> = HashMap::with_capacity(tables.len());
 
-            println!("Inspecting table dependencies...");
-            let started = Instant::now();
-            for table in tables.iter() {
-                let deps: Vec<Self::Table> = self
-                    .get_dependencies(connection, table)
-                    .unwrap_or_default()
-                    .into_iter()
-                    .collect();
-                depgraph.register_dependencies(table.clone(), deps);
-            }
-            println!(
-                "Inspecting completed in {}",
-                HumanDuration(started.elapsed())
-            );
+        println!(
+            "Inspecting completed in {}",
+            HumanDuration(started.elapsed())
+        );
 
-            println!("Processing table dependencies...");
-            let started = Instant::now();
-            for table in tables.iter() {
-                let _ = res.entry(table.clone()).or_insert(0);
-                if let Ok(nodes) = depgraph.dependencies_of(table) {
-                    for node in nodes.flatten() {
-                        let counter = res.entry(node.clone()).or_insert(0);
-                        *counter += 1;
-                    }
+        println!("Inspecting table dependencies...");
+        let started = Instant::now();
+        for table in tables.iter() {
+            depgraph.register_dependencies(table.get_full_name(), table.get_dep_table_names());
+        }
+
+        println!(
+            "Inspecting completed in {}",
+            HumanDuration(started.elapsed())
+        );
+
+        println!("Processing table dependencies...");
+        let started = Instant::now();
+
+        for table in tables.iter() {
+            let name = table.get_full_name();
+            weight_map.entry(name.clone()).or_insert(0);
+            if let Ok(names) = depgraph.dependencies_of(&name) {
+                for name in names.flatten() {
+                    let counter = weight_map.entry(name.clone()).or_insert(0);
+                    *counter += 1;
                 }
             }
-            println!(
-                "Processing completed in {}",
-                HumanDuration(started.elapsed())
-            );
         }
-        res.iter().map(|(k, b)| (k.clone(), *b)).collect()
+
+        println!(
+            "Processing completed in {}",
+            HumanDuration(started.elapsed())
+        );
+
+        let mut table_map = HashMap::with_capacity(tables.len());
+        for table in tables.iter() {
+            table_map.insert(table.get_full_name(), table);
+        }
+
+        // ignore unexisted dependencies
+        Ok(tables
+            .into_iter()
+            .map(|t| {
+                let name = t.get_full_name();
+                (
+                    t,
+                    weight_map.get(name.as_str()).copied().unwrap_or_default(),
+                )
+            })
+            .collect())
     }
 
     /// Get columns for table
@@ -145,6 +161,8 @@ pub trait Table<T>: Sized + Send + Clone + Eq + Hash {
     fn get_size(&self) -> i64;
     /// Get column name - index map
     fn get_column_indexes(&self) -> &HashMap<String, usize>;
+    /// Get depended table names
+    fn get_dep_table_names(&self) -> Vec<String>;
 }
 
 pub trait ColumnData<T> {

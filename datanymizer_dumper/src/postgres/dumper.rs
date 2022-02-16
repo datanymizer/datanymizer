@@ -145,7 +145,7 @@ impl<W: 'static + Write + Send, I: 'static + Indicator + Send> Dumper for PgDump
     fn pre_data(&mut self, connection: &mut Self::Connection) -> Result<()> {
         let started = Instant::now();
         self.debug("Fetching tables metadata...".into());
-        let mut tables = self.schema_inspector().ordered_tables(connection);
+        let mut tables = self.schema_inspector().ordered_tables(connection)?;
         self.debug(format!(
             "Fetching completed in {}",
             HumanDuration(started.elapsed())
