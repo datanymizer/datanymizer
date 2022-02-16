@@ -103,10 +103,10 @@ pub trait SchemaInspector: 'static + Sized + Send + Clone {
         for table in tables.iter() {
             let name = table.get_full_name();
             weight_map.entry(name.clone()).or_insert(0);
-            if let Ok(names) = depgraph.dependencies_of(&name) {
-                for name in names.flatten() {
-                    let counter = weight_map.entry(name.clone()).or_insert(0);
-                    *counter += 1;
+            if let Ok(dep_names) = depgraph.dependencies_of(&name) {
+                for dep_name in dep_names.flatten() {
+                    let weight = weight_map.entry(dep_name.clone()).or_insert(0);
+                    *weight += 1;
                 }
             }
         }
@@ -116,12 +116,6 @@ pub trait SchemaInspector: 'static + Sized + Send + Clone {
             HumanDuration(started.elapsed())
         );
 
-        let mut table_map = HashMap::with_capacity(tables.len());
-        for table in tables.iter() {
-            table_map.insert(table.get_full_name(), table);
-        }
-
-        // ignore unexisted dependencies
         Ok(tables
             .into_iter()
             .map(|t| {
