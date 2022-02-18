@@ -1,4 +1,5 @@
 use crate::store::KeyValueStore;
+use rand::Rng;
 use std::collections::HashMap;
 use tera::{Function, Tera, Value};
 
@@ -7,6 +8,8 @@ pub fn register<S: 'static + KeyValueStore>(t: &mut Tera, store: S) {
     t.register_function("store_write", write(store.clone()));
     t.register_function("store_force_write", force_write(store.clone()));
     t.register_function("store_inc", inc(store));
+
+    t.register_function("get_random", get_random);
 }
 
 fn read<S: KeyValueStore>(store: S) -> impl Function {
@@ -92,6 +95,42 @@ fn inc<S: KeyValueStore>(store: S) -> impl Function {
             }
         },
     )
+}
+
+pub fn get_random(args: &HashMap<String, Value>) -> tera::Result<Value> {
+    let start = match args.get("start") {
+        Some(val) => match tera::from_value::<i32>(val.clone()) {
+            Ok(v) => v,
+            Err(_) => {
+                return Err(tera::Error::msg(format!(
+                    "Function `get_random` received start={} but `start` can only be a boolean",
+                    val
+                )));
+            }
+        },
+        None => 0,
+    };
+
+    let end = match args.get("end") {
+        Some(val) => match tera::from_value::<i32>(val.clone()) {
+            Ok(v) => v,
+            Err(_) => {
+                return Err(tera::Error::msg(format!(
+                    "Function `get_random` received end={} but `end` can only be a boolean",
+                    val
+                )));
+            }
+        },
+        None => {
+            return Err(tera::Error::msg(
+                "Function `get_random` didn't receive an `end` argument",
+            ))
+        }
+    };
+    let mut rng = rand::thread_rng();
+    let res = rng.gen_range(start..end);
+
+    Ok(Value::Number(res.into()))
 }
 
 #[cfg(test)]

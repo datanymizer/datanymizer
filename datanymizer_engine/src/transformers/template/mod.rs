@@ -1,4 +1,4 @@
-mod store_functions;
+mod functions;
 
 use crate::{
     transformer::{
@@ -152,7 +152,7 @@ impl Transformer for TemplateTransformer {
     }
 
     fn init(&mut self, ctx: &TransformerInitContext) {
-        store_functions::register(&mut self.renderer, ctx.template_store.clone());
+        functions::register(&mut self.renderer, ctx.template_store.clone());
 
         let mut ext_renderer = Tera::default();
 
@@ -239,6 +239,21 @@ mod tests {
                 None,
             )),
         );
+        assert_eq!(res, Ok(Some(expected)));
+    }
+
+    #[test]
+    fn get_random() {
+        let expected = String::from("123");
+        let config = r#"
+                            template:
+                              format: '{{ get_random(start=123,end=124) }}'
+                          "#;
+
+        let mut transformer: Transformers = serde_yaml::from_str(config).unwrap();
+        transformer.init(&TransformerInitContext::default());
+
+        let res = transformer.transform("", "", &Some(TransformContext::default()));
         assert_eq!(res, Ok(Some(expected)));
     }
 
