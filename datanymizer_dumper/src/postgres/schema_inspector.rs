@@ -2,7 +2,6 @@ use super::{
     column::PgColumn, connector, foreign_key::PgForeignKey, sequence::PgSequence, table::PgTable,
     SchemaInspector,
 };
-use crate::Table;
 use anyhow::Result;
 use postgres::types::Type;
 
@@ -27,7 +26,7 @@ const TABLE_FOREIGN_KEYS: &str = "SELECT
                                     JOIN information_schema.constraint_column_usage AS ccu
                                     ON ccu.constraint_name = tc.constraint_name
                                     AND ccu.table_schema = tc.table_schema
-                                WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_name = $1";
+                                WHERE tc.constraint_type = 'FOREIGN KEY'"; // AND tc.table_schema = $1 AND tc.table_name = $2
 
 const TABLE_COLUMNS_QUERY: &str = "SELECT cc.column_name, cc.ordinal_position, cc.data_type, pt.oid
                                    FROM information_schema.columns as cc
@@ -58,7 +57,12 @@ impl SchemaInspector for PgSchemaInspector {
 
     // Get all tables in the database
     fn get_tables(&self, connection: &mut Self::Connection) -> Result<Vec<Self::Table>> {
-        let mut counter = 0;
+        let foreign_keys: Vec<PgForeignKey> = connection
+            .client
+            .query(TABLE_FOREIGN_KEYS, &[])?
+            .into_iter()
+            .map(|row| row.into())
+            .collect();
         let items: Vec<Self::Table> = connection
             .client
             .query(PG_CATALOG_SCHEMA, &[])?
@@ -71,16 +75,28 @@ impl SchemaInspector for PgSchemaInspector {
                 if let Ok(sequences) = self.get_sequences(connection, &table) {
                     table.set_sequences(sequences);
                 };
-                if let Ok(foreign_keys) = self.get_foreign_keys(connection, &table) {
-                    table.set_foreign_keys(foreign_keys);
-                };
+                // if let Ok(foreign_keys) = self.get_foreign_keys(connection, &table) {
+                //    table.set_foreign_keys(foreign_keys);
+                // };
+                table.set_foreign_keys(
+                    foreign_keys
+                        .iter()
+                        .filter_map(|fk| {
+                            if fk.table_schema == table.schemaname
+                                && fk.table_name == table.tablename
+                            {
+                                Some(fk.clone())
+                            } else {
+                                None
+                            }
+                        })
+                        .collect(),
+                );
 
                 match self.get_table_size(connection, &table) {
                     Ok(size) => table.size = size as i64,
                     Err(e) => panic!("ERR: {}", e),
                 }
-
-                counter += 1;
 
                 table
             })
@@ -108,7 +124,7 @@ impl SchemaInspector for PgSchemaInspector {
     ) -> Result<Vec<Self::ForeignKey>> {
         Ok(connection
             .client
-            .query(TABLE_FOREIGN_KEYS, &[&table.get_name()])?
+            .query(TABLE_FOREIGN_KEYS, &[&table.schemaname, &table.tablename])?
             .into_iter()
             .map(|row| row.into())
             .collect())
