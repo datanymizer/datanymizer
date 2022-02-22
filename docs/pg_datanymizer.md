@@ -11,9 +11,10 @@ pg_datanymizer [OPTIONS] <DBNAME> [PG_DUMP_ARGS]...
 #### FLAGS
 
 | Name                         | Description 
-|---                           |---          
+|------------------------------|---          
 | `--accept_invalid_certs`     | Accept invalid certificates (e.g., self-signed) when using SSL
 | `--accept_invalid_hostnames` | Accept invalid hostnames when using SSL
+| `--check_updates`            | Check for updates
 | `--help`                     | Prints help information
 | `-V`, `--version`            | Prints version information
 

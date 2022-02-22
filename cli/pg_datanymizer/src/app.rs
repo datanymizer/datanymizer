@@ -1,5 +1,7 @@
 use anyhow::Result;
+use std::time::Duration;
 use std::{fs::File, io};
+use update_informer::{registry::GitHub, Check};
 use url::Url;
 
 use crate::options::{Options, TransactionConfig};
@@ -29,6 +31,11 @@ impl App {
     pub fn run(&self) -> Result<()> {
         let mut connection = self.connector().connect()?;
         let engine = self.engine()?;
+
+        if self.options.check_updates {
+            self.print_new_version_if_available();
+            return Ok(());
+        }
 
         match &self.options.file {
             Some(filename) => PgDumper::new(
@@ -74,6 +81,24 @@ impl App {
             TransactionConfig::ReadCommitted => Some(IsolationLevel::ReadCommitted),
             TransactionConfig::RepeatableRead => Some(IsolationLevel::RepeatableRead),
             TransactionConfig::Serializable => Some(IsolationLevel::Serializable),
+        }
+    }
+
+    fn print_new_version_if_available(&self) {
+        let pkg = "datanymizer";
+        let repo = format!("{pkg}/{pkg}");
+        let current_version = env!("CARGO_PKG_VERSION");
+
+        let informer = update_informer::UpdateInformer::new(GitHub, &repo, current_version)
+            .interval(Duration::ZERO);
+
+        if let Ok(Some(version)) = informer.check_version() {
+            let msg =
+                format!("A new release of {pkg} is available: v{current_version} -> {version}");
+
+            let release_url = format!("https://github.com/{repo}/releases/tag/{version}");
+
+            println!("\n{msg}\n{release_url}");
         }
     }
 }

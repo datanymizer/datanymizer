@@ -9,12 +9,12 @@ license = "MIT"
 readme = "README.md"
 keywords = ["anonymizer", "data", "database", "postgresql", "pg_dump", "faker"]
 categories = ["command-line-utilities"]
-
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 anyhow = "1.0"
-datanymizer_dumper = {path = "../../datanymizer_dumper"}
-datanymizer_engine = {path = "../../datanymizer_engine"}
+datanymizer_dumper = { path = "../../datanymizer_dumper" }
+datanymizer_engine = { path = "../../datanymizer_engine" }
 structopt = "0.3.20"
+update-informer = { version = "0.4.0", default_features = false, features = ["github"] }
 url = "2.2"

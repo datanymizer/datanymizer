@@ -3,12 +3,11 @@ name = "datanymizer_dumper"
 version = "0.5.0"
 authors = ["Aleksandr Kirillov <saratovsource@gmail.com>", "Evgeniy Rashchepkin <e.a.rashchepkin@gmail.com>"]
 edition = "2021"
-
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-datanymizer_engine = { path= "../datanymizer_engine" }
 anyhow = "1.0"
+datanymizer_engine = { path = "../datanymizer_engine" }
 indicatif = "0.15.0"
 native-tls = "0.2.7"
 postgres = "0.19.1"

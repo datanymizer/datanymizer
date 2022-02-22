@@ -1,8 +1,8 @@
 [workspace]
 members = [
-    "datanymizer_engine",
-    "datanymizer_dumper",
     "cli/pg_datanymizer",
+    "datanymizer_dumper",
+    "datanymizer_engine",
 ]
 
 [profile.release]

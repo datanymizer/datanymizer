@@ -99,6 +99,9 @@ pub struct Options {
         help = "The remaining arguments are passed directly to `pg_dump` calls. You should add `--` before <DBNAME> in such cases"
     )]
     pub pg_dump_args: Vec<String>,
+
+    #[structopt(long = "check_updates", help = "Check for updates")]
+    pub check_updates: bool,
 }
 
 impl Options {
