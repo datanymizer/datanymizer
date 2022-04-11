@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### 🚀 Added
 - Add wildcards support in the filter section [#151](https://github.com/datanymizer/datanymizer/pull/151)
   ([@evgeniy-r](https://github.com/evgeniy-r))
+- Add bcrypt filter to generate hashes [164](https://github.com/datanymizer/datanymizer/pull/164)
 
 ### ⚙️ Changed
 - Remove the dependency from `crono` ([security issue](https://github.com/chronotope/chrono/pull/578)) 

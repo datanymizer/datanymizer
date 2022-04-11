@@ -1,3 +1,4 @@
+mod hash_functions;
 mod store_functions;
 
 use crate::{
@@ -153,6 +154,7 @@ impl Transformer for TemplateTransformer {
 
     fn init(&mut self, ctx: &TransformerInitContext) {
         store_functions::register(&mut self.renderer, ctx.template_store.clone());
+        hash_functions::register(&mut self.renderer);
 
         let mut ext_renderer = Tera::default();
 
