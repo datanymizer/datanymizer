@@ -228,7 +228,7 @@ fn table_args(filter: &Option<Filter>) -> Result<Vec<String>> {
     Ok(args)
 }
 
-fn sort_tables(tables: &mut Vec<(PgTable, i32)>, order: &[String]) {
+fn sort_tables(tables: &mut [(PgTable, i32)], order: &[String]) {
     tables.sort_by_cached_key(|(tbl, weight)| {
         let position = order.iter().position(|i| tbl.get_names().contains(i));
         (position, -weight)

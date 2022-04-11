@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
-use bcrypt::{DEFAULT_COST, hash};
+use bcrypt::{hash, DEFAULT_COST};
 use serde_json::{from_value, Value};
-use tera::{Tera, Result, Error, try_get_value};
+use tera::{try_get_value, Error, Result, Tera};
 
 pub fn register(t: &mut Tera) {
     t.register_filter("bcrypt_hash", bcrypt_hash);
@@ -47,12 +47,11 @@ fn bcrypt_hash(value: &Value, args: &HashMap<String, Value>) -> Result<Value> {
         .map_err(|err| Error::from(err.to_string()))
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tera::Context;
     use bcrypt::verify;
+    use tera::Context;
 
     #[test]
     fn bcrypt_hash_default() {

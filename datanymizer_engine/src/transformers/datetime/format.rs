@@ -114,8 +114,8 @@ impl CompiledItem {
 
     fn from_format_items(items: Vec<FormatItem>) -> Vec<Self> {
         items
-            .to_owned()
-            .into_iter()
+            .iter()
+            .cloned()
             .flat_map(Self::from_format_item)
             .collect()
     }
