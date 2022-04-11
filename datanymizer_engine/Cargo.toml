@@ -8,6 +8,7 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0"
+bcrypt = "0.12"
 config = "0.10"
 csv = "1.1"
 fake = { version = "2.4.1" }

@@ -346,6 +346,30 @@ If you need the `\\N` literal - return `\\\N` and so on.
 
 **Warning!** This behavior can be changed in the future.
 
+## Crypto
+
+It extends builtin filters in templates with some crypto functions:
+
+* `bcrypt_hash` - generates bcrypt hash for input string.
+   Arguments: `cost` (optional) bcrypt cost.
+
+Take a look at an example:
+
+```yaml
+tables:
+  - name: users
+    rules:
+      password_hash_default:
+        template:
+          format: "{{ _1 | bcrypt_hash }}"
+          rules:
+            - word: {} # Random word
+      password_hash_with_cost:
+        template:
+          format: "{{ _1 | bcrypt_hash(cost=10) }}"
+          rules:
+            - word: {} # Random word
+
 ## Business
 
 #### company_activity 🌐
