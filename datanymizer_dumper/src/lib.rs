@@ -16,6 +16,7 @@ pub trait Dumper: 'static + Sized + Send {
     /// Process steps
     fn dump(&mut self, connection: &mut Self::Connection) -> Result<()> {
         let started = Instant::now();
+        self.debug("Fetching tables metadata...".into());
         self.prepare(connection)?;
         self.pre_data(connection)?;
         self.data(connection)?;
