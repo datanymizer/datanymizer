@@ -21,7 +21,7 @@ pub type Tables = Vec<Table>;
 
 type TransformList = Vec<(String, Transformers)>;
 
-#[derive(Debug, Default, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct Settings {
     /// Tables list with transformation rules
     #[serde(default)]

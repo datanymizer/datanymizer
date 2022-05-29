@@ -63,7 +63,7 @@ pub trait Dumper: 'static + Sized + Send {
     fn debug(&self, message: String);
 }
 
-fn sort_tables<T, Tbl: Table<T>>(tables: &mut Vec<(Tbl, i32)>, order: &[String]) {
+fn sort_tables<T, Tbl: Table<T>>(tables: &mut [(Tbl, i32)], order: &[String]) {
     tables.sort_by_cached_key(|(tbl, weight)| {
         let position = order.iter().position(|i| tbl.get_names().contains(i));
         (position, -weight)
