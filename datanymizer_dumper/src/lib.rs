@@ -29,7 +29,7 @@ pub trait Dumper: 'static + Sized + Send {
 
     /// Preparation (load table list, set table ordering, initialize table filter)
     fn prepare(&mut self, connection: &mut Self::Connection) -> Result<()> {
-        let mut tables = self.schema_inspector().ordered_tables(connection);
+        let mut tables = self.schema_inspector().ordered_tables(connection)?;
         sort_tables(&mut tables, &self.settings().table_order);
         let tables: Vec<_> = tables.into_iter().map(|(t, _)| t).collect();
         self.filter_mut()
@@ -76,6 +76,7 @@ pub trait SchemaInspector: 'static + Sized + Send + Clone {
     type Connection;
     type Table: Table<Self::Type>;
     type Column: ColumnData<Self::Type>;
+    type ForeignKey;
 
     /// Get all tables in the database
     fn get_tables(&self, connection: &mut Self::Connection) -> Result<Vec<Self::Table>>;
@@ -84,37 +85,44 @@ pub trait SchemaInspector: 'static + Sized + Send + Clone {
     fn get_table_size(&self, connection: &mut Self::Connection, table: &Self::Table)
         -> Result<i64>;
 
-    /// Get all dependencies (by FK) for `table` in database
-    fn get_dependencies(
+    /// Get foreign keys for table
+    fn get_foreign_keys(
         &self,
         connection: &mut Self::Connection,
         table: &Self::Table,
-    ) -> Result<Vec<Self::Table>>;
+    ) -> Result<Vec<Self::ForeignKey>>;
 
-    fn ordered_tables(&self, connection: &mut Self::Connection) -> Vec<(Self::Table, i32)> {
-        let mut res: HashMap<Self::Table, i32> = HashMap::new();
-        let mut depgraph: DepGraph<Self::Table> = DepGraph::new();
-        if let Ok(tables) = self.get_tables(connection) {
-            for table in tables.iter() {
-                let deps: Vec<Self::Table> = self
-                    .get_dependencies(connection, table)
-                    .unwrap_or_default()
-                    .into_iter()
-                    .collect();
-                depgraph.register_dependencies(table.clone(), deps);
-            }
+    fn ordered_tables(&self, connection: &mut Self::Connection) -> Result<Vec<(Self::Table, i32)>> {
+        let mut depgraph: DepGraph<String> = DepGraph::new();
 
-            for table in tables.iter() {
-                let _ = res.entry(table.clone()).or_insert(0);
-                if let Ok(nodes) = depgraph.dependencies_of(table) {
-                    for node in nodes.flatten() {
-                        let counter = res.entry(node.clone()).or_insert(0);
-                        *counter += 1;
-                    }
+        let tables = self.get_tables(connection)?;
+        let mut weight_map: HashMap<String, i32> = HashMap::with_capacity(tables.len());
+
+        for table in tables.iter() {
+            depgraph.register_dependencies(table.get_full_name(), table.get_dep_table_names());
+        }
+
+        for table in tables.iter() {
+            let name = table.get_full_name();
+            weight_map.entry(name.clone()).or_insert(0);
+            if let Ok(dep_names) = depgraph.dependencies_of(&name) {
+                for dep_name in dep_names.flatten() {
+                    let weight = weight_map.entry(dep_name.clone()).or_insert(0);
+                    *weight += 1;
                 }
             }
         }
-        res.iter().map(|(k, b)| (k.clone(), *b)).collect()
+
+        Ok(tables
+            .into_iter()
+            .map(|t| {
+                let name = t.get_full_name();
+                (
+                    t,
+                    weight_map.get(name.as_str()).copied().unwrap_or_default(),
+                )
+            })
+            .collect())
     }
 
     /// Get columns for table
@@ -144,6 +152,8 @@ pub trait Table<T>: Sized + Send + Clone + Eq + Hash {
     fn get_size(&self) -> i64;
     /// Get column name - index map
     fn get_column_indexes(&self) -> &HashMap<String, usize>;
+    /// Get depended table names
+    fn get_dep_table_names(&self) -> Vec<String>;
 }
 
 pub trait ColumnData<T> {
@@ -178,15 +188,32 @@ mod tests {
     struct MockTable {
         schema: &'static str,
         name: &'static str,
+        dep_table_names: Vec<&'static str>,
         col_map: HashMap<String, usize>,
     }
 
     impl MockTable {
         fn new(schema: &'static str, name: &'static str) -> Self {
+            let dep_table_names = vec![];
             let col_map = HashMap::new();
             Self {
                 schema,
                 name,
+                dep_table_names,
+                col_map,
+            }
+        }
+
+        fn with_deps(
+            schema: &'static str,
+            name: &'static str,
+            dep_table_names: Vec<&'static str>,
+        ) -> Self {
+            let col_map = HashMap::new();
+            Self {
+                schema,
+                name,
+                dep_table_names,
                 col_map,
             }
         }
@@ -230,26 +257,34 @@ mod tests {
         fn get_column_indexes(&self) -> &HashMap<String, usize> {
             &self.col_map
         }
+
+        fn get_dep_table_names(&self) -> Vec<String> {
+            self.dep_table_names.iter().map(|s| s.to_string()).collect()
+        }
     }
 
     struct MockConnection;
 
     #[derive(Clone)]
-    struct MockSchemaInspector;
+    struct MockSchemaInspector {
+        tables: Vec<MockTable>,
+    }
+
+    impl MockSchemaInspector {
+        fn new(tables: Vec<MockTable>) -> Self {
+            Self { tables }
+        }
+    }
 
     impl SchemaInspector for MockSchemaInspector {
         type Type = ();
         type Connection = MockConnection;
         type Table = MockTable;
         type Column = MockColumn;
+        type ForeignKey = ();
 
         fn get_tables(&self, _connection: &mut Self::Connection) -> Result<Vec<Self::Table>> {
-            Ok(vec![
-                MockTable::new("public", "table1"),
-                MockTable::new("other", "table1"),
-                MockTable::new("public", "table2"),
-                MockTable::new("public", "table3"),
-            ])
+            Ok(self.tables.clone())
         }
 
         fn get_table_size(
@@ -257,14 +292,14 @@ mod tests {
             _connection: &mut Self::Connection,
             _table: &Self::Table,
         ) -> Result<i64> {
-            Ok(4)
+            Ok(self.tables.len() as i64)
         }
 
-        fn get_dependencies(
+        fn get_foreign_keys(
             &self,
             _connection: &mut Self::Connection,
             _table: &Self::Table,
-        ) -> Result<Vec<Self::Table>> {
+        ) -> Result<Vec<Self::ForeignKey>> {
             Ok(vec![])
         }
 
@@ -278,15 +313,20 @@ mod tests {
     }
 
     struct MockDumper {
+        inspector: MockSchemaInspector,
         pub tables: Vec<MockTable>,
         pub settings: Settings,
     }
 
     impl MockDumper {
-        fn new(cfg: &str) -> Self {
+        fn new(cfg: &str, inspector: MockSchemaInspector) -> Self {
             let tables = vec![];
             let settings = Settings::from_yaml(cfg).unwrap();
-            Self { tables, settings }
+            Self {
+                inspector,
+                tables,
+                settings,
+            }
         }
     }
 
@@ -307,7 +347,7 @@ mod tests {
         }
 
         fn schema_inspector(&self) -> Self::SchemaInspector {
-            MockSchemaInspector
+            self.inspector.clone()
         }
 
         fn set_tables(&mut self, tables: Vec<<Self::SchemaInspector as SchemaInspector>::Table>) {
@@ -361,43 +401,131 @@ mod tests {
         )
     }
 
-    #[test]
-    fn prepare() {
-        let cfg = r#"
-            table_order:
-              - table3
-              - other.table1
-              - public.table1
-            filter:
-              schema:
-                except:
-                  - other.*
-              data:
-                only:
-                  - table1
-                  - table2
-            "#;
-        let mut dumper = MockDumper::new(cfg);
+    mod dumper {
+        use super::*;
 
-        assert!(dumper.prepare(&mut MockConnection).is_ok());
-        // it loads sorted tables
-        assert_eq!(
-            dumper
-                .tables
-                .iter()
-                .map(|t| t.get_full_name())
-                .collect::<Vec<_>>(),
-            vec![
-                "public.table2",
-                "public.table3",
-                "other.table1",
-                "public.table1"
-            ]
-        );
-        // it inits filter
-        assert_eq!(
-            dumper.settings.filter.schema_match_list(),
-            &TableList::Except(vec![String::from("other.table1")])
-        );
+        #[test]
+        fn prepare() {
+            let cfg = r#"
+                table_order:
+                  - table3
+                  - other.table1
+                  - public.table1
+                filter:
+                  schema:
+                    except:
+                      - other.*
+                  data:
+                    only:
+                      - table1
+                      - table2
+                "#;
+            let inspector = MockSchemaInspector::new(vec![
+                MockTable::new("public", "table1"),
+                MockTable::new("other", "table1"),
+                MockTable::new("public", "table2"),
+                MockTable::new("public", "table3"),
+            ]);
+            let mut dumper = MockDumper::new(cfg, inspector);
+
+            assert!(dumper.prepare(&mut MockConnection).is_ok());
+            // it loads sorted tables
+            assert_eq!(
+                dumper
+                    .tables
+                    .iter()
+                    .map(|t| t.get_full_name())
+                    .collect::<Vec<_>>(),
+                vec![
+                    "public.table2",
+                    "public.table3",
+                    "other.table1",
+                    "public.table1"
+                ]
+            );
+            // it inits filter
+            assert_eq!(
+                dumper.settings.filter.schema_match_list(),
+                &TableList::Except(vec![String::from("other.table1")])
+            );
+        }
+    }
+
+    mod inspector {
+        use super::*;
+
+        mod ordered_tables {
+            use super::*;
+
+            fn get_weight_map(ts: Vec<MockTable>) -> HashMap<String, i32> {
+                let inspector = MockSchemaInspector::new(ts);
+
+                let tables: Vec<_> = inspector.ordered_tables(&mut MockConnection).unwrap();
+                let mut weight_map = HashMap::new();
+                for (t, i) in tables.iter() {
+                    weight_map.insert(t.get_full_name(), *i);
+                }
+
+                weight_map
+            }
+
+            #[test]
+            fn plain() {
+                let weight_map = get_weight_map(vec![
+                    MockTable::with_deps("public", "table1", vec![]),
+                    MockTable::with_deps("public", "table2", vec![]),
+                    MockTable::with_deps("public", "table3", vec![]),
+                ]);
+
+                assert_eq!(weight_map["public.table1"], 1);
+                assert_eq!(weight_map["public.table2"], 1);
+                assert_eq!(weight_map["public.table3"], 1);
+            }
+
+            #[test]
+            fn simple() {
+                let weight_map = get_weight_map(vec![
+                    MockTable::with_deps("public", "table1", vec![]),
+                    MockTable::with_deps("public", "table2", vec!["public.table1"]),
+                    MockTable::with_deps("public", "table3", vec!["public.table1"]),
+                ]);
+
+                assert_eq!(weight_map["public.table1"], 3);
+                assert_eq!(weight_map["public.table2"], 1);
+                assert_eq!(weight_map["public.table3"], 1);
+            }
+
+            #[test]
+            fn chain() {
+                let weight_map = get_weight_map(vec![
+                    MockTable::with_deps("public", "table1", vec![]),
+                    MockTable::with_deps("public", "table2", vec!["public.table1"]),
+                    MockTable::with_deps(
+                        "public",
+                        "table3",
+                        vec!["public.table1", "public.table2"],
+                    ),
+                    MockTable::with_deps("public", "table4", vec!["public.table3"]),
+                ]);
+
+                assert_eq!(weight_map["public.table1"], 4);
+                assert_eq!(weight_map["public.table2"], 3);
+                assert_eq!(weight_map["public.table3"], 2);
+                assert_eq!(weight_map["public.table4"], 1);
+            }
+
+            #[test]
+            fn cycle() {
+                let weight_map = get_weight_map(vec![
+                    MockTable::with_deps("public", "table1", vec!["public.table2"]),
+                    MockTable::with_deps("public", "table2", vec!["public.table3"]),
+                    MockTable::with_deps("public", "table3", vec!["public.table1"]),
+                ]);
+
+                assert_eq!(weight_map["public.table1"], 0);
+                assert_eq!(weight_map["public.table2"], 0);
+                assert_eq!(weight_map["public.table3"], 0);
+            }
+        }
     }
 }

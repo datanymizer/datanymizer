@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   ([@evgeniy-r](https://github.com/evgeniy-r))
 
 ### ⚙️ Changed
+- Speed up loading of metadata [#170](https://github.com/datanymizer/datanymizer/pull/170)
+  ([@evgeniy-r](https://github.com/evgeniy-r))
 - Refactoring (more generic `Dumper` trait) [#159](https://github.com/datanymizer/datanymizer/pull/159)
   ([@evgeniy-r](https://github.com/evgeniy-r))
 - Remove the dependency from `crono` ([security issue](https://github.com/chronotope/chrono/pull/578)).

@@ -1,7 +1,7 @@
 use postgres::Row as PostgresRow;
 
-#[derive(Debug)]
-pub struct ForeignKey {
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct PgForeignKey {
     // Source
     pub table_schema: String,
     pub table_name: String,
@@ -15,7 +15,7 @@ pub struct ForeignKey {
     pub foreign_column_name: String,
 }
 
-impl From<PostgresRow> for ForeignKey {
+impl From<PostgresRow> for PgForeignKey {
     fn from(row: PostgresRow) -> Self {
         Self {
             table_schema: row.get("table_schema"),
