@@ -29,7 +29,7 @@ pub trait Dumper: 'static + Sized + Send {
 
     /// Preparation (load table list, set table ordering, initialize table filter)
     fn prepare(&mut self, connection: &mut Self::Connection) -> Result<()> {
-        let mut tables = self.schema_inspector().ordered_tables(connection);
+        let mut tables = self.schema_inspector().ordered_tables(connection)?;
         sort_tables(&mut tables, &self.settings().table_order);
         let tables: Vec<_> = tables.into_iter().map(|(t, _)| t).collect();
         self.filter_mut()
@@ -240,6 +240,10 @@ mod tests {
         fn get_column_indexes(&self) -> &HashMap<String, usize> {
             &self.col_map
         }
+
+        fn get_dep_table_names(&self) -> Vec<String> {
+            vec![]
+        }
     }
 
     struct MockConnection;
@@ -252,6 +256,7 @@ mod tests {
         type Connection = MockConnection;
         type Table = MockTable;
         type Column = MockColumn;
+        type ForeignKey = ();
 
         fn get_tables(&self, _connection: &mut Self::Connection) -> Result<Vec<Self::Table>> {
             Ok(vec![
@@ -270,11 +275,11 @@ mod tests {
             Ok(4)
         }
 
-        fn get_dependencies(
+        fn get_foreign_keys(
             &self,
             _connection: &mut Self::Connection,
             _table: &Self::Table,
-        ) -> Result<Vec<Self::Table>> {
+        ) -> Result<Vec<Self::ForeignKey>> {
             Ok(vec![])
         }
 
