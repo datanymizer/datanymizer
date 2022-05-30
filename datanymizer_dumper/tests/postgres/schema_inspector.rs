@@ -39,7 +39,10 @@ fn get_tables() {
     let table = find_table(&tables, "public.actor");
     assert_eq!(table.tablename, "actor");
     assert_eq!(table.schemaname, "public");
-    assert_cols(table, vec!["actor_id", "first_name", "last_name", "last_update"]);
+    assert_cols(
+        table,
+        vec!["actor_id", "first_name", "last_name", "last_update"],
+    );
     assert_fks(table, vec![]);
 
     let table = find_table(&tables, "public.address");
@@ -55,8 +58,8 @@ fn get_tables() {
             "city_id",
             "postal_code",
             "phone",
-            "last_update"
-        ]
+            "last_update",
+        ],
     );
     assert_fks(table, vec!["public.city"]);
 
@@ -71,8 +74,11 @@ fn get_tables() {
             "staff_id",
             "rental_id",
             "amount",
-            "payment_date"
-        ]
+            "payment_date",
+        ],
     );
-    assert_fks(table, vec!["public.customer", "public.rental", "public.staff"]);
+    assert_fks(
+        table,
+        vec!["public.customer", "public.rental", "public.staff"],
+    );
 }
