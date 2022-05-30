@@ -24,16 +24,19 @@ type TransformList = Vec<(String, Transformers)>;
 #[derive(Debug, Deserialize, Clone)]
 pub struct Settings {
     /// Tables list with transformation rules
+    #[serde(default)]
     pub tables: Tables,
 
     /// Table order. All tables not listed are dumping at the beginning
-    pub table_order: Option<Vec<String>>,
+    #[serde(default)]
+    pub table_order: Vec<String>,
 
     /// Default transformers configuration
     #[serde(default)]
     pub default: TransformerDefaults,
 
-    pub filter: Option<Filter>,
+    #[serde(default)]
+    pub filter: Filter,
 
     /// Global values. Visible in any template.
     /// They may be shadowed by template variables.

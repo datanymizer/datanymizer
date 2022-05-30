@@ -136,25 +136,11 @@ impl<W: 'static + Write + Send, I: 'static + Indicator + Send> PgDumper<W, I> {
 }
 
 impl<W: 'static + Write + Send, I: 'static + Indicator + Send> Dumper for PgDumper<W, I> {
-    type Table = PgTable;
     type Connection = connector::Connection;
     type SchemaInspector = PgSchemaInspector;
 
     // Stage before dumping data. It makes dump schema with any options
     fn pre_data(&mut self, connection: &mut Self::Connection) -> Result<()> {
-        self.debug("Fetch tables metadata...".into());
-        let mut tables = self.schema_inspector().ordered_tables(connection);
-
-        sort_tables(
-            &mut tables,
-            self.engine.settings.table_order.as_ref().unwrap_or(&vec![]),
-        );
-        self.tables = tables.into_iter().map(|(t, _)| t).collect();
-
-        if let Some(filter) = &mut self.engine.settings.filter {
-            filter.load_tables(self.tables.iter().map(|t| t.get_full_name()).collect());
-        }
-
         self.debug("Prepare data scheme...".into());
         self.run_pg_dump("pre-data", connection.url.as_str())
     }
@@ -196,8 +182,16 @@ impl<W: 'static + Write + Send, I: 'static + Indicator + Send> Dumper for PgDump
         self.schema_inspector.clone()
     }
 
+    fn set_tables(&mut self, tables: Vec<<Self::SchemaInspector as SchemaInspector>::Table>) {
+        self.tables = tables;
+    }
+
     fn settings(&self) -> &Settings {
         &self.engine.settings
+    }
+
+    fn filter_mut(&mut self) -> &mut Filter {
+        &mut self.engine.settings.filter
     }
 
     fn write_log(&mut self, message: String) -> Result<()> {
@@ -211,28 +205,20 @@ impl<W: 'static + Write + Send, I: 'static + Indicator + Send> Dumper for PgDump
     }
 }
 
-fn table_args(filter: &Option<Filter>) -> Result<Vec<String>> {
+fn table_args(f: &Filter) -> Result<Vec<String>> {
     let mut args = vec![];
-    if let Some(f) = filter {
-        let list = f.schema_match_list();
-        let flag = match list {
-            TableList::Only(_) => "-t",
-            TableList::Except(_) => "-T",
-        };
-        for table in list.tables() {
-            args.push(String::from(flag));
-            args.push(PgTable::quote_table_name(table.as_str())?);
-        }
+
+    let list = f.schema_match_list();
+    let flag = match list {
+        TableList::Only(_) => "-t",
+        TableList::Except(_) => "-T",
+    };
+    for table in list.tables() {
+        args.push(String::from(flag));
+        args.push(PgTable::quote_table_name(table.as_str())?);
     }
 
     Ok(args)
-}
-
-fn sort_tables(tables: &mut [(PgTable, i32)], order: &[String]) {
-    tables.sort_by_cached_key(|(tbl, weight)| {
-        let position = order.iter().position(|i| tbl.get_names().contains(i));
-        (position, -weight)
-    });
 }
 
 #[cfg(test)]
@@ -244,7 +230,7 @@ mod tests {
         let tables = vec![String::from("table1"), String::from("table2")];
 
         let empty: Vec<String> = vec![];
-        assert_eq!(table_args(&None).unwrap(), empty);
+        assert_eq!(table_args(&Filter::default()).unwrap(), empty);
 
         let mut filter = Filter::new(
             TableList::Except(vec![String::from("table1")]),
@@ -252,7 +238,7 @@ mod tests {
         );
         filter.load_tables(tables.clone());
         assert_eq!(
-            table_args(&Some(filter)).unwrap(),
+            table_args(&filter).unwrap(),
             vec![String::from("-T"), String::from("\"table1\"")]
         );
 
@@ -261,7 +247,7 @@ mod tests {
             TableList::Except(vec![String::from("table1")]),
         );
         filter.load_tables(tables.clone());
-        assert_eq!(table_args(&Some(filter)).unwrap(), empty);
+        assert_eq!(table_args(&filter).unwrap(), empty);
 
         let mut filter = Filter::new(
             TableList::Only(vec![String::from("table1"), String::from("table2")]),
@@ -269,7 +255,7 @@ mod tests {
         );
         filter.load_tables(tables.clone());
         assert_eq!(
-            table_args(&Some(filter)).unwrap(),
+            table_args(&filter).unwrap(),
             vec![
                 String::from("-t"),
                 String::from("\"table1\""),
@@ -284,7 +270,7 @@ mod tests {
         );
         filter.load_tables(tables);
         assert_eq!(
-            table_args(&Some(filter)).unwrap(),
+            table_args(&filter).unwrap(),
             vec![
                 String::from("-t"),
                 String::from("\"table1\""),
@@ -292,37 +278,5 @@ mod tests {
                 String::from("\"table2\"")
             ]
         );
-    }
-
-    #[test]
-    fn test_sort_tables() {
-        let order = vec!["table2".to_string(), "public.table1".to_string()];
-
-        let mut tables = vec![
-            (PgTable::new("table1".to_string(), "public".to_string()), 0),
-            (PgTable::new("table2".to_string(), "public".to_string()), 1),
-            (PgTable::new("table3".to_string(), "public".to_string()), 2),
-            (PgTable::new("table4".to_string(), "public".to_string()), 3),
-            (PgTable::new("table1".to_string(), "other".to_string()), 4),
-            (PgTable::new("table2".to_string(), "other".to_string()), 5),
-        ];
-
-        sort_tables(&mut tables, &order);
-
-        let ordered_names: Vec<_> = tables
-            .iter()
-            .map(|(t, w)| (t.get_full_name(), *w))
-            .collect();
-        assert_eq!(
-            ordered_names,
-            vec![
-                ("other.table1".to_string(), 4),
-                ("public.table4".to_string(), 3),
-                ("public.table3".to_string(), 2),
-                ("other.table2".to_string(), 5),
-                ("public.table2".to_string(), 1),
-                ("public.table1".to_string(), 0),
-            ]
-        )
     }
 }
