@@ -17,7 +17,8 @@ rand = "0.8.4"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 serde_yaml = "0.8.14"
-tera = { version = "1.15.0", default-features = false, features = ["slug", "percent-encoding", "humansize", "rand"] }
+# We need granular dependency management in Tera
+tera = { git = "https://github.com/datanymizer/tera", default-features = false, features = ["slug", "percent-encoding", "humansize", "rand"] }
 thiserror = "1.0"
 time = { version = "0.3.7", features = ["formatting", "macros", "parsing"] }
 unicode-segmentation = "1.7.0"

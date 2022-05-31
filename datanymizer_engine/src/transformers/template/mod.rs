@@ -677,4 +677,24 @@ mod tests {
             assert_eq!(value, "10-9-8-7-6-5-4-3-2-1");
         }
     }
+
+    // Test this because of using the fork
+    mod tera_builtin_feature {
+        use super::*;
+
+        #[test]
+        fn get_random() {
+            let expected = String::from("123");
+            let config = r#"
+                            template:
+                              format: '{{ get_random(start=123,end=124) }}'
+                          "#;
+
+            let mut transformer: Transformers = serde_yaml::from_str(config).unwrap();
+            transformer.init(&TransformerInitContext::default());
+
+            let res = transformer.transform("", "", &Some(TransformContext::default()));
+            assert_eq!(res, Ok(Some(expected)));
+        }
+    }
 }
