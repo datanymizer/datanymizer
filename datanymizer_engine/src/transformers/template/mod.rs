@@ -684,10 +684,13 @@ mod tests {
 
         fn assert_expected(expr: &str, expected: &str) {
             let expected = String::from(expected);
-            let config = format!(r#"
+            let config = format!(
+                r#"
                         template:
                           format: '{{{{{}}}}}'
-                      "#, expr);
+                      "#,
+                expr
+            );
 
             let mut transformer: Transformers = serde_yaml::from_str(config.as_str()).unwrap();
             transformer.init(&TransformerInitContext::default());
@@ -713,7 +716,10 @@ mod tests {
 
         #[test]
         fn urlencode_strict() {
-            assert_expected("\"/path?a=b&c=d\" | urlencode_strict", "%2Fpath%3Fa%3Db%26c%3Dd");
+            assert_expected(
+                "\"/path?a=b&c=d\" | urlencode_strict",
+                "%2Fpath%3Fa%3Db%26c%3Dd",
+            );
         }
 
         #[test]
