@@ -679,22 +679,46 @@ mod tests {
     }
 
     // Test this because of using the fork
-    mod tera_builtin_feature {
+    mod tera_builtin_features {
         use super::*;
+
+        fn assert_expected(expr: &str, expected: &str) {
+            let expected = String::from(expected);
+            let config = format!(r#"
+                        template:
+                          format: '{{{{{}}}}}'
+                      "#, expr);
+
+            let mut transformer: Transformers = serde_yaml::from_str(config.as_str()).unwrap();
+            transformer.init(&TransformerInitContext::default());
+
+            let res = transformer.transform("", "", &None);
+            assert_eq!(res, Ok(Some(expected)));
+        }
 
         #[test]
         fn get_random() {
-            let expected = String::from("123");
-            let config = r#"
-                            template:
-                              format: '{{ get_random(start=123,end=124) }}'
-                          "#;
+            assert_expected("get_random(start=123,end=124)", "123");
+        }
 
-            let mut transformer: Transformers = serde_yaml::from_str(config).unwrap();
-            transformer.init(&TransformerInitContext::default());
+        #[test]
+        fn filesizeformat() {
+            assert_expected("1024 | filesizeformat", "1 KB");
+        }
 
-            let res = transformer.transform("", "", &Some(TransformContext::default()));
-            assert_eq!(res, Ok(Some(expected)));
+        #[test]
+        fn urlencode() {
+            assert_expected("\"/path?a=b&c=d\" | urlencode", "/path%3Fa%3Db%26c%3Dd");
+        }
+
+        #[test]
+        fn urlencode_strict() {
+            assert_expected("\"/path?a=b&c=d\" | urlencode_strict", "%2Fpath%3Fa%3Db%26c%3Dd");
+        }
+
+        #[test]
+        fn slugify() {
+            assert_expected("\"Hello Everyone\" | slugify", "hello-everyone");
         }
     }
 }

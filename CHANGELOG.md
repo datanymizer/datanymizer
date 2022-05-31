@@ -12,11 +12,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   ([@evgeniy-r](https://github.com/evgeniy-r))
 
 ### ⚙️ Changed
+- Use forked Tera (because of a security issue with `chrono`)
+  [#171](https://github.com/datanymizer/datanymizer/pull/171) ([@evgeniy-r](https://github.com/evgeniy-r))
 - Speed up loading of metadata [#170](https://github.com/datanymizer/datanymizer/pull/170)
   ([@evgeniy-r](https://github.com/evgeniy-r))
 - Refactoring (more generic `Dumper` trait) [#159](https://github.com/datanymizer/datanymizer/pull/159)
   ([@evgeniy-r](https://github.com/evgeniy-r))
-- Remove the dependency from `crono` ([security issue](https://github.com/chronotope/chrono/pull/578)).
+- Remove the dependency from `chrono` ([security issue](https://github.com/chronotope/chrono/pull/578)).
   Remove the `raw_date` and `raw_datetime` transformers (duplication with the `datetime` transformer)
   [#152](https://github.com/datanymizer/datanymizer/pull/152) ([@evgeniy-r](https://github.com/evgeniy-r)).
 
