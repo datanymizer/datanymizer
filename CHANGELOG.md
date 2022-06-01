@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   [#152](https://github.com/datanymizer/datanymizer/pull/152) ([@evgeniy-r](https://github.com/evgeniy-r)).
 
 ### 🛠 Fixed
+- Update the `regex` crate (security issue) [#172](https://github.com/datanymizer/datanymizer/pull/172)
+  ([@evgeniy-r](https://github.com/evgeniy-r))
 - Use pg_namespace to deconflict duplicate field names [#149](https://github.com/datanymizer/datanymizer/pull/149)
   ([@mbeynon](https://github.com/mbeynon))
 - Fix Postgres COPY syntax when dumping a table with zero defined fields
