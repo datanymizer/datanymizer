@@ -20,6 +20,6 @@ serde_yaml = "0.8.14"
 # We need granular dependency management in Tera
 tera = { git = "https://github.com/datanymizer/tera", default-features = false, features = ["slug", "percent-encoding", "humansize", "rand"] }
 thiserror = "1.0"
-time = { version = "0.3.7", features = ["formatting", "macros", "parsing"] }
+time = { version = "0.3.7", features = ["local-offset", "formatting", "macros", "parsing"] }
 unicode-segmentation = "1.7.0"
 wildmatch = "2.1.0"

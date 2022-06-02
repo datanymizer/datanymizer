@@ -1,5 +1,6 @@
 mod hash_functions;
 mod store_functions;
+mod time_functions;
 
 use crate::{
     transformer::{
@@ -155,6 +156,7 @@ impl Transformer for TemplateTransformer {
     fn init(&mut self, ctx: &TransformerInitContext) {
         store_functions::register(&mut self.renderer, ctx.template_store.clone());
         hash_functions::register(&mut self.renderer);
+        time_functions::register(&mut self.renderer);
 
         let mut ext_renderer = Tera::default();
 
@@ -680,10 +682,10 @@ mod tests {
 
     // Test this because of using the fork
     mod tera_builtin_features {
+        use time::OffsetDateTime;
         use super::*;
 
-        fn assert_expected(expr: &str, expected: &str) {
-            let expected = String::from(expected);
+        fn transform_result(expr: &str) -> String {
             let config = format!(
                 r#"
                         template:
@@ -695,8 +697,12 @@ mod tests {
             let mut transformer: Transformers = serde_yaml::from_str(config.as_str()).unwrap();
             transformer.init(&TransformerInitContext::default());
 
-            let res = transformer.transform("", "", &None);
-            assert_eq!(res, Ok(Some(expected)));
+            transformer.transform("", "", &None).unwrap().unwrap()
+        }
+
+        fn assert_expected(expr: &str, expected: &str) {
+            let res = transform_result(expr);
+            assert_eq!(res, String::from(expected));
         }
 
         #[test]
@@ -725,6 +731,13 @@ mod tests {
         #[test]
         fn slugify() {
             assert_expected("\"Hello Everyone\" | slugify", "hello-everyone");
+        }
+
+        #[test]
+        fn now() {
+            let now = OffsetDateTime::now_utc();
+            let res = transform_result("now()");
+            assert!(res.starts_with(now.year().to_string().as_str()));
         }
     }
 }
