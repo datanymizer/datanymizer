@@ -682,8 +682,8 @@ mod tests {
 
     // Test this because of using the fork
     mod tera_builtin_features {
-        use time::OffsetDateTime;
         use super::*;
+        use time::OffsetDateTime;
 
         fn transform_result(expr: &str) -> String {
             let config = format!(
