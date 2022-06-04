@@ -1,9 +1,13 @@
 use anyhow::Result;
-use std::{fs::File, io};
+use std::{
+    fs::File,
+    io::{self, Write},
+};
 use url::Url;
 
 use crate::options::{Options, TransactionConfig};
 
+use datanymizer_dumper::indicator::Indicator;
 use datanymizer_dumper::{
     indicator::{ConsoleIndicator, SilentIndicator},
     postgres::{connector::Connector, dumper::PgDumper, IsolationLevel},
@@ -27,30 +31,29 @@ impl App {
     }
 
     pub fn run(&self) -> Result<()> {
+        match &self.options.file {
+            Some(filename) => self.make_dump(File::create(filename)?, ConsoleIndicator::new()),
+            None => self.make_dump(io::stdout(), SilentIndicator),
+        }
+    }
+
+    fn make_dump<W, I>(&self, w: W, i: I) -> Result<()>
+    where
+        W: 'static + Write + Send,
+        I: 'static + Indicator + Send,
+    {
         let mut connection = self.connector().connect()?;
         let engine = self.engine()?;
 
-        match &self.options.file {
-            Some(filename) => PgDumper::new(
-                engine,
-                self.dump_isolation_level(),
-                self.options.pg_dump_location.clone(),
-                File::create(filename)?,
-                ConsoleIndicator::new(),
-                self.options.pg_dump_args.clone(),
-            )?
-            .dump(&mut connection),
-
-            None => PgDumper::new(
-                engine,
-                self.dump_isolation_level(),
-                self.options.pg_dump_location.clone(),
-                io::stdout(),
-                SilentIndicator,
-                self.options.pg_dump_args.clone(),
-            )?
-            .dump(&mut connection),
-        }
+        PgDumper::new(
+            engine,
+            self.dump_isolation_level(),
+            self.options.pg_dump_location.clone(),
+            w,
+            i,
+            self.options.pg_dump_args.clone(),
+        )?
+        .dump(&mut connection)
     }
 
     fn connector(&self) -> Connector {
