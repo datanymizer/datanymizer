@@ -12,7 +12,7 @@ const DB_ENV_KEY: &str = "DATANYMIZER_TEST_PG_DB";
 const PG_DUMP_PATH_KEY: &str = "DATANYMIZER_TEST_PG_DUMP_PATH";
 const PG_RESTORE_PATH_KEY: &str = "DATANYMIZER_TEST_PG_RESTORE_PATH";
 const PSQL_PATH_KEY: &str = "DATANYMIZER_TEST_PSQL_PATH";
-const SRC_DUMP_PATH: &str = "tests/postgres/dumps/common.dump";
+const SRC_DUMP_PATH: &str = "tests/dumps/common.dump";
 
 pub struct DstWrapper(Child);
 

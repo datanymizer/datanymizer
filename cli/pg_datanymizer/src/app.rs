@@ -6,10 +6,10 @@ use crate::options::{Options, TransactionConfig};
 
 use datanymizer_dumper::{
     indicator::{ConsoleIndicator, SilentIndicator},
-    postgres::{connector::Connector, dumper::PgDumper, IsolationLevel},
     Dumper,
 };
 use datanymizer_engine::{Engine, Settings};
+use pg_datanymizer_dumper::{connector::Connector, dumper::PgDumper, IsolationLevel};
 
 pub struct App {
     options: Options,

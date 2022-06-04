@@ -1,6 +1,6 @@
 use super::helpers;
 
-use datanymizer_dumper::postgres::connector::Connector;
+use pg_datanymizer_dumper::connector::Connector;
 
 fn test_connection(tls_mode: &str) {
     let mut database_url = helpers::src_database_url();
