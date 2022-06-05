@@ -739,5 +739,22 @@ mod tests {
             let res = transform_result("now()");
             assert!(res.starts_with(now.year().to_string().as_str()));
         }
+
+        #[test]
+        fn date() {
+            assert_expected(
+                "\"2022-01-06T23:12:12Z\" | date(format=\"%d.%m.%Y, %H:%M\")",
+                "06.01.2022, 23:12",
+            );
+        }
+
+        #[test]
+        fn now_and_date() {
+            let now = OffsetDateTime::now_utc();
+            assert_expected(
+                "now() | date(format=\"%Y\")",
+                now.year().to_string().as_str(),
+            );
+        }
     }
 }

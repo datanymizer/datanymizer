@@ -1,12 +1,12 @@
-use crate::transformer::{TransformContext, TransformResult, TransformResultHelper, Transformer};
-use format::Compiled;
+use crate::{
+    transformer::{TransformContext, TransformResult, TransformResultHelper, Transformer},
+    utils::format_time::{CompileError, Compiled},
+};
 use rand::distributions::{Distribution, Uniform};
 use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
 use time::{format_description::well_known::Rfc3339, Duration, OffsetDateTime};
-
-mod format;
 
 /// Generates random dates in the specified interval (granularity is a second).
 ///
@@ -144,7 +144,7 @@ impl Default for Config {
 #[derive(Debug)]
 pub enum ParseError {
     Parse(time::error::Parse),
-    Compile(format::CompileError),
+    Compile(CompileError),
 }
 
 impl Display for ParseError {
@@ -164,8 +164,8 @@ impl From<time::error::Parse> for ParseError {
     }
 }
 
-impl From<format::CompileError> for ParseError {
-    fn from(err: format::CompileError) -> Self {
+impl From<CompileError> for ParseError {
+    fn from(err: CompileError) -> Self {
         Self::Compile(err)
     }
 }
