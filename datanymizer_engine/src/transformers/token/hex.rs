@@ -1,6 +1,6 @@
 use crate::{
     transformer::{TransformContext, TransformResult, TransformResultHelper, Transformer},
-    utils,
+    utils::rnd::rnd_chars,
 };
 use serde::{Deserialize, Serialize};
 
@@ -52,7 +52,7 @@ impl Transformer for HexTokenTransformer {
         _field_value: &str,
         _ctx: &Option<TransformContext>,
     ) -> TransformResult {
-        TransformResult::present(utils::rnd_chars(self.len, &CHARS))
+        TransformResult::present(rnd_chars(self.len, &CHARS))
     }
 }
 

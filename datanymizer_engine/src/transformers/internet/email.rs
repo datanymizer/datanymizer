@@ -1,6 +1,7 @@
 use crate::{
     transformer::{TransformContext, UniqTransformer, Uniqueness},
-    utils, Transformer, TransformerInitContext, Transformers,
+    utils::rnd::rnd_chars,
+    Transformer, TransformerInitContext, Transformers,
 };
 use fake::{faker::internet::raw::*, locales::EN, Fake};
 use serde::{Deserialize, Serialize};
@@ -189,7 +190,7 @@ impl Affix {
         ctx: &Option<TransformContext>,
     ) -> String {
         match self {
-            Self::Random(len) => utils::rnd_chars(*len, CHARS),
+            Self::Random(len) => rnd_chars(*len, CHARS),
             Self::Fixed(str) => str.clone(),
             Self::Custom(tr) => tr
                 .transform(field_name, field_value, ctx)

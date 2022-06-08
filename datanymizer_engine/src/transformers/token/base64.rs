@@ -1,6 +1,6 @@
 use crate::{
     transformer::{TransformContext, TransformResult, TransformResultHelper, Transformer},
-    utils,
+    utils::rnd::rnd_chars,
 };
 use serde::{Deserialize, Serialize};
 
@@ -68,7 +68,7 @@ impl Transformer for Base64TokenTransformer {
         };
         TransformResult::present(format!(
             "{}{}",
-            utils::rnd_chars(self.len - self.pad, &CHARS),
+            rnd_chars(self.len - self.pad, &CHARS),
             padding
         ))
     }
