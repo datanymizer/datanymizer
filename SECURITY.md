@@ -2,7 +2,7 @@
 
 ## Supported Versions
 
-We support only the last relesead version and the version from the `main` branch for now (but can help with upgrade).
+We support only the last released version and the version from the `main` branch for now (but can help with upgrade).
 
 | Version | Supported          |
 | ------- | ------------------ |
