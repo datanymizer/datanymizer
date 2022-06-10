@@ -61,10 +61,9 @@ impl Settings {
     where
         S: config::Source + Send + Sync,
     {
-        let mut s = Config::new();
-        s.merge(source)?;
+        let c = Config::builder().add_source(source).build()?;
 
-        let mut settings: Self = s.try_into()?;
+        let mut settings: Self = c.try_deserialize()?;
         settings.preprocess();
 
         Ok(settings)
