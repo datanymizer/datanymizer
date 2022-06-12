@@ -12,13 +12,12 @@ use std::{
     collections::HashMap,
     error,
     fmt::{self, Display, Formatter},
-    result,
     sync::{Arc, RwLock},
 };
 
 use crate::{settings::TemplatesCollection, LocaleConfig};
 
-pub type TransformResult = result::Result<Option<String>, TransformError>;
+pub type TransformResult = Result<Option<String>, TransformError>;
 pub type Globals = HashMap<String, Value>;
 type TemplateStore = Arc<RwLock<HashMap<String, tera::Value>>>;
 

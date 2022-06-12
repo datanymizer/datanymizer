@@ -28,7 +28,11 @@ pub use datetime::RandomDateTimeTransformer;
 mod token;
 pub use token::{Base64TokenTransformer, Base64UrlTokenTransformer, HexTokenTransformer};
 
+mod plain;
+pub use plain::PlainTransformer;
+
 mod fk;
+
 pub use fk::sql_value::AsSqlValue;
 pub use fk::*;
 
@@ -78,6 +82,7 @@ define_transformers_enum![
     ("random_num", RandomNum, RandomNumberTransformer),
     ("password", Password, PasswordTransformer),
     ("datetime", DateTime, RandomDateTimeTransformer),
+    ("plain", Plain, PlainTransformer),
 
     ("hex_token", HexToken, HexTokenTransformer),
     ("base64_token", Base64Token, Base64TokenTransformer),
