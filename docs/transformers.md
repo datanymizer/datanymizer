@@ -146,6 +146,16 @@ These are due to the fact that we removed the dependency on the [chrono](https:/
 the [time](https://crates.io/crates/time) crate directly (because of 
 [security issue](https://github.com/chronotope/chrono/pull/578) in `chrono`).
 
+#### plain
+
+Generates a fixed text (a plain text).
+
+Example:
+
+```yaml
+plain: "some text"
+```
+
 #### random_num
 
 Gets a random number.

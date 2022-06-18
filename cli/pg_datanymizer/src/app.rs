@@ -7,9 +7,8 @@ use url::Url;
 
 use crate::options::{Options, TransactionConfig};
 
-use datanymizer_dumper::indicator::Indicator;
 use datanymizer_dumper::{
-    indicator::{ConsoleIndicator, SilentIndicator},
+    indicator::{ConsoleIndicator, Indicator, SilentIndicator},
     postgres::{connector::Connector, dumper::PgDumper, IsolationLevel},
     Dumper,
 };

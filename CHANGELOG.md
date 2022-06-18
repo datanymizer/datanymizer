@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### 🚀 Added
+- Add the plain text transformer [#177](https://github.com/datanymizer/datanymizer/pull/177)
+  ([@evgeniy-r](https://github.com/evgeniy-r))
 - Add bcrypt filter to generate hashes [#164](https://github.com/datanymizer/datanymizer/pull/164)
   ([@akirill0v](https://github.com/akirill0v))
 - Add wildcards support in the filter section [#151](https://github.com/datanymizer/datanymizer/pull/151)
