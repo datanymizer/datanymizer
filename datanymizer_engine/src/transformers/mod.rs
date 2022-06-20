@@ -35,7 +35,6 @@ mod uuid;
 pub use self::uuid::UuidTransformer;
 
 mod fk;
-
 pub use fk::sql_value::AsSqlValue;
 pub use fk::*;
 
