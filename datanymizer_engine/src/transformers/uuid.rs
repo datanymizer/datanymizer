@@ -1,6 +1,5 @@
 use crate::transformer::{TransformContext, TransformResult, TransformResultHelper, Transformer};
 use serde::{Deserialize, Serialize};
-
 use uuid::Uuid;
 
 /// Generates UUID (http://en.wikipedia.org/wiki/Universally_unique_identifier)
