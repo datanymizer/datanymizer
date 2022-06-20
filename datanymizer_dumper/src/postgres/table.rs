@@ -101,7 +101,7 @@ impl PgTable {
     }
 
     pub fn set_columns(&mut self, sorted_cols: Vec<PgColumn>) {
-        let mut map: HashMap<String, usize> = HashMap::with_capacity(columns.len());
+        let mut map: HashMap<String, usize> = HashMap::with_capacity(sorted_cols.len());
         for (i, column) in sorted_cols.iter().enumerate() {
             map.insert(column.name.clone(), i);
         }
