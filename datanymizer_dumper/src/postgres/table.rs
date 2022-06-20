@@ -100,16 +100,14 @@ impl PgTable {
         format!(r#""{}"."{}""#, self.schemaname, self.tablename)
     }
 
-    pub fn set_columns(&mut self, columns: Vec<PgColumn>) {
+    pub fn set_columns(&mut self, sorted_cols: Vec<PgColumn>) {
         let mut map: HashMap<String, usize> = HashMap::with_capacity(columns.len());
-        let mut column_refs: Vec<_> = columns.iter().collect();
-        column_refs.sort_by_key(|c| c.position);
-        for (i, column) in column_refs.iter().enumerate() {
+        for (i, column) in sorted_cols.iter().enumerate() {
             map.insert(column.name.clone(), i);
         }
 
         self.column_indexes = map;
-        self.columns = columns;
+        self.columns = sorted_cols;
     }
 
     pub fn set_sequences(&mut self, sequences: Vec<PgSequence>) {
