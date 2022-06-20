@@ -52,9 +52,9 @@ impl TryFrom<DomainConfig> for Domain {
 
     fn try_from(c: DomainConfig) -> Result<Self, Self::Error> {
         let namespace = match c.namespace {
-            Namespace::DNS => Uuid::NAMESPACE_DNS,
-            Namespace::OID => Uuid::NAMESPACE_OID,
-            Namespace::URL => Uuid::NAMESPACE_URL,
+            Namespace::Dns => Uuid::NAMESPACE_DNS,
+            Namespace::Oid => Uuid::NAMESPACE_OID,
+            Namespace::Url => Uuid::NAMESPACE_URL,
             Namespace::X500 => Uuid::NAMESPACE_X500,
             Namespace::Custom(s) => Uuid::parse_str(s.as_str())?,
         };
@@ -80,9 +80,9 @@ impl From<Domain> for DomainConfig {
 
 #[derive(Serialize, Deserialize, PartialEq, Eq, Hash, Clone, Debug)]
 enum Namespace {
-    DNS,
-    OID,
-    URL,
+    Dns,
+    Oid,
+    Url,
     X500,
     Custom(String),
 }
