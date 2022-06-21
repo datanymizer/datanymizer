@@ -4,7 +4,10 @@ use uuid::Uuid;
 
 /// Generates UUID (http://en.wikipedia.org/wiki/Universally_unique_identifier)
 #[derive(Serialize, Deserialize, PartialEq, Eq, Hash, Clone, Debug, Default)]
-pub struct UuidTransformer(#[serde(default)] Version);
+pub struct UuidTransformer {
+    #[serde(default)]
+    version: Version,
+}
 
 impl Transformer for UuidTransformer {
     fn transform(
@@ -13,7 +16,7 @@ impl Transformer for UuidTransformer {
         _field_value: &str,
         _ctx: &Option<TransformContext>,
     ) -> TransformResult {
-        let result = match &self.0 {
+        let result = match &self.version {
             //Version::V1 => Uuid::new_v1(),
             Version::V3(domain) => Uuid::new_v3(&domain.namespace, &domain.name),
             Version::V4 => Uuid::new_v4(),
@@ -25,7 +28,7 @@ impl Transformer for UuidTransformer {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Eq, Hash, Clone, Debug)]
-#[serde(tag = "version")]
+// #[serde(tag = "version")]
 enum Version {
     //V1,
     V3(Domain),
@@ -91,12 +94,22 @@ mod tests {
     use super::*;
     use crate::Transformers;
 
+    fn assert_uuid(config: &str) {
+        let t: Transformers = serde_yaml::from_str(config).unwrap();
+        let str_uuid = t.transform("", "", &None).unwrap().unwrap();
+        assert!(Uuid::parse_str(str_uuid.as_str()).is_ok());
+    }
+
+    #[test]
+    fn default() {
+        let config = r#"uuid: {}"#;
+        assert_uuid(config);
+    }
+
     #[test]
     fn v4() {
         let config = r#"uuid:
             version: V4"#;
-        let t: Transformers = serde_yaml::from_str(config).unwrap();
-        let str_uuid = t.transform("", "", &None).unwrap().unwrap();
-        assert!(Uuid::parse_str(str_uuid.as_str()).is_ok());
+        assert_uuid(config);
     }
 }
