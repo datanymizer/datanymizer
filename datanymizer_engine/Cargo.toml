@@ -23,5 +23,5 @@ thiserror = "1.0"
 time = { version = "0.3.7", features = ["local-offset", "formatting", "macros", "parsing"] }
 time-tz = "1.0.2"
 unicode-segmentation = "1.7.0"
-uuid = { version = "1.1.2", features = ["v3", "v4", "v5", "fast-rng"] }
+uuid = { version = "1.1.2", features = ["v4", "fast-rng"] }
 wildmatch = "2.1.0"
