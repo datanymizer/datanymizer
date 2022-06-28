@@ -76,9 +76,7 @@ Currently, uniqueness is supported by: [email](#email), [ip](#ip), [phone](#phon
 
 In the future, we plan to add support for the uniqueness option for all transformers.  
 
-## Available transformers
-
-### Basic types
+## Basic transformers
 
 #### boolean
 
@@ -356,7 +354,7 @@ If you need the `\\N` literal - return `\\\N` and so on.
 
 **Warning!** This behavior can be changed in the future.
 
-## Crypto
+##### Crypto
 
 It extends builtin filters in templates with some crypto functions:
 
@@ -379,6 +377,7 @@ tables:
           format: "{{ _1 | bcrypt_hash(cost=10) }}"
           rules:
             - word: {} # Random word
+```
 
 ## Business
 
@@ -976,6 +975,16 @@ hex_token:
   len: 128
 ```
 
+#### UUID
+
+Generates random [UUIDs](http://en.wikipedia.org/wiki/Universally_unique_identifier).
+It uses the UUID version 4 algorithm.
+
+Example:
+
+```yaml
+uuid: ~
+```
 
 ## Others
 

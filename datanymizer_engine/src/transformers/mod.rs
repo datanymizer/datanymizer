@@ -31,6 +31,9 @@ pub use token::{Base64TokenTransformer, Base64UrlTokenTransformer, HexTokenTrans
 mod plain;
 pub use plain::PlainTransformer;
 
+mod uuid;
+pub use self::uuid::UuidTransformer;
+
 mod fk;
 pub use fk::sql_value::AsSqlValue;
 pub use fk::*;
@@ -86,6 +89,8 @@ define_transformers_enum![
     ("hex_token", HexToken, HexTokenTransformer),
     ("base64_token", Base64Token, Base64TokenTransformer),
     ("base64url_token", Base64UrlToken, Base64UrlTokenTransformer),
+
+    ("uuid", Uuid, UuidTransformer),
 
     ("city", City, CityTransformer),
     ("city_prefix", CityPrefix, CityPrefixTransformer),
