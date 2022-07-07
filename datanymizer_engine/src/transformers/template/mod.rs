@@ -149,9 +149,7 @@ impl Transformer for TemplateTransformer {
 
         match self.render(&render_context) {
             Ok(res) => TransformResult::present(res),
-            Err(e) => {
-                TransformResult::error(field_name, field_value, format!("{:?}", e).as_str())
-            },
+            Err(e) => TransformResult::error(field_name, field_value, format!("{:?}", e).as_str()),
         }
     }
 
