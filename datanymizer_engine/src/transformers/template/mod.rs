@@ -16,6 +16,7 @@ use std::{
     hash::{Hash, Hasher},
 };
 use tera::{Context, Tera};
+use log::warn;
 
 const TEMPLATE_NAME: &str = "TemplateTransformerTemplate";
 const FINAL_ROW_KEY: &str = "final";
@@ -74,7 +75,16 @@ impl TemplateTransformer {
     }
 
     fn render(&self, ctx: &Context) -> tera::Result<String> {
-        self.renderer.render(TEMPLATE_NAME, ctx)
+        self.renderer.render(TEMPLATE_NAME, ctx).map_err(|err| {
+            warn!(
+                "Can't render template: \n---\n{}\n---\nRules: \n{:#?}\nVariables: \n{:#?}",
+                self.format,
+                self.rules,
+                self.variables
+            );
+            warn!("{:#?}", err);
+            err
+        })
     }
 }
 

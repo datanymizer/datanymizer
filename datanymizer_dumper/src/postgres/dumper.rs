@@ -11,6 +11,7 @@ use std::{
     process::{self, Command},
     time::Instant,
 };
+use log::warn;
 
 pub struct PgDumper<W: Write + Send, I: Indicator + Send> {
     schema_inspector: PgSchemaInspector,
@@ -97,7 +98,13 @@ impl<W: 'static + Write + Send, I: 'static + Indicator + Send> PgDumper<W, I> {
                     self.indicator.inc_pb(1);
 
                     let row = PgRow::from_string_row(line?, table.clone());
-                    let transformed = row.transform(&self.engine, cfg.name.as_str())?;
+                    // let transformed = row.transform(&self.engine, cfg.name.as_str())?;
+                    let transformed = row
+                        .transform(&self.engine, cfg.name.as_str())
+                        .map_err(|err| {
+                            warn!("{:#?}", err);
+                            err
+                        })?;
                     self.dump_writer.write_all(transformed.as_bytes())?;
                     self.dump_writer.write_all(b"\n")?;
 
