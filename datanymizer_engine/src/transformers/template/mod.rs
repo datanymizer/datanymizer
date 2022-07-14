@@ -9,6 +9,7 @@ use crate::{
     },
     Transformers,
 };
+use log::warn;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::{
@@ -74,7 +75,14 @@ impl TemplateTransformer {
     }
 
     fn render(&self, ctx: &Context) -> tera::Result<String> {
-        self.renderer.render(TEMPLATE_NAME, ctx)
+        self.renderer.render(TEMPLATE_NAME, ctx).map_err(|err| {
+            warn!(
+                "Can't render template: \n---\n{}\n---\nRules: \n{:#?}\nVariables: \n{:#?}",
+                self.format, self.rules, self.variables
+            );
+            warn!("{:#?}", err);
+            err
+        })
     }
 }
 

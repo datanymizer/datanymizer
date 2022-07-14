@@ -16,6 +16,7 @@ pg_datanymizer [OPTIONS] <DBNAME> [PG_DUMP_ARGS]...
 | `--accept_invalid_hostnames` | Accept invalid hostnames when using SSL
 | `--help`                     | Prints help information
 | `-V`, `--version`            | Prints version information
+| `-v`, `--verbose`            | Turn on verbose logging to show more information about errors
 
 #### OPTIONS
 
