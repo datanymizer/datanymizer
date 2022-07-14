@@ -9,6 +9,7 @@ use crate::{
     },
     Transformers,
 };
+use log::warn;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::{
@@ -16,7 +17,6 @@ use std::{
     hash::{Hash, Hasher},
 };
 use tera::{Context, Tera};
-use log::warn;
 
 const TEMPLATE_NAME: &str = "TemplateTransformerTemplate";
 const FINAL_ROW_KEY: &str = "final";
@@ -78,9 +78,7 @@ impl TemplateTransformer {
         self.renderer.render(TEMPLATE_NAME, ctx).map_err(|err| {
             warn!(
                 "Can't render template: \n---\n{}\n---\nRules: \n{:#?}\nVariables: \n{:#?}",
-                self.format,
-                self.rules,
-                self.variables
+                self.format, self.rules, self.variables
             );
             warn!("{:#?}", err);
             err

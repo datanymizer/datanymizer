@@ -99,6 +99,13 @@ pub struct Options {
         help = "The remaining arguments are passed directly to `pg_dump` calls. You should add `--` before <DBNAME> in such cases"
     )]
     pub pg_dump_args: Vec<String>,
+
+    #[structopt(
+        parse(from_occurrences),
+        short = "v",
+        help = "Turn on verbose logging features to get more information about dumper errors"
+    )]
+    pub verbose: u64,
 }
 
 impl Options {
