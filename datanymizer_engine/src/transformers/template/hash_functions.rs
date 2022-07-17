@@ -80,7 +80,7 @@ fn sha256_hash(value: &Value, args: &HashMap<String, Value>) -> Result<Value> {
         hash = format!("{:x}", sha256.finalize());
     }
 
-    Ok(Value::from( hash.clone() ))
+    Ok(Value::from(hash))
 }
 
 /// BCrypt hash function
@@ -229,9 +229,6 @@ mod tests {
         t.add_raw_template("filter2", &template2).unwrap();
         let real_value2 = t.render("filter2", &context).unwrap();
 
-        assert_ne!(
-            &real_value1,
-            &real_value2,
-        );
+        assert_ne!(&real_value1, &real_value2,);
     }
 }
