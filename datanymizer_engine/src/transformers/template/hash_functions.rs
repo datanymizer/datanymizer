@@ -8,34 +8,38 @@ use sha2::{Digest, Sha256};
 
 pub fn register(t: &mut Tera) {
     t.register_filter("bcrypt_hash", bcrypt_hash);
-    t.register_filter("sha256", sha256);
+    t.register_filter("sha256_hash", sha256_hash);
 }
 
 /// Sha256 hash function
-/// You can generate salted sha256 hashes with it
+/// You can generate salted sha256 hashes with it. You may specify rounds of repeated hash function
+/// on its own results. You can specify your own salts. Depending on law you might need to throw
+/// the salt away or keep it only temporarily for an audit purpose. Use it when you may leak
+/// pseudoanonymized, traceable id's for debug purposes internally that must act like a primary
+/// key.
 ///
 /// # Examples
 ///
 /// ```yaml
 /// #...
 /// rules:
-///   some_value:
+///   some_field:
 ///     template:
-///       format: "{{ _0 | sha256 }}"
+///       format: "{{ _0 | sha256_hash }}"
 ///
-///   some_value_more_confidential:
+///   some_more_confidential_field:
 ///     template:
-///       format: "{{ _0 | sha256(rounds=10, salt='someverysecret') }}"
+///       format: "{{ _0 | sha256_hash(rounds=10, salt='someverysecret') }}"
 ///
-///   or_some_other_value:
+///   or_some_other_field:
 ///     template:
-///       format: "{{ _0 | sha256(rounds=10, salt=secret_salt) }}"
+///       format: "{{ _0 | sha256_hash(rounds=100, salt=secret_salt) }}"
 ///
-///# you can concatenate this section in CI to avoid literal secrets
+/// # you can concatenate the global section in CI to avoid literal secrets in config
 /// globals:
 ///   secret_salt: someverysecret
 /// ```
-fn sha256(value: &Value, args: &HashMap<String, Value>) -> Result<Value> {
+fn sha256_hash(value: &Value, args: &HashMap<String, Value>) -> Result<Value> {
     let rounds: u32 = match args.get("rounds") {
         Some(val) => match from_value::<u32>(val.clone()) {
             Ok(v) => v,
@@ -160,7 +164,7 @@ mod tests {
         context.insert("value", inp);
         register(&mut t);
 
-        let template = "{{ value | sha256 }}";
+        let template = "{{ value | sha256_hash }}";
         t.add_raw_template("empty_filter", &template).unwrap();
 
         let real_value = t.render("empty_filter", &context).unwrap();
@@ -179,7 +183,7 @@ mod tests {
         context.insert("value", inp);
         register(&mut t);
 
-        let template = "{{ value | sha256(salt='abcdef') }}";
+        let template = "{{ value | sha256_hash(salt='abcdef') }}";
         t.add_raw_template("empty_filter", &template).unwrap();
 
         let real_value = t.render("empty_filter", &context).unwrap();
@@ -198,7 +202,7 @@ mod tests {
         context.insert("value", inp);
         register(&mut t);
 
-        let template = "{{ value | sha256(salt='abcdef', rounds=5) }}";
+        let template = "{{ value | sha256_hash(salt='abcdef', rounds=5) }}";
         t.add_raw_template("empty_filter", &template).unwrap();
 
         let real_value = t.render("empty_filter", &context).unwrap();
@@ -208,6 +212,7 @@ mod tests {
             &real_value,
         );
     }
+
     #[test]
     fn sha256_2salts_values_ne() {
         let mut t = Tera::default();
@@ -216,11 +221,11 @@ mod tests {
         context.insert("value", inp);
         register(&mut t);
 
-        let template1 = "{{ value | sha256(salt='abc', rounds=5) }}";
+        let template1 = "{{ value | sha256_hash(salt='abc', rounds=5) }}";
         t.add_raw_template("filter1", &template1).unwrap();
         let real_value1 = t.render("filter1", &context).unwrap();
 
-        let template2 = "{{ value | sha256(salt='def', rounds=5) }}";
+        let template2 = "{{ value | sha256_hash(salt='def', rounds=5) }}";
         t.add_raw_template("filter2", &template2).unwrap();
         let real_value2 = t.render("filter2", &context).unwrap();
 
