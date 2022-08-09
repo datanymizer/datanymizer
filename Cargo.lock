@@ -325,7 +325,7 @@ dependencies = [
 
 [[package]]
 name = "datanymizer_dumper"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "datanymizer_engine",
@@ -340,7 +340,7 @@ dependencies = [
 
 [[package]]
 name = "datanymizer_engine"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "bcrypt",
@@ -1046,7 +1046,7 @@ dependencies = [
 
 [[package]]
 name = "pg_datanymizer"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "datanymizer_dumper",
