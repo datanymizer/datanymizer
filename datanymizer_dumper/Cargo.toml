@@ -1,6 +1,6 @@
 [package]
 name = "datanymizer_dumper"
-version = "0.5.0"
+version = "0.6.0"
 authors = ["Aleksandr Kirillov <saratovsource@gmail.com>", "Evgeniy Rashchepkin <e.a.rashchepkin@gmail.com>"]
 edition = "2021"
 
