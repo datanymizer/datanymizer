@@ -9,6 +9,31 @@ use serde_json::Value;
 mod selector;
 use selector::Selector;
 
+/// This transformer allows to replace values in JSON and JSONB columns using JSONPath selectors.
+/// It uses the [jsonpath_lib](https://github.com/freestrings/jsonpath) crate.
+///
+/// # Example:
+///
+/// ```yaml
+/// #...
+/// rules:
+///   fields:
+///     - name: "user_name"
+///       selector: "$..user.name"
+///       quote: true
+///       rule:
+///         person_name: {}
+///     - name: "user_age"
+///       selector: "$..user.age"
+///       rule:
+///         random_num:
+///           min: 25
+///           max: 55
+/// ```
+///
+/// If a value of the column is `{"user": {"name": "Andrew", "age": 20, "comment": "The comment"}}`,
+/// the transformed value will be something like this:
+/// `{"user": {"name": "John", "age": 30, "comment": "The comment"}}`.
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq, Hash)]
 pub struct JsonTransformer {
     fields: Vec<Field>,
@@ -274,6 +299,25 @@ mod test {
             let new_json = t.transform("field", "invalid", &None).unwrap().unwrap();
 
             assert_eq!(new_json, "{\"rule\": true}");
+        }
+
+        #[test]
+        fn error() {
+            let config = r#"
+                json:
+                  fields:
+                    - name: "user_name"
+                      selector: "$..user.name"
+                      quote: true
+                      rule:
+                        first_name: {}
+                  on_invalid: error
+                "#;
+
+            let t: Transformers = serde_yaml::from_str(config).unwrap();
+            let result = t.transform("field", "invalid", &None);
+
+            assert!(result.is_err());
         }
     }
 }
