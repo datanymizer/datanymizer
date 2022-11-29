@@ -379,6 +379,122 @@ tables:
             - word: {} # Random word
 ```
 
+#### json
+
+This transformer allows to replace values in JSON and JSONB columns using JSONPath selectors.
+
+It uses the [jsonpath_lib](https://github.com/freestrings/jsonpath) crate.
+
+Specification:
+
+| Section      | Mandatory | YAML type          | Description                                                             |
+|--------------|-----------|--------------------|-------------------------------------------------------------------------|
+| `fields`     | yes       | list               | List of selectors and related rules (transformers)                      |
+| `on_invalid` | no        | text or dictionary | Reaction on invalid input JSON (the default reaction is to return `{}`) | 
+
+Example: 
+
+```yaml
+json:
+  fields:
+    - name: "user_name"
+      selector: "$..user.name"
+      quote: true
+      rule:
+        template:
+          format: "UserName"
+    - name: "user_age"
+      selector: "$..user.age"
+      rule:
+        random_num:
+          min: 25
+          max: 55
+```
+
+If a value of the column is `{"user": {"name": "Andrew", "age": 20, "comment": "The comment"}}`, the transformed 
+value will be something like this: `{"user": {"name": "UserName", "age": 30, "comment": "The comment"}}`.
+
+The fields are transformed consequently in their order.
+
+##### fields
+
+A list of field descriptions. 
+
+Specification of each field item:
+
+| Section    | Mandatory | YAML type  | Description                                                                         |
+|------------|-----------|------------|-------------------------------------------------------------------------------------|
+| `name`     | yes       | text       | Selector name (your choice, but should be unique in scope of this transformer)      |
+| `selector` | yes       | text       | JSONPath selector                                                                   | 
+| `rule`     | yes       | dictionary | Transform rule                                                                      | 
+| `quote`    | no        | boolean    | Whether a transformation result should be quoted (with `"`). The default is `false` | 
+
+##### on_invalid
+
+There are three possible options for the reaction on an invalid input value (incorrectly formatted JSON):
+
+* `as_is` - perform no transformation, just return the current value;
+* `replace_with` - replace with provided plain values or using provided transformer;
+* `error` - stop with an error.
+
+The default is to replace the invalid value with `{}`.
+
+Examples:
+
+This config returns an invalid value as is: 
+```yaml
+json:
+  fields:
+    - name: "user_name"
+      selector: "$..user.name"
+      quote: true
+      rule:
+        first_name: {}
+  on_invalid: as_is
+```
+
+This one returns specified JSON instead an invalid value:
+```yaml
+json:
+  fields:
+    - name: "user_name"
+      selector: "$..user.name"
+      quote: true
+      rule:
+        first_name: {}
+  on_invalid:
+    replace_with: '{"user": {"name": "John", "age": 30}}'
+```
+
+This one returns specified transformer's result instead an invalid value:
+```yaml
+json:
+  fields:
+    - name: "user_name"
+      selector: "$..user.name"
+      quote: true
+      rule:
+        first_name: {}
+  on_invalid:
+    replace_with:
+      template:
+        format: '{ "user": { "name": "{{ _1 }}", "age": 30 } }'
+        rules:
+          - person_name: {}
+```
+
+And this one raises an error on an invalid value:
+```yaml
+json:
+  fields:
+    - name: "user_name"
+      selector: "$..user.name"
+      quote: true
+      rule:
+        first_name: {}
+  on_invalid: error
+```
+
 ## Business
 
 #### company_activity 🌐
