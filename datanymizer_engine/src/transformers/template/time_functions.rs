@@ -146,7 +146,7 @@ pub fn date(value: &Value, args: &HashMap<String, Value>) -> Result<Value> {
     };
 
     match formatted {
-        Ok(formatted) => to_value(&formatted).map_err(Error::json),
+        Ok(formatted) => to_value(formatted).map_err(Error::json),
         Err(e) => Err(Error::msg(format!("Formatting error: {}", e))),
     }
 }
