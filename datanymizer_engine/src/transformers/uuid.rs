@@ -23,7 +23,7 @@ impl Transformer for UuidTransformer {
         _field_value: &str,
         _ctx: &Option<TransformContext>,
     ) -> TransformResult {
-        TransformResult::present(&Uuid::new_v4().to_string())
+        TransformResult::present(Uuid::new_v4().to_string())
     }
 }
 

@@ -38,7 +38,7 @@ impl Transformer for CapitalizeTransformer {
         _ctx: &Option<TransformContext>,
     ) -> TransformResult {
         let result = Self::capitalize(field_value);
-        TransformResult::present(&result)
+        TransformResult::present(result)
     }
 }
 
