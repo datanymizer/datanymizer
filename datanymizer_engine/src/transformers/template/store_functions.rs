@@ -21,7 +21,7 @@ fn read<S: KeyValueStore>(store: S) -> impl Function {
                             None => match args.get("default") {
                                 Some(default) => Ok(default.clone()),
                                 None => {
-                                    Err(format!("No such key {} and no default value", key).into())
+                                    Err(format!("No such key {key} and no default value").into())
                                 }
                             },
                         },

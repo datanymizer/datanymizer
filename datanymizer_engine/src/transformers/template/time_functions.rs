@@ -22,8 +22,7 @@ fn now(args: &HashMap<String, Value>) -> Result<Value> {
             Ok(v) => v,
             Err(_) => {
                 return Err(Error::msg(format!(
-                    "Function `now` received utc={} but `utc` can only be a boolean",
-                    val
+                    "Function `now` received utc={val} but `utc` can only be a boolean"
                 )));
             }
         },
@@ -34,8 +33,7 @@ fn now(args: &HashMap<String, Value>) -> Result<Value> {
             Ok(v) => v,
             Err(_) => {
                 return Err(Error::msg(format!(
-                    "Function `now` received timestamp={} but `timestamp` can only be a boolean",
-                    val
+                    "Function `now` received timestamp={val} but `timestamp` can only be a boolean"
                 )));
             }
         },
@@ -62,7 +60,7 @@ pub fn date(value: &Value, args: &HashMap<String, Value>) -> Result<Value> {
 
     let compiled = Compiled::compile(format.as_str());
     if compiled.is_err() {
-        return Err(Error::msg(format!("Invalid date format `{}`", format)));
+        return Err(Error::msg(format!("Invalid date format `{format}`")));
     }
     let compiled = compiled.unwrap();
 
@@ -73,8 +71,7 @@ pub fn date(value: &Value, args: &HashMap<String, Value>) -> Result<Value> {
                 Some(timezone) => Some(timezone),
                 None => {
                     return Err(Error::msg(format!(
-                        "Error parsing `{}` as a timezone",
-                        timezone
+                        "Error parsing `{timezone}` as a timezone"
                     )));
                 }
             }
@@ -89,13 +86,12 @@ pub fn date(value: &Value, args: &HashMap<String, Value>) -> Result<Value> {
                 if let Ok(datetime) = datetime {
                     datetime.format(&compiled.format_items())
                 } else {
-                    return Err(Error::msg(format!("Invalid timestamp: {}", i)));
+                    return Err(Error::msg(format!("Invalid timestamp: {i}")));
                 }
             }
             None => {
                 return Err(Error::msg(format!(
-                    "Filter `date` was invoked on a float: {}",
-                    n
+                    "Filter `date` was invoked on a float: {n}"
                 )))
             }
         },
@@ -109,12 +105,11 @@ pub fn date(value: &Value, args: &HashMap<String, Value>) -> Result<Value> {
                         None => val.format(&compiled.format_items()),
                     },
                     // Like NaiveDateTime in the original
-                    Err(_) => match OffsetDateTime::parse(format!("{}Z", s).as_str(), &Rfc3339) {
+                    Err(_) => match OffsetDateTime::parse(format!("{s}Z").as_str(), &Rfc3339) {
                         Ok(val) => val.format(&compiled.format_items()),
                         Err(_) => {
                             return Err(Error::msg(format!(
-                                "Error parsing `{:?}` as rfc3339 date or naive datetime",
-                                s
+                                "Error parsing `{s:?}` as rfc3339 date or naive datetime"
                             )));
                         }
                     },
@@ -129,8 +124,7 @@ pub fn date(value: &Value, args: &HashMap<String, Value>) -> Result<Value> {
                         .format(&compiled.format_items()),
                     Err(_) => {
                         return Err(Error::msg(format!(
-                            "Error parsing `{:?}` as YYYY-MM-DD date",
-                            s
+                            "Error parsing `{s:?}` as YYYY-MM-DD date"
                         )));
                     }
                 }
@@ -139,15 +133,14 @@ pub fn date(value: &Value, args: &HashMap<String, Value>) -> Result<Value> {
         _ => {
             return Err(Error::msg(format!(
                 "Filter `date` received an incorrect type for arg `value`: \
-                 got `{:?}` but expected i64|u64|String",
-                value
+                 got `{value:?}` but expected i64|u64|String"
             )));
         }
     };
 
     match formatted {
         Ok(formatted) => to_value(formatted).map_err(Error::json),
-        Err(e) => Err(Error::msg(format!("Formatting error: {}", e))),
+        Err(e) => Err(Error::msg(format!("Formatting error: {e}"))),
     }
 }
 

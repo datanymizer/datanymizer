@@ -90,7 +90,7 @@ impl PgTable {
     pub fn quote_table_name(name: &str) -> Result<String> {
         let parts: Vec<_> = name.split('.').collect();
         match parts.len() {
-            1 => Ok(format!(r#""{}""#, name)),
+            1 => Ok(format!(r#""{name}""#)),
             2 => Ok(format!(r#""{}"."{}""#, parts[0], parts[1])),
             _ => Err(anyhow!("Invalid table name {}", name)),
         }
@@ -126,7 +126,7 @@ impl PgTable {
         already_dumped: u64,
     ) -> Option<String> {
         cfg.and_then(|c| match &c.query {
-            Some(q) => self.query_unless_already_dumped(q, |s| format!("({})", s), already_dumped),
+            Some(q) => self.query_unless_already_dumped(q, |s| format!("({s})"), already_dumped),
             None => Some(self.default_query()),
         })
     }
@@ -139,7 +139,7 @@ impl PgTable {
         match cfg {
             Some(c) => c.query.as_ref().and_then(|q| {
                 if q.transform_condition.is_some() {
-                    self.query_unless_already_dumped(q, |s| format!("NOT ({})", s), already_dumped)
+                    self.query_unless_already_dumped(q, |s| format!("NOT ({s})"), already_dumped)
                 } else {
                     None
                 }
@@ -189,7 +189,7 @@ impl PgTable {
 
         Some(self.query_with_select(
             vec![
-                q.dump_condition.as_ref().map(|c| format!("({})", c)),
+                q.dump_condition.as_ref().map(|c| format!("({c})")),
                 q.transform_condition.as_ref().map(tr_fmt),
             ],
             q.limit.map(|limit| limit as u64 - already_dumped),
@@ -227,13 +227,13 @@ impl PgTable {
     }
 
     fn sql_limit(limit: Option<u64>) -> String {
-        limit.map_or(String::new(), |limit| format!(" LIMIT {}", limit))
+        limit.map_or(String::new(), |limit| format!(" LIMIT {limit}"))
     }
 
     fn quoted_columns(&self) -> Vec<String> {
         self.get_columns_names()
             .into_iter()
-            .map(|x| format!("\"{}\"", x))
+            .map(|x| format!("\"{x}\""))
             .collect()
     }
 }

@@ -202,7 +202,7 @@ impl<W: 'static + Write + Send, I: 'static + Indicator + Send> Dumper for PgDump
 
     fn write_log(&mut self, message: String) -> Result<()> {
         self.dump_writer
-            .write_all(format!("\n---\n--- {}\n---\n", message).as_bytes())
+            .write_all(format!("\n---\n--- {message}\n---\n").as_bytes())
             .map_err(|e| e.into())
     }
 

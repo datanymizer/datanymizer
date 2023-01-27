@@ -150,8 +150,8 @@ pub enum ParseError {
 impl Display for ParseError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Parse(e) => write!(f, "{}", e),
-            Self::Compile(e) => write!(f, "{}", e),
+            Self::Parse(e) => write!(f, "{e}"),
+            Self::Compile(e) => write!(f, "{e}"),
         }
     }
 }

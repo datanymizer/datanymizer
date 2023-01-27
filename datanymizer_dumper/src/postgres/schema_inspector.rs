@@ -75,7 +75,7 @@ impl SchemaInspector for PgSchemaInspector {
 
                 match self.get_table_size(connection, &table) {
                     Ok(size) => table.size = size,
-                    Err(e) => panic!("ERR: {}", e),
+                    Err(e) => panic!("ERR: {e}"),
                 }
 
                 counter += 1;

@@ -66,7 +66,7 @@ impl Indicator for ConsoleIndicator {
     }
 
     fn debug_msg(&self, msg: &str) {
-        println!("{}", msg);
+        println!("{msg}");
     }
 }
 

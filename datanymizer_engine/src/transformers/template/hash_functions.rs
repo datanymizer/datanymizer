@@ -33,8 +33,7 @@ fn bcrypt_hash(value: &Value, args: &HashMap<String, Value>) -> Result<Value> {
             Ok(v) => v,
             Err(_) => {
                 return Err(Error::msg(format!(
-                    "Function `bcrypt_hash` recived cost={} but `bcrypt_hash` can only be a number",
-                    val
+                    "Function `bcrypt_hash` recived cost={val} but `bcrypt_hash` can only be a number"
                 )));
             }
         },

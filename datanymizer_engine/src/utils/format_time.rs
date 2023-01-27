@@ -172,8 +172,8 @@ pub enum CompileError {
 impl Display for CompileError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Convert(e) => write!(f, "{}", e),
-            Self::Format(e) => write!(f, "{}", e),
+            Self::Convert(e) => write!(f, "{e}"),
+            Self::Format(e) => write!(f, "{e}"),
         }
     }
 }

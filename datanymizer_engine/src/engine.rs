@@ -30,7 +30,7 @@ impl Engine {
             for (field, tr) in ts {
                 if let Some(&i) = column_indexes.get(field) {
                     match tr.transform(
-                        &format!("{}.{}", table, field),
+                        &format!("{table}.{field}"),
                         values[i],
                         &Some(TransformContext::new(
                             &self.settings.globals,

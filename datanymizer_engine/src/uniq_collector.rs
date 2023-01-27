@@ -8,7 +8,7 @@ static GLOBAL_DATA: Lazy<Mutex<HashSet<u64>>> = Lazy::new(|| Mutex::new(HashSet:
 pub(crate) fn add_to_collector(name: &str, value: &str) -> bool {
     if let Ok(mut counter) = GLOBAL_DATA.lock() {
         let mut hasher = DefaultHasher::new();
-        format!("{}.{}", name, value).hash(&mut hasher);
+        format!("{name}.{value}").hash(&mut hasher);
         counter.insert(hasher.finish())
     } else {
         false
