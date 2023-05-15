@@ -386,8 +386,7 @@ mod tests {
                                      - template:
                                          format: "{{ final.last_name }}"
                               "#;
-                let t: EnumWrapper<Transformers> = serde_yaml::from_str(config).unwrap();
-                let mut t = t.0;
+                let mut t: Transformers = EnumWrapper::parse(config).unwrap();
                 t.init(&TransformerInitContext::default());
 
                 let res = t.transform(
@@ -442,8 +441,7 @@ mod tests {
                                      template:
                                        format: "Hello, {{ prev.first_name }} {{ final.last_name }}!"
                                   "#;
-                let t: EnumWrapper<Transformers> = serde_yaml::from_str(config).unwrap();
-                let mut t = t.0;
+                let mut t: Transformers = EnumWrapper::parse(config).unwrap();
                 t.init(&TransformerInitContext::default());
 
                 return t;
@@ -485,8 +483,7 @@ mod tests {
                                 template:
                                   format: "Read: {{ store_read(key=_0) }}"
                               "#;
-            let t: EnumWrapper<Transformers> = serde_yaml::from_str(config).unwrap();
-            t.0
+            EnumWrapper::parse(config).unwrap()
         }
 
         fn read_default_transformer() -> Transformers {
@@ -494,8 +491,7 @@ mod tests {
                                 template:
                                   format: "Read: {{ store_read(key=_0, default='def key') }}"
                               "#;
-            let t: EnumWrapper<Transformers> = serde_yaml::from_str(config).unwrap();
-            t.0
+            EnumWrapper::parse(config).unwrap()
         }
 
         fn write_transformer() -> Transformers {
