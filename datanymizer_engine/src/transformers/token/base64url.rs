@@ -77,7 +77,7 @@ impl Transformer for Base64UrlTokenTransformer {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::Transformers;
+    use crate::{utils::EnumWrapper, Transformers};
 
     fn transformed_value(cfg: &str) -> String {
         let transformer: Base64UrlTokenTransformer = serde_yaml::from_str(cfg).unwrap();
@@ -87,7 +87,7 @@ mod test {
     #[test]
     fn deserialize() {
         let config = "base64url_token: {}";
-        let transformer: Transformers = serde_yaml::from_str(config).unwrap();
+        let transformer: Transformers = EnumWrapper::parse(config).unwrap();
 
         assert_eq!(
             transformer,

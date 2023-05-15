@@ -7,6 +7,7 @@ use crate::{
         TransformContext, TransformResult, TransformResultHelper, Transformer,
         TransformerInitContext,
     },
+    utils::EnumWrapper,
     Transformers,
 };
 use log::warn;
@@ -196,14 +197,18 @@ impl Transformer for TemplateTransformer {
 
 impl From<Config> for TemplateTransformer {
     fn from(cfg: Config) -> Self {
-        Self::new(cfg.format, cfg.rules, cfg.variables)
+        Self::new(
+            cfg.format,
+            cfg.rules.map(|ws| ws.into_iter().map(|w| w.0).collect()),
+            cfg.variables,
+        )
     }
 }
 
 #[derive(Deserialize)]
 struct Config {
     pub format: String,
-    pub rules: Option<Vec<Transformers>>,
+    pub rules: Option<Vec<EnumWrapper<Transformers>>>,
     pub variables: Option<HashMap<String, Value>>,
 }
 
@@ -238,7 +243,7 @@ mod tests {
                                 name: Alex
                           "#;
 
-        let mut transformer: Transformers = serde_yaml::from_str(config).unwrap();
+        let mut transformer: Transformers = EnumWrapper::parse(config).unwrap();
         transformer.init(&TransformerInitContext::default());
 
         let res = transformer.transform(
@@ -299,7 +304,7 @@ mod tests {
                                      template:
                                        format: "Hello, {{ prev.first_name }} {{ prev.last_name }}!"
                                   "#;
-                let mut t: Transformers = serde_yaml::from_str(config).unwrap();
+                let mut t: Transformers = EnumWrapper::parse(config).unwrap();
                 t.init(&TransformerInitContext::default());
 
                 return t;
@@ -334,7 +339,7 @@ mod tests {
                                  template:
                                    format: "Hello, {{ final.first_name }} {{ final.last_name }}!"
                               "#;
-                let mut t: Transformers = serde_yaml::from_str(config).unwrap();
+                let mut t: Transformers = EnumWrapper::parse(config).unwrap();
                 t.init(&TransformerInitContext::default());
 
                 return t;
@@ -381,7 +386,8 @@ mod tests {
                                      - template:
                                          format: "{{ final.last_name }}"
                               "#;
-                let mut t: Transformers = serde_yaml::from_str(config).unwrap();
+                let t: EnumWrapper<Transformers> = serde_yaml::from_str(config).unwrap();
+                let mut t = t.0;
                 t.init(&TransformerInitContext::default());
 
                 let res = t.transform(
@@ -436,7 +442,8 @@ mod tests {
                                      template:
                                        format: "Hello, {{ prev.first_name }} {{ final.last_name }}!"
                                   "#;
-                let mut t: Transformers = serde_yaml::from_str(config).unwrap();
+                let t: EnumWrapper<Transformers> = serde_yaml::from_str(config).unwrap();
+                let mut t = t.0;
                 t.init(&TransformerInitContext::default());
 
                 return t;
@@ -478,7 +485,8 @@ mod tests {
                                 template:
                                   format: "Read: {{ store_read(key=_0) }}"
                               "#;
-            serde_yaml::from_str(config).unwrap()
+            let t: EnumWrapper<Transformers> = serde_yaml::from_str(config).unwrap();
+            t.0
         }
 
         fn read_default_transformer() -> Transformers {
@@ -486,7 +494,8 @@ mod tests {
                                 template:
                                   format: "Read: {{ store_read(key=_0, default='def key') }}"
                               "#;
-            serde_yaml::from_str(config).unwrap()
+            let t: EnumWrapper<Transformers> = serde_yaml::from_str(config).unwrap();
+            t.0
         }
 
         fn write_transformer() -> Transformers {
@@ -499,7 +508,7 @@ mod tests {
                       - template:
                           format: '{{ "value_" ~ _0 }}'
                 "#;
-            serde_yaml::from_str(config).unwrap()
+            EnumWrapper::parse(config).unwrap()
         }
 
         #[test]
@@ -575,7 +584,7 @@ mod tests {
                                       {{ c }}
                                     {%- endif -%}
                               "#;
-            let mut t: Transformers = serde_yaml::from_str(config).unwrap();
+            let mut t: Transformers = EnumWrapper::parse(config).unwrap();
             let mut w = write_transformer();
             let ctx = TransformerInitContext::default();
 
@@ -605,7 +614,7 @@ mod tests {
                 "#;
 
             let mut r = read_transformer();
-            let mut w: Transformers = serde_yaml::from_str(config).unwrap();
+            let mut w: Transformers = EnumWrapper::parse(config).unwrap();
             let ctx = TransformerInitContext::default();
 
             r.init(&ctx);
@@ -632,7 +641,7 @@ mod tests {
                 "#;
 
             let mut r = read_transformer();
-            let mut w: Transformers = serde_yaml::from_str(config).unwrap();
+            let mut w: Transformers = EnumWrapper::parse(config).unwrap();
             let ctx = TransformerInitContext::default();
 
             r.init(&ctx);
@@ -645,13 +654,13 @@ mod tests {
             assert_eq!(value, "Read: 0.5");
 
             let value = w.transform("field", "2", &None).unwrap().unwrap();
-            assert_eq!(value, "Write: 2 into key");
+            assert_eq!(value, "Write: 2.0 into key");
 
             let value = r.transform("field", "key", &None).unwrap().unwrap();
             assert_eq!(value, "Read: 2.5");
 
             let value = w.transform("field", "-1", &None).unwrap().unwrap();
-            assert_eq!(value, "Write: -1 into key");
+            assert_eq!(value, "Write: -1.0 into key");
 
             let value = r.transform("field", "key", &None).unwrap().unwrap();
             assert_eq!(value, "Read: 1.5");
@@ -678,7 +687,7 @@ mod tests {
                       {% endmacro decrement -%}"#;
             let templates_collection: TemplatesCollection =
                 serde_yaml::from_str(macro_config).unwrap();
-            let mut t: Transformers = serde_yaml::from_str(config).unwrap();
+            let mut t: Transformers = EnumWrapper::parse(config).unwrap();
             let mut context = TransformerInitContext::default();
             context.template_collection = templates_collection;
             t.init(&context);
@@ -702,7 +711,7 @@ mod tests {
                 expr
             );
 
-            let mut transformer: Transformers = serde_yaml::from_str(config.as_str()).unwrap();
+            let mut transformer: Transformers = EnumWrapper::parse(config.as_str()).unwrap();
             transformer.init(&TransformerInitContext::default());
 
             transformer.transform("", "", &None).unwrap().unwrap()

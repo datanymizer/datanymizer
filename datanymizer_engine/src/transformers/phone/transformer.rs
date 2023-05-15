@@ -90,7 +90,7 @@ impl UniqTransformer for PhoneTransformer {
 
 #[cfg(test)]
 mod tests {
-    use crate::{transformer::TransformResult, Transformer, Transformers};
+    use crate::{transformer::TransformResult, utils::EnumWrapper, Transformer, Transformers};
 
     #[test]
     fn parse_config_to_phone_transformer() {
@@ -99,7 +99,7 @@ mod tests {
             format: +123456789#
         "#;
 
-        let transformer: Transformers = serde_yaml::from_str(config).unwrap();
+        let transformer: Transformers = EnumWrapper::parse(config).unwrap();
         assert!(matches!(transformer, Transformers::Phone(_)));
     }
 
@@ -111,7 +111,7 @@ mod tests {
             uniq: true
         "#;
 
-        let transformer: Transformers = serde_yaml::from_str(config).unwrap();
+        let transformer: Transformers = EnumWrapper::parse(config).unwrap();
 
         let val1 = transformer.transform("field", "value", &None);
         let val2 = transformer.transform("field", "value", &None);
@@ -120,14 +120,13 @@ mod tests {
     }
 
     #[test]
-    #[warn(unused_doc_comments)]
     fn test_max_invariants_of_uniq_phones() {
         let config = r#"
         phone:
             format: +123456789#
             uniq: true
         "#;
-        let transformer: Transformers = serde_yaml::from_str(config).unwrap();
+        let transformer: Transformers = EnumWrapper::parse(config).unwrap();
 
         let mut phones: Vec<TransformResult> = vec![];
         for _ in 0..5 {

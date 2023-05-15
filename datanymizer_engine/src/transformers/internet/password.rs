@@ -68,12 +68,12 @@ impl Transformer for PasswordTransformer {
 #[cfg(test)]
 mod test {
     use super::{MaxValue, MinValue};
-    use crate::{Transformer, Transformers};
+    use crate::{utils::EnumWrapper, Transformer, Transformers};
 
     #[test]
     fn deserialize_default_transformer() {
         let config = "password: {}";
-        let transformer: Transformers = serde_yaml::from_str(config).unwrap();
+        let transformer: Transformers = EnumWrapper::parse(config).unwrap();
         if let Transformers::Password(p_transformer) = transformer {
             assert_eq!(p_transformer.min, MinValue(8));
             assert_eq!(p_transformer.max, MaxValue(20));
@@ -89,7 +89,7 @@ mod test {
               min: 1
               max: 10
             "#;
-        let transformer: Transformers = serde_yaml::from_str(config).unwrap();
+        let transformer: Transformers = EnumWrapper::parse(config).unwrap();
 
         if let Transformers::Password(p_transformer) = transformer {
             assert_eq!(p_transformer.min, MinValue(1));
@@ -106,7 +106,7 @@ mod test {
               min: 8
               max: 8
             "#;
-        let transformer: Transformers = serde_yaml::from_str(config).unwrap();
+        let transformer: Transformers = EnumWrapper::parse(config).unwrap();
         let value = transformer.transform("pwd", "", &None).unwrap().unwrap();
 
         assert_eq!(value.len(), 8);

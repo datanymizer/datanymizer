@@ -20,6 +20,7 @@ pub struct Table {
     /// Table name
     pub name: String,
     /// Rule set for columns
+    #[serde(with = "serde_yaml::with::singleton_map_recursive")]
     pub rules: Rules,
     /// Order of applying rules. All rules not listed are placed at the beginning
     pub rule_order: Option<Vec<String>>,

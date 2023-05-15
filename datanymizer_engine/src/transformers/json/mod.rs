@@ -37,7 +37,7 @@ use selector::Selector;
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq, Hash)]
 pub struct JsonTransformer {
     fields: Vec<Field>,
-    #[serde(default)]
+    #[serde(default, with = "serde_yaml::with::singleton_map")]
     on_invalid: OnInvalid,
 }
 
@@ -136,6 +136,7 @@ impl Transformer for JsonTransformer {
 struct Field {
     name: String,
     selector: Selector,
+    #[serde(with = "serde_yaml::with::singleton_map")]
     rule: Transformers,
     #[serde(default)]
     quote: bool,
@@ -171,7 +172,7 @@ impl Default for ReplaceInvalid {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::Transformers;
+    use crate::{utils::EnumWrapper, Transformers};
     use serde_json::json;
 
     #[test]
@@ -199,7 +200,7 @@ mod test {
                 { "user": { "name": "Charlie", "age": 20, "comment": "Ghi" } }
             ]
         );
-        let mut t: Transformers = serde_yaml::from_str(config).unwrap();
+        let mut t: Transformers = EnumWrapper::parse(config).unwrap();
         t.init(&TransformerInitContext::default());
 
         let new_json: Value = serde_json::from_str(
@@ -233,7 +234,7 @@ mod test {
                         first_name: {}
                 "#;
 
-            let t: Transformers = serde_yaml::from_str(config).unwrap();
+            let t: Transformers = EnumWrapper::parse(config).unwrap();
             let new_json = t.transform("field", "invalid", &None).unwrap().unwrap();
 
             assert_eq!(new_json, "{}");
@@ -252,7 +253,7 @@ mod test {
                   on_invalid: as_is
                 "#;
 
-            let t: Transformers = serde_yaml::from_str(config).unwrap();
+            let t: Transformers = EnumWrapper::parse(config).unwrap();
             let new_json = t.transform("field", "invalid", &None).unwrap().unwrap();
 
             assert_eq!(new_json, "invalid");
@@ -272,7 +273,7 @@ mod test {
                     replace_with: '{"plain": true}'
                 "#;
 
-            let t: Transformers = serde_yaml::from_str(config).unwrap();
+            let t: Transformers = EnumWrapper::parse(config).unwrap();
             let new_json = t.transform("field", "invalid", &None).unwrap().unwrap();
 
             assert_eq!(new_json, "{\"plain\": true}");
@@ -294,7 +295,7 @@ mod test {
                         format: '{"rule": true}'
                 "#;
 
-            let mut t: Transformers = serde_yaml::from_str(config).unwrap();
+            let mut t: Transformers = EnumWrapper::parse(config).unwrap();
             t.init(&TransformerInitContext::default());
             let new_json = t.transform("field", "invalid", &None).unwrap().unwrap();
 
@@ -314,7 +315,7 @@ mod test {
                   on_invalid: error
                 "#;
 
-            let t: Transformers = serde_yaml::from_str(config).unwrap();
+            let t: Transformers = EnumWrapper::parse(config).unwrap();
             let result = t.transform("field", "invalid", &None);
 
             assert!(result.is_err());

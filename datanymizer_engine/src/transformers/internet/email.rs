@@ -204,14 +204,14 @@ impl Affix {
 mod tests {
     use super::*;
     use crate::{
-        transformers::FirstNameTransformer, LocaleConfig, Transformer, TransformerDefaults,
-        Transformers,
+        transformers::FirstNameTransformer, utils::EnumWrapper, LocaleConfig, Transformer,
+        TransformerDefaults, Transformers,
     };
 
     #[test]
     fn parse_config() {
         let config = "email: {}";
-        let transformer: Transformers = serde_yaml::from_str(config).unwrap();
+        let transformer: Transformers = EnumWrapper::parse(config).unwrap();
         if let Transformers::Email(transformer) = &transformer {
             assert_eq!(transformer.kind, EmailKind::Safe);
         }
@@ -224,7 +224,7 @@ mod tests {
                            email:
                              kind: Free
                            "#;
-        let transformer: Transformers = serde_yaml::from_str(config).unwrap();
+        let transformer: Transformers = EnumWrapper::parse(config).unwrap();
         if let Transformers::Email(transformer) = &transformer {
             assert_eq!(transformer.kind, EmailKind::Free);
         }

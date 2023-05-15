@@ -74,12 +74,12 @@ impl UniqTransformer for IpTransformer {
 #[cfg(test)]
 mod tests {
     use super::IpKind;
-    use crate::Transformers;
+    use crate::{utils::EnumWrapper, Transformers};
 
     #[test]
     fn test_parse_config_v4() {
         let config = r#"ip: {}"#;
-        let transformer: Transformers = serde_yaml::from_str(config).unwrap();
+        let transformer: Transformers = EnumWrapper::parse(config).unwrap();
         if let Transformers::Ip(transformer) = &transformer {
             assert_eq!(transformer.kind, None);
         }
@@ -88,10 +88,10 @@ mod tests {
     #[test]
     fn test_parse_config_v6() {
         let config = r#"
-ip:
-  kind: V6
-"#;
-        let transformer: Transformers = serde_yaml::from_str(config).unwrap();
+            ip:
+              kind: V6
+            "#;
+        let transformer: Transformers = EnumWrapper::parse(config).unwrap();
         if let Transformers::Ip(transformer) = &transformer {
             assert_eq!(transformer.kind, Some(IpKind::V6));
         }
