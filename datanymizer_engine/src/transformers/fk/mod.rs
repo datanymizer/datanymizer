@@ -15,6 +15,7 @@ use fake::{
     faker::{
         address::raw::*,
         boolean::raw::*,
+        color::raw::*,
         company::raw::*,
         currency::raw::*,
         filesystem::raw::*,
