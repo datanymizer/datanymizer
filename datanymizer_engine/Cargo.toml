@@ -8,22 +8,22 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0"
-bcrypt = "0.12"
+bcrypt = "0.14"
 config = "0.13"
-csv = "1.1"
-fake = { version = "2.4.1" }
-log = "0.4.16"
+csv = "1.2"
+fake = { version = "2.6.1" }
+log = "0.4.17"
 jsonpath_lib = "0.3.0"
-once_cell = "1.5.2"
-rand = "0.8.4"
+once_cell = "1.17.1"
+rand = "0.8.5"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-serde_yaml = "0.8.14"
+serde_yaml = "0.9.21"
 # We need granular dependency management in Tera
 tera = { git = "https://github.com/datanymizer/tera", default-features = false, features = ["slug", "percent-encoding", "humansize", "rand"] }
 thiserror = "1.0"
-time = { version = "0.3.7", features = ["local-offset", "formatting", "macros", "parsing"] }
+time = { version = "0.3.21", features = ["local-offset", "formatting", "macros", "parsing"] }
 time-tz = "1.0.2"
-unicode-segmentation = "1.7.0"
-uuid = { version = "1.1.2", features = ["v4", "fast-rng"] }
-wildmatch = "2.1.0"
+unicode-segmentation = "1.10.1"
+uuid = { version = "1.3.2", features = ["v4", "fast-rng"] }
+wildmatch = "2.1.1"
