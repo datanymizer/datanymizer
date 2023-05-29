@@ -34,15 +34,14 @@ impl Default for ConsoleIndicator {
 
 impl Indicator for ConsoleIndicator {
     fn start_pb(&self, size: u64, name: &str) {
-        let delta = size / 100;
         self.pb.set_length(size);
-        self.pb.set_draw_delta(delta);
-        self.pb.set_prefix(name);
+        self.pb.set_prefix(name.to_owned());
         self.pb.set_style(
             ProgressStyle::default_bar()
                 .template(
                     "[Dumping: {prefix}] [|{bar:50}|] {pos} of {len} rows [{percent}%] ({eta})",
                 )
+                .unwrap()
                 .progress_chars("#>-"),
         );
     }

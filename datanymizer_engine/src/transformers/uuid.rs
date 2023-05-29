@@ -30,12 +30,12 @@ impl Transformer for UuidTransformer {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::Transformers;
+    use crate::{utils::EnumWrapper, Transformers};
 
     #[test]
     fn transform() {
         let config = r#"uuid: ~"#;
-        let t: Transformers = serde_yaml::from_str(config).unwrap();
+        let t: Transformers = EnumWrapper::parse(config).unwrap();
 
         let uuid1 = t.transform("", "", &None).unwrap().unwrap();
         assert!(Uuid::parse_str(uuid1.as_str()).is_ok());

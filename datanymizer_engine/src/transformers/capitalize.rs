@@ -44,11 +44,11 @@ impl Transformer for CapitalizeTransformer {
 
 #[cfg(test)]
 mod tests {
-    use crate::{TransformResult, Transformer, Transformers};
+    use crate::{utils::EnumWrapper, TransformResult, Transformer, Transformers};
 
     fn transform(value: &str) -> TransformResult {
         let config = r#"capitalize: ~"#;
-        let transformer: Transformers = serde_yaml::from_str(config).unwrap();
+        let transformer: Transformers = EnumWrapper::parse(config).unwrap();
         transformer.transform("field", value, &None)
     }
 

@@ -15,6 +15,7 @@ use fake::{
     faker::{
         address::raw::*,
         boolean::raw::*,
+        color::raw::*,
         company::raw::*,
         currency::raw::*,
         filesystem::raw::*,
@@ -59,14 +60,14 @@ macro_rules! fk_doctest {
     ( $ser:literal, $tr:ident ) => {
         concat!(
             "# use datanymizer_engine::{\n",
-            "#   Transformer, Transformers, transformers::",
+            "#   utils::EnumWrapper, transformers::",
             stringify!($tr),
-            "\n",
+            ", Transformer, Transformers\n",
             "# };\n",
             "let cfg = \"",
             $ser,
             ": {}\";\n",
-            "let t: Transformers = serde_yaml::from_str(cfg).unwrap();\n",
+            "let t: Transformers = EnumWrapper::parse(cfg).unwrap();\n",
             "let s = t.transform(\"table.field\", \"t\", &None).unwrap().unwrap();\n",
             "println!(\"{}\", s);\n",
             "# assert!(s.len() > 0);\n"

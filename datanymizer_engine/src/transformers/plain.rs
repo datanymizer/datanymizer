@@ -27,12 +27,13 @@ impl Transformer for PlainTransformer {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::utils::EnumWrapper;
     use crate::Transformers;
 
     #[test]
     fn parse_and_transform() {
         let cfg = "plain: 'some text'";
-        let transformer: Transformers = serde_yaml::from_str(cfg).unwrap();
+        let transformer: Transformers = EnumWrapper::parse(cfg).unwrap();
         let result = transformer.transform("field", "", &None).unwrap().unwrap();
 
         assert_eq!(result, "some text");

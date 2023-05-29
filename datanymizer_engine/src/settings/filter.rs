@@ -130,9 +130,10 @@ mod tests {
 
     mod table_list {
         use super::*;
+        use crate::utils::EnumWrapper;
 
         fn deserialize(config: &str) -> TableList {
-            serde_yaml::from_str(config).unwrap()
+            EnumWrapper::parse(config).unwrap()
         }
 
         #[test]
