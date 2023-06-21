@@ -16,6 +16,7 @@ postgres = "0.19.5"
 postgres-native-tls = "0.5.0"
 solvent = "0.8.3"
 url = "2.3"
+openssl = "0.10.55"
 
 [features]
 pg_db_tests = []
