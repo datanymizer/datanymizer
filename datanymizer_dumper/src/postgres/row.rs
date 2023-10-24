@@ -51,6 +51,15 @@ mod tests {
     use crate::postgres::{column::PgColumn, table::PgTable};
     use datanymizer_engine::Settings;
 
+    fn new_column(position: i32, name: &str) -> PgColumn {
+        PgColumn {
+            position,
+            name: String::from(name),
+            data_type: String::new(),
+            inner_type: Some(0),
+        }
+    }
+
     #[test]
     fn transform() {
         let config = r#"
@@ -74,30 +83,10 @@ mod tests {
 
         let mut table = PgTable::new("table_name".to_string(), "public".to_string());
 
-        let col1 = PgColumn {
-            position: 1,
-            name: String::from("first_name"),
-            data_type: String::new(),
-            inner_type: Some(0),
-        };
-        let col2 = PgColumn {
-            position: 2,
-            name: String::from("middle_name"),
-            data_type: String::new(),
-            inner_type: Some(0),
-        };
-        let col3 = PgColumn {
-            position: 3,
-            name: String::from("last_name"),
-            data_type: String::new(),
-            inner_type: Some(0),
-        };
-        let col4 = PgColumn {
-            position: 4,
-            name: String::from("comment"),
-            data_type: String::new(),
-            inner_type: Some(0),
-        };
+        let col1 = new_column(1, "first_name");
+        let col2 = new_column(2, "middle_name");
+        let col3 = new_column(3, "last_name");
+        let col4 = new_column(4, "comment");
 
         table.set_columns(vec![col1, col2, col3, col4]);
         let row = PgRow::from_string_row("first\tmiddle\tlast\t".to_string(), table);

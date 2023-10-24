@@ -249,6 +249,15 @@ mod tests {
     use super::*;
     use crate::{postgres::column::PgColumn, Table};
 
+    fn new_column(position: i32, name: &str) -> PgColumn {
+        PgColumn {
+            position,
+            name: String::from(name),
+            data_type: String::new(),
+            inner_type: Some(0),
+        }
+    }
+
     #[test]
     fn table_full_name() {
         let table = PgTable::new(String::from("name"), String::from("public"));
@@ -278,26 +287,9 @@ mod tests {
     fn set_columns() {
         let mut table = PgTable::new(String::from("name"), String::from("public"));
 
-        let col1 = PgColumn {
-            position: 1,
-            name: String::from("col1"),
-            data_type: String::new(),
-            inner_type: Some(0),
-        };
-        let col2 = PgColumn {
-            position: 2,
-            name: String::from("col2"),
-            data_type: String::new(),
-            inner_type: Some(0),
-        };
-        let col3 = PgColumn {
-            // Column positions in Postgres are not always in sequence
-            // (e.g., when we have dropped some column).
-            position: 4,
-            name: String::from("col4"),
-            data_type: String::new(),
-            inner_type: Some(0),
-        };
+        let col1 = new_column(1, "col1");
+        let col2 = new_column(2, "col2");
+        let col3 = new_column(4, "col4");
 
         table.set_columns(vec![col1.clone(), col2.clone(), col3.clone()]);
 
@@ -317,18 +309,8 @@ mod tests {
         }
 
         fn columns() -> Vec<PgColumn> {
-            let col1 = PgColumn {
-                position: 1,
-                name: String::from("col1"),
-                data_type: String::new(),
-                inner_type: Some(0),
-            };
-            let col2 = PgColumn {
-                position: 2,
-                name: String::from("col2"),
-                data_type: String::new(),
-                inner_type: Some(0),
-            };
+            let col1 = new_column(1, "col1");
+            let col2 = new_column(2, "col2");
             vec![col1, col2]
         }
 
