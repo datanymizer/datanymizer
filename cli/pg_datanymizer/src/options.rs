@@ -106,6 +106,9 @@ pub struct Options {
         help = "Turn on verbose logging features to get more information about dumper errors"
     )]
     pub verbose: u64,
+
+    #[structopt(long, name = "no-indicator", help = "Disable indicator")]
+    pub no_indicator: bool,
 }
 
 impl Options {
