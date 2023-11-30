@@ -432,3 +432,16 @@ tables:
 ## License
 
 [MIT](https://github.com/datanymizer/datanymizer/blob/main/LICENSE)
+
+## Development
+
+### Cross compilation
+
+Mac to Linux
+
+```
+rustup target add x86_64-unknown-linux-gnu
+brew tap messense/macos-cross-toolchains
+brew install x86_64-unknown-linux-gnu
+CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER=x86_64-linux-gnu-gcc cargo build --target x86_64-unknown-linux-gnu --release --features openssl/vendored
+```
