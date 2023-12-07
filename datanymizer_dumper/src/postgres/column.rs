@@ -68,27 +68,20 @@ mod tests {
     use super::*;
     use std::cmp::Ordering;
 
+    fn new_column(position: i32, name: &str) -> PgColumn {
+        PgColumn {
+            position,
+            name: String::from(name),
+            data_type: String::new(),
+            inner_type: Some(0),
+        }
+    }
+
     #[test]
     fn ordering_test() {
-        let col1 = &PgColumn {
-            position: 1,
-            name: String::from("Column1"),
-            data_type: String::new(),
-            inner_type: Some(0),
-        };
-        let col2 = &PgColumn {
-            position: 2,
-            name: String::from("Column2"),
-            data_type: String::new(),
-            inner_type: Some(0),
-        };
-
-        let col3 = &PgColumn {
-            position: 1,
-            name: String::from("Column1"),
-            data_type: String::new(),
-            inner_type: Some(0),
-        };
+        let col1 = &new_column(1, "Column1");
+        let col2 = &new_column(2, "Column2");
+        let col3 = &new_column(1, "Column1");
 
         assert_eq!(col1, col3);
         assert_eq!(col1.cmp(col2), Ordering::Less);
