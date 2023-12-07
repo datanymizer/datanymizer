@@ -30,9 +30,12 @@ impl App {
     }
 
     pub fn run(&self) -> Result<()> {
-        match &self.options.file {
-            Some(filename) => self.make_dump(File::create(filename)?, ConsoleIndicator::new()),
-            None => self.make_dump(io::stdout(), SilentIndicator),
+        match (&self.options.file, &self.options.no_indicator) {
+            (Some(filename), false) => {
+                self.make_dump(File::create(filename)?, ConsoleIndicator::new())
+            }
+            (Some(filename), true) => self.make_dump(File::create(filename)?, SilentIndicator),
+            _ => self.make_dump(io::stdout(), SilentIndicator),
         }
     }
 
