@@ -22,7 +22,7 @@ impl Default for TransactionConfig {
 #[derive(StructOpt, Debug, Clone, Default)]
 #[structopt(name = "pg_datanymizer")]
 pub struct Options {
-    #[structopt(name = "DBNAME")]
+    #[structopt(name = "DBNAME", env = "PGDATABASE")]
     database: String,
 
     #[structopt(
@@ -53,17 +53,28 @@ pub struct Options {
         short,
         long,
         help = "Database server host or socket directory",
-        default_value = "localhost"
+        default_value = "localhost",
+        env = "PGHOST"
     )]
     pub host: String,
 
-    #[structopt(short, long, help = "Database server port number [default: 5432]")]
+    #[structopt(
+        short,
+        long,
+        help = "Database server port number [default: 5432]",
+        env = "PGPORT"
+    )]
     pub port: Option<u16>,
 
-    #[structopt(short = "U", long, help = "Connect as specified database user")]
+    #[structopt(
+        short = "U",
+        long,
+        help = "Connect as specified database user",
+        env = "PGUSER"
+    )]
     pub username: Option<String>,
 
-    #[structopt(short = "W", long, help = "User password")]
+    #[structopt(short = "W", long, help = "User password", env = "PGPASSWORD")]
     pub password: Option<String>,
 
     #[structopt(
