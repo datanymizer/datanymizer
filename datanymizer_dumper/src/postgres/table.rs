@@ -139,7 +139,11 @@ impl PgTable {
         match cfg {
             Some(c) => c.query.as_ref().and_then(|q| {
                 if q.transform_condition.is_some() {
-                    self.query_unless_already_dumped(q, |s| format!("NOT ({})", s), already_dumped)
+                    self.query_unless_already_dumped(
+                        q,
+                        |s| format!("((NOT ({})) OR (({}) IS NULL))", s, s),
+                        already_dumped,
+                    )
                 } else {
                     None
                 }
@@ -419,7 +423,7 @@ mod tests {
             );
             assert_eq!(
                 table().untransformed_query_to(Some(&cfg), 0).unwrap(),
-                "COPY (SELECT * FROM \"public\".\"some_table\" WHERE NOT (col1 = 'value')) TO STDOUT"
+                "COPY (SELECT * FROM \"public\".\"some_table\" WHERE ((NOT (col1 = 'value')) OR ((col1 = 'value') IS NULL))) TO STDOUT"
             );
             assert_eq!(table().count_of_query_to(Some(&cfg)), 1000);
         }
@@ -440,7 +444,7 @@ mod tests {
             assert_eq!(
                 table().untransformed_query_to(Some(&cfg), 0).unwrap(),
                 "COPY (SELECT * FROM \"public\".\"some_table\" \
-                WHERE (col1 = 'value') AND NOT (col2 <> 'other_value') LIMIT 500) TO STDOUT"
+                WHERE (col1 = 'value') AND ((NOT (col2 <> 'other_value')) OR ((col2 <> 'other_value') IS NULL)) LIMIT 500) TO STDOUT"
             );
             assert_eq!(table().count_of_query_to(Some(&cfg)), 500);
         }
@@ -462,7 +466,7 @@ mod tests {
                 );
                 assert_eq!(
                     table().untransformed_query_to(Some(&cfg), 100).unwrap(),
-                    "COPY (SELECT * FROM \"public\".\"some_table\" WHERE NOT (col1 = 'value')) TO STDOUT"
+                    "COPY (SELECT * FROM \"public\".\"some_table\" WHERE ((NOT (col1 = 'value')) OR ((col1 = 'value') IS NULL))) TO STDOUT"
                 );
             }
 
@@ -480,7 +484,7 @@ mod tests {
                 );
                 assert_eq!(
                     table().untransformed_query_to(Some(&cfg), 100).unwrap(),
-                    "COPY (SELECT * FROM \"public\".\"some_table\" WHERE NOT (col1 = 'value') LIMIT 50) TO STDOUT"
+                    "COPY (SELECT * FROM \"public\".\"some_table\" WHERE ((NOT (col1 = 'value')) OR ((col1 = 'value') IS NULL)) LIMIT 50) TO STDOUT"
                 );
             }
 
