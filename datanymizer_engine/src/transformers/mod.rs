@@ -10,6 +10,10 @@ pub use internet::{EmailKind, EmailTransformer, IpTransformer, PasswordTransform
 mod phone;
 pub use phone::PhoneTransformer;
 
+mod phone_north_america;
+pub use phone_north_america::PhoneNorthAmericaAreaCodeTransformer;
+pub use phone_north_america::PhoneNorthAmericaTransformer;
+
 mod pipeline;
 pub use pipeline::PipelineTransformer;
 
@@ -81,6 +85,8 @@ define_transformers_enum![
     ("email", Email, EmailTransformer),
     ("ip", Ip, IpTransformer),
     ("phone", Phone, PhoneTransformer),
+    ("phone_north_america", PhoneNorthAmerica, PhoneNorthAmericaTransformer),
+    ("phone_north_america_area_code", PhoneNorthAmericaAreaCode, PhoneNorthAmericaAreaCodeTransformer),
     ("pipeline", Pipeline, PipelineTransformer<Transformers>),
     ("capitalize", Capitalize, CapitalizeTransformer),
     ("template", Template, TemplateTransformer),
