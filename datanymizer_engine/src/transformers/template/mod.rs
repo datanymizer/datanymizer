@@ -648,13 +648,13 @@ mod tests {
             assert_eq!(value, "Read: 0.5");
 
             let value = w.transform("field", "2", &None).unwrap().unwrap();
-            assert_eq!(value, "Write: 2.0 into key");
+            assert_eq!(value, "Write: 2 into key");
 
             let value = r.transform("field", "key", &None).unwrap().unwrap();
             assert_eq!(value, "Read: 2.5");
 
             let value = w.transform("field", "-1", &None).unwrap().unwrap();
-            assert_eq!(value, "Write: -1.0 into key");
+            assert_eq!(value, "Write: -1 into key");
 
             let value = r.transform("field", "key", &None).unwrap().unwrap();
             assert_eq!(value, "Read: 1.5");

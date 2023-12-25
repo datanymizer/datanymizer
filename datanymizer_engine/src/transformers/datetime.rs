@@ -130,7 +130,7 @@ impl Default for Config {
         Self {
             from: String::from("1970-01-01T00:00:00+00:00"),
             to: String::from("9999-01-01T00:00:00+00:00"),
-            format: String::from("%Y-%m-%dT%H:%M:%S%.f%:z"),
+            format: String::from("%Y-%m-%dT%H:%M:%S%.f+00:00"),
         }
     }
 }
