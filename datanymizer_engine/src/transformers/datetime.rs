@@ -113,8 +113,7 @@ impl Transformer for RandomDateTimeTransformer {
 
         let res = (self.parsed_from + Duration::seconds(rnd_duration)).format(&self.format);
 
-        let str = res.to_string();
-        TransformResult::present(str)
+        TransformResult::present(res)
     }
 }
 
