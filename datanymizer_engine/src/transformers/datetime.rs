@@ -113,7 +113,8 @@ impl Transformer for RandomDateTimeTransformer {
 
         let res = (self.parsed_from + Duration::seconds(rnd_duration)).format(&self.format);
 
-        TransformResult::present(res)
+        let str = res.to_string();
+        TransformResult::present(str)
     }
 }
 
@@ -130,7 +131,7 @@ impl Default for Config {
         Self {
             from: String::from("1970-01-01T00:00:00+00:00"),
             to: String::from("9999-01-01T00:00:00+00:00"),
-            format: String::from("%Y-%m-%dT%H:%M:%S%.f%:z"),
+            format: String::from("%Y-%m-%dT%H:%M:%S%.f+00:00"),
         }
     }
 }
