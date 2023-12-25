@@ -1,12 +1,11 @@
-use crate::{
-    transformer::{TransformContext, TransformResult, TransformResultHelper, Transformer},
-    utils::format_time::{CompileError, Compiled},
-};
+use crate::transformer::{TransformContext, TransformResult, TransformResultHelper, Transformer};
+use chrono::{DateTime, Duration, NaiveDateTime, ParseError, ParseResult};
 use rand::distributions::{Distribution, Uniform};
 use serde::{Deserialize, Serialize};
-use std::fmt::{Debug, Display, Formatter};
+use std::fmt::Debug;
 use std::hash::{Hash, Hasher};
-use time::{format_description::well_known::Rfc3339, Duration, OffsetDateTime};
+
+const BOUNDS_FORMAT: &str = "%Y-%m-%dT%H:%M:%S%.f%:z";
 
 /// Generates random dates in the specified interval (granularity is a second).
 ///
@@ -55,16 +54,14 @@ pub struct RandomDateTimeTransformer {
     format: String,
 
     #[serde(skip)]
-    parsed_from: OffsetDateTime,
+    parsed_from: NaiveDateTime,
     #[serde(skip)]
-    parsed_to: OffsetDateTime,
-    #[serde(skip)]
-    compiled: Compiled,
+    parsed_to: NaiveDateTime,
 }
 
 impl RandomDateTimeTransformer {
-    fn parse_date(s: &str) -> Result<OffsetDateTime, time::error::Parse> {
-        OffsetDateTime::parse(s, &Rfc3339)
+    fn parse_date(s: &str) -> ParseResult<NaiveDateTime> {
+        DateTime::parse_from_str(s, BOUNDS_FORMAT).map(|d| d.naive_utc())
     }
 }
 
@@ -85,14 +82,13 @@ impl PartialEq for RandomDateTimeTransformer {
 impl TryFrom<Config> for RandomDateTimeTransformer {
     type Error = ParseError;
 
-    fn try_from(c: Config) -> Result<Self, Self::Error> {
+    fn try_from(c: Config) -> ParseResult<Self> {
         let from = c.from;
         let to = c.to;
         let format = c.format;
 
         let parsed_from = Self::parse_date(from.as_str())?;
         let parsed_to = Self::parse_date(to.as_str())?;
-        let compiled = Compiled::compile(format.as_str())?;
 
         Ok(Self {
             from,
@@ -100,7 +96,6 @@ impl TryFrom<Config> for RandomDateTimeTransformer {
             format,
             parsed_from,
             parsed_to,
-            compiled,
         })
     }
 }
@@ -112,12 +107,11 @@ impl Transformer for RandomDateTimeTransformer {
         _field_value: &str,
         _ctx: &Option<TransformContext>,
     ) -> TransformResult {
-        let duration = (self.parsed_to - self.parsed_from).whole_seconds();
+        let duration = (self.parsed_to - self.parsed_from).num_seconds();
         let mut rng = rand::thread_rng();
         let rnd_duration = Uniform::new_inclusive(0, duration).sample(&mut rng);
 
-        let res = (self.parsed_from + Duration::seconds(rnd_duration))
-            .format(&self.compiled.format_items())?;
+        let res = (self.parsed_from + Duration::seconds(rnd_duration)).format(&self.format);
 
         TransformResult::present(res)
     }
@@ -138,35 +132,6 @@ impl Default for Config {
             to: String::from("9999-01-01T00:00:00+00:00"),
             format: String::from("%Y-%m-%dT%H:%M:%S%.f%:z"),
         }
-    }
-}
-
-#[derive(Debug)]
-pub enum ParseError {
-    Parse(time::error::Parse),
-    Compile(CompileError),
-}
-
-impl Display for ParseError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Parse(e) => write!(f, "{}", e),
-            Self::Compile(e) => write!(f, "{}", e),
-        }
-    }
-}
-
-impl std::error::Error for ParseError {}
-
-impl From<time::error::Parse> for ParseError {
-    fn from(err: time::error::Parse) -> Self {
-        Self::Parse(err)
-    }
-}
-
-impl From<CompileError> for ParseError {
-    fn from(err: CompileError) -> Self {
-        Self::Compile(err)
     }
 }
 
