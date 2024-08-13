@@ -20,11 +20,8 @@ pub fn replace_chars(s: &mut String) {
     let mut new_s = None;
     let mut beginning = 0;
     let mut slash_count = 0;
-    let mut position = 0;
 
-    for (_i, c) in s.chars().enumerate() {
-        position = position + c.to_string().len();
-
+    for (i, c) in s.char_indices() {
         if let Some(replacement) = match c {
             '\x08' => Some(r#"\b"#),
             '\x0C' => Some(r#"\f"#),
@@ -39,14 +36,14 @@ pub fn replace_chars(s: &mut String) {
             _ => None,
         } {
             if new_s.is_none() {
-                new_s = Some(String::with_capacity(len * 2 - position + 1));
+                new_s = Some(String::with_capacity(len * 2 - i));
             }
             if let Some(ref mut new_s) = new_s {
-                if position > beginning {
-                    new_s.push_str(&s[beginning..position - 1])
+                if i > beginning {
+                    new_s.push_str(&s[beginning..i])
                 }
                 new_s.push_str(replacement);
-                beginning = position;
+                beginning = i + 1;
             }
         }
     }
@@ -139,6 +136,34 @@ mod tests {
         let mut s = String::from("Яx\\");
         replace_chars(&mut s);
         assert_eq!(s, r#"Яx\\"#);
+    }
+
+    #[test]
+    fn utf8mb3_problem_case_1(){
+        let mut s = String::from("y̆\\");
+        replace_chars(&mut s);
+        assert_eq!(s, r#"y̆\\"#);
+    }
+
+    #[test]
+    fn utf8mb3_problem_case_2(){
+        let mut s = String::from("y̆x\\");
+        replace_chars(&mut s);
+        assert_eq!(s, r#"y̆x\\"#);
+    }
+
+    #[test]
+    fn utf8mb4_problem_case_1(){
+        let mut s = String::from("𡞰\\");
+        replace_chars(&mut s);
+        assert_eq!(s, r#"𡞰\\"#);
+    }
+
+    #[test]
+    fn utf8mb4_problem_case_2(){
+        let mut s = String::from("𡞰x\\");
+        replace_chars(&mut s);
+        assert_eq!(s, r#"𡞰x\\"#);
     }
 
     mod null_like_sequences {
