@@ -132,35 +132,35 @@ mod tests {
     }
 
     #[test]
-    fn utf8_problem_case_2(){
+    fn utf8_problem_case_2() {
         let mut s = String::from("Яx\\");
         replace_chars(&mut s);
         assert_eq!(s, r#"Яx\\"#);
     }
 
     #[test]
-    fn utf8mb3_problem_case_1(){
+    fn utf8mb3_problem_case_1() {
         let mut s = String::from("y̆\\");
         replace_chars(&mut s);
         assert_eq!(s, r#"y̆\\"#);
     }
 
     #[test]
-    fn utf8mb3_problem_case_2(){
+    fn utf8mb3_problem_case_2() {
         let mut s = String::from("y̆x\\");
         replace_chars(&mut s);
         assert_eq!(s, r#"y̆x\\"#);
     }
 
     #[test]
-    fn utf8mb4_problem_case_1(){
+    fn utf8mb4_problem_case_1() {
         let mut s = String::from("𡞰\\");
         replace_chars(&mut s);
         assert_eq!(s, r#"𡞰\\"#);
     }
 
     #[test]
-    fn utf8mb4_problem_case_2(){
+    fn utf8mb4_problem_case_2() {
         let mut s = String::from("𡞰x\\");
         replace_chars(&mut s);
         assert_eq!(s, r#"𡞰x\\"#);
