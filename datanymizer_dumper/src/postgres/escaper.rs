@@ -20,8 +20,11 @@ pub fn replace_chars(s: &mut String) {
     let mut new_s = None;
     let mut beginning = 0;
     let mut slash_count = 0;
+    let mut position = 0;
 
-    for (i, c) in s.chars().enumerate() {
+    for (_i, c) in s.chars().enumerate() {
+        position = position + c.to_string().len();
+
         if let Some(replacement) = match c {
             '\x08' => Some(r#"\b"#),
             '\x0C' => Some(r#"\f"#),
@@ -36,14 +39,14 @@ pub fn replace_chars(s: &mut String) {
             _ => None,
         } {
             if new_s.is_none() {
-                new_s = Some(String::with_capacity(len * 2 - i));
+                new_s = Some(String::with_capacity(len * 2 - position + 1));
             }
             if let Some(ref mut new_s) = new_s {
-                if i > beginning {
-                    new_s.push_str(&s[beginning..i])
+                if position > beginning {
+                    new_s.push_str(&s[beginning..position - 1])
                 }
                 new_s.push_str(replacement);
-                beginning = i + 1;
+                beginning = position;
             }
         }
     }
@@ -122,6 +125,20 @@ mod tests {
         let mut s = String::from("\ta\x0Bb\\c\x08\x0C\r\n");
         replace_chars(&mut s);
         assert_eq!(s, r#"\ta\vb\\c\b\f\r\n"#);
+    }
+
+    #[test]
+    fn utf8_problem_case_1() {
+        let mut s = String::from("Я\\");
+        replace_chars(&mut s);
+        assert_eq!(s, r#"Я\\"#);
+    }
+
+    #[test]
+    fn utf8_problem_case_2(){
+        let mut s = String::from("Яx\\");
+        replace_chars(&mut s);
+        assert_eq!(s, r#"Яx\\"#);
     }
 
     mod null_like_sequences {
