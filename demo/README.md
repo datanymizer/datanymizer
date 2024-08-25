@@ -2,7 +2,7 @@
 
 ## Get started
 
-1. Install `docker` and `docker-compose` to your development environment.
+1. Install `docker` and `docker compose` to your development environment.
 2. Go to `demo` directory:
 
 ``` shell
