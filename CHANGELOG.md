@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   [#214](https://github.com/datanymizer/datanymizer/pull/214) ([@evgeniy-r](https://github.com/evgeniy-r))
 
 ### 🛠 Fixed
+- Fix escaping multibyte strings [#219](https://github.com/datanymizer/datanymizer/pull/219)
+  ([@dakulov](https://github.com/dakulov), [@kontsevoye](https://github.com/kontsevoye))
 
 ## [v0.6.0] - 2022-08-09
 ### 🚀 Added
