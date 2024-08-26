@@ -117,7 +117,13 @@ jobs:
             postgres://postgres:${{ env.postgres_password }}@localhost:${{ env.postgres_port }}/datanymizer_test
           RUSTFLAGS: |
             -Zprofile -Zpanic_abort_tests -Ccodegen-units=1 -Clink-dead-code -Coverflow-checks=off
-      - uses: actions-rs/grcov@v0.1
+      - run: |
+          cd target/debug/deps
+          find . -name "pg_datanymizer-*.gcda" -o -name "pg_datanymizer-*.gcno" -o \
+                 -name "datanymizer_dumper-*.gcda" -o -name "datanymizer_dumper-*.gcno" -o \
+                 -name "datanymizer_engine-*.gcda" -o -name "datanymizer_engine-*.gcno" | zip ../../../coverage -@
+          cd ../../..
+          grcov --llvm --output-type=lcov --output-file=lcov.info coverage.zip
       - uses: codecov/codecov-action@v1
         with:
           file: ./lcov.info

@@ -1,3 +1,0 @@
-llvm: true
-output-type: lcov
-output-file: ./lcov.info
