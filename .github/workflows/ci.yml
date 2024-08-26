@@ -67,7 +67,7 @@ jobs:
       - name: Check with Clippy
         run: cargo clippy -- -D warnings
       - name: Cleanup for caching
-        uses: cargo clean --package pg_datanymizer
+        run: cargo clean --package pg_datanymizer
         if: steps.cache-target.outputs.cache-hit != 'true'
 
   test:
