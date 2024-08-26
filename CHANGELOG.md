@@ -11,8 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add the JSON transformer [#134](https://github.com/datanymizer/datanymizer/pull/134)
   ([@evgeniy-r](https://github.com/evgeniy-r))
 - transform_condition on nullable fields [#203](https://github.com/datanymizer/datanymizer/pull/203)
+  ([@gregwebs](https://github.com/gregwebs))
 
 ### ⚙️ Changed
+- Don't use forked Tera anymore (the security issue has fixed), update some dependencies
+  [#214](https://github.com/datanymizer/datanymizer/pull/214) ([@evgeniy-r](https://github.com/evgeniy-r))
 
 ### 🛠 Fixed
 
