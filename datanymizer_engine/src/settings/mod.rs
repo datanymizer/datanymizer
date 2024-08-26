@@ -57,9 +57,9 @@ impl Settings {
         Self::from_source(File::from_str(config, FileFormat::Yaml))
     }
 
-    fn from_source<S: 'static>(source: S) -> Result<Self, ConfigError>
+    fn from_source<S>(source: S) -> Result<Self, ConfigError>
     where
-        S: config::Source + Send + Sync,
+        S: config::Source + Send + Sync + 'static,
     {
         let c = Config::builder().add_source(source).build()?;
 

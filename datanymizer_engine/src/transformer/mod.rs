@@ -111,15 +111,3 @@ impl From<tera::Error> for TransformError {
         Self::from_error(err)
     }
 }
-
-impl From<time::error::Format> for TransformError {
-    fn from(err: time::error::Format) -> Self {
-        Self::from_error(err)
-    }
-}
-
-impl From<time::error::InvalidFormatDescription> for TransformError {
-    fn from(err: time::error::InvalidFormatDescription) -> Self {
-        Self::from_error(err)
-    }
-}

@@ -5,7 +5,7 @@ use fake::locales::Data;
 #[allow(clippy::upper_case_acronyms)]
 pub struct RU;
 
-#[cfg_attr(tool_attributes, rustfmt_skip)]
+#[rustfmt::skip]
 impl Data for RU {
     const NAME_FIRST_NAME: &'static [&'static str] = &[
         "Абрам", "Авраам", "Ибрагим", "Аввакум", "Аввакуум", "Аббакум", "Август", "Августин",
@@ -401,7 +401,7 @@ impl Data for RU {
 }
 
 impl ExtData for RU {
-    #[cfg_attr(tool_attributes, rustfmt_skip)]
+    #[rustfmt::skip]
     const NAME_MIDDLE_NAME: &'static [&'static str] = &[
         "Александрович", "Алексеевич", "Альбертович", "Анатольевич", "Андреевич", "Антонович",
         "Аркадьевич", "Артемович", "Богданович", "Богуславович", "Борисович", "Вадимович",
@@ -429,7 +429,7 @@ impl ExtData for RU {
         "Яковлевна",
     ];
 
-    #[cfg_attr(tool_attributes, rustfmt_skip)]
+    #[rustfmt::skip]
     const COMPANY_BEGINNING_PART: &'static [&'static str] = &[
         "Бур", "Волокно", "Гео", "Гибрид", "Гидро", "Гипро", "Деталь", "Дизель", "Запчасть",
         "Инструмент", "Кран", "Лазер", "Маш", "Мех", "Монтаж", "Нано", "Пром", "Резино", "Рем",
@@ -452,7 +452,7 @@ impl ExtData for RU {
         "Продукт", "Проект", "Проф", "Сервис", "Спец", "Стандарт", "Фактор", "Центр",
     ];
 
-    #[cfg_attr(tool_attributes, rustfmt_skip)]
+    #[rustfmt::skip]
     const COMPANY_END_PART: &'static [&'static str] = &[
         "Автоматика", "Волокно", "Гео", "Гибрид", "Гидравлика", "Гидро", "Гипро", "Деталь", "Дизель",
         "Запчасть", "Индустрия", "Инструмент", "Кран", "Лазер", "Маш", "Мех", "Монтаж", "Нано",

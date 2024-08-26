@@ -20,6 +20,7 @@ use std::char;
 /// * `format` - you can specify format for you phone number
 /// * `#` - any digit from `0` to `9`
 /// * `^` - any digit from `1` to `9`
+///
 /// Also, you can use any other symbols in `format`, like: `^##-00-### (##-##)`
 ///
 /// If you want to generate unique phone numbers, use this option:
