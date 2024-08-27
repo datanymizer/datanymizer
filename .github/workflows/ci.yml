@@ -14,77 +14,60 @@ jobs:
     name: Check / Linux
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
-      - uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@v1
         id: toolchain
         with:
-          profile: minimal
           toolchain: stable
       - name: Chown cargo registry because of caching
         run: sudo chown -R runner ~/.cargo/registry
       - name: Cache cargo registry and target
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: |
             ~/.cargo/registry
             target
-          key: linux-check-${{ steps.toolchain.outputs.rustc_hash }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          key: linux-check-${{ steps.toolchain.outputs.cachekey }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - name: Check
-        uses: actions-rs/cargo@v1
-        with:
-          command: check
+        run: cargo check
       - name: Cleanup for caching
-        uses: actions-rs/cargo@v1
-        with:
-          command: clean
-          args: --package pg_datanymizer
+        run: cargo clean --package pg_datanymizer
         if: steps.cache-target.outputs.cache-hit != 'true'
 
   fmt:
     name: Rustfmt / Linux
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
-      - uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@v1
         with:
-          profile: minimal
           toolchain: stable
           components: rustfmt
-      - uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --all -- --check
+      - run: cargo fmt --all -- --check
 
   clippy:
     name: Clippy / Linux
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
-      - uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@v1
         id: toolchain
         with:
-          profile: minimal
           toolchain: stable
           components: clippy
       - name: Chown cargo registry because of caching
         run: sudo chown -R runner ~/.cargo/registry
       - name: Cache cargo registry and target
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: |
             ~/.cargo/registry
             target
-          key: clippy-linux-${{ steps.toolchain.outputs.rustc_hash }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          key: clippy-linux-${{ steps.toolchain.outputs.cachekey }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - name: Check with Clippy
-        uses: actions-rs/cargo@v1
-        with:
-          command: clippy
-          args: -- -D warnings
+        run: cargo clippy -- -D warnings
       - name: Cleanup for caching
-        uses: actions-rs/cargo@v1
-        with:
-          command: clean
-          args: --package pg_datanymizer
+        run: cargo clean --package pg_datanymizer
         if: steps.cache-target.outputs.cache-hit != 'true'
 
   test:
@@ -95,31 +78,29 @@ jobs:
       postgres_port: 5432
       postgres_version: 14
     steps:
-      - name: Run Postges (with Docker)
+      - name: Run Postgres (with Docker)
         # requires the `server.crt` file for TLS support
         run: |
           docker run -d -p 127.0.0.1:${{ env.postgres_port }}:5432 -e POSTGRES_PASSWORD=${{ env.postgres_password }} \
             postgres:${{ env.postgres_version }}
-      - uses: actions/checkout@v1
-      - uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@v1
         id: toolchain
         with:
-          profile: minimal
           toolchain: nightly
-          override: true
       - name: Chown cargo registry because of caching
         run: sudo chown -R runner ~/.cargo/registry
       - name: Set grcov version
         run: echo "GRCOV_VERSION=$(cargo search --limit 1 grcov | head -n1 | cut -d '"' -f2)" >> $GITHUB_ENV
       - name: Cache cargo registry, target, and grcov binary
         id: test-grcov
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/bin/grcov
             target
-          key: grcov-${{ steps.toolchain.outputs.rustc_hash }}-cargo-${{ hashFiles('**/Cargo.lock') }}-${{ env.GRCOV_VERSION }}
+          key: grcov-${{ steps.toolchain.outputs.cachekey }}-cargo-${{ hashFiles('**/Cargo.lock') }}-${{ env.GRCOV_VERSION }}
       - name: Install grcov
         run: |
           cargo install --version $GRCOV_VERSION grcov
@@ -129,32 +110,34 @@ jobs:
           rm -f target/debug/deps/*.gcda
           rm -f target/debug/deps/*.gcno
       - name: Run tests
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --all-features #--no-fail-fast
+        run: cargo test --all-features
         env:
           CARGO_INCREMENTAL: '0'
           DATANYMIZER_TEST_PG_DB: |
             postgres://postgres:${{ env.postgres_password }}@localhost:${{ env.postgres_port }}/datanymizer_test
           RUSTFLAGS: |
             -Zprofile -Zpanic_abort_tests -Ccodegen-units=1 -Clink-dead-code -Coverflow-checks=off
-      - uses: actions-rs/grcov@v0.1
-      - uses: codecov/codecov-action@v1
+      - name: Prepare coverage info for Codecov
+        run: |
+          cd target/debug/deps
+          find . -name "pg_datanymizer-*.gcda" -o -name "pg_datanymizer-*.gcno" -o \
+                 -name "datanymizer_dumper-*.gcda" -o -name "datanymizer_dumper-*.gcno" -o \
+                 -name "datanymizer_engine-*.gcda" -o -name "datanymizer_engine-*.gcno" | zip ../../../coverage -@
+          cd ../../..
+          grcov --llvm --output-type=lcov --output-file=lcov.info coverage.zip
+      - uses: codecov/codecov-action@v4
         with:
           file: ./lcov.info
+          token: ${{ secrets.CODECOV_TOKEN }}
       - name: Cleanup for caching
-        uses: actions-rs/cargo@v1
-        with:
-          command: clean
-          args: --package pg_datanymizer
+        run: cargo clean --package pg_datanymizer
         if: steps.cache-target.outputs.cache-hit != 'true'
 
   test_demo:
     name: Test demo
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v4
       - name: Bootstrap demo, make a dump file, ensure that it is not empty
         run: |
           cd demo
@@ -171,64 +154,52 @@ jobs:
     name: Build / Linux
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
-      - uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@v1
         id: toolchain
         with:
-          profile: minimal
           toolchain: stable
       - name: Chown cargo registry because of caching
         run: sudo chown -R runner ~/.cargo/registry
       - name: Cache cargo registry and target
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: |
             ~/.cargo/registry
             target
-          key: build-linux-${{ steps.toolchain.outputs.rustc_hash }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          key: build-linux-${{ steps.toolchain.outputs.cachekey }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - name: Build
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
+        run: cargo build
       - name: Cleanup for caching
-        uses: actions-rs/cargo@v1
-        with:
-          command: clean
-          args: --package pg_datanymizer
+        run: cargo clean --package pg_datanymizer
         if: steps.cache-target.outputs.cache-hit != 'true'
 
   windows_build:
     name: Build / Windows
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v1
-      - uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@v1
         id: toolchain
         with:
-          profile: minimal
           toolchain: stable
       - name: Cache cargo registry and target
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: |
             ~/.cargo/registry
             target
-          key: build-windows-${{ steps.toolchain.outputs.rustc_hash }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          key: build-windows-${{ steps.toolchain.outputs.cachekey }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - name: Build
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
+        run: cargo build
       - name: Cleanup for caching
-        uses: actions-rs/cargo@v1
-        with:
-          command: clean
-          args: --package pg_datanymizer
+        run: cargo clean --package pg_datanymizer
         if: steps.cache-target.outputs.cache-hit != 'true'
 
   docker_build:
     name: Build / Docker
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v4
       - name: Build
         run: docker build --target builder .

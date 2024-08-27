@@ -11,10 +11,9 @@ jobs:
   release-linux-gnu:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
-      - uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@v1
         with:
-          profile: minimal
           toolchain: stable
       - name: Build
         run: |
@@ -35,10 +34,9 @@ jobs:
   release-linux-musl:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
-      - uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@v1
         with:
-          profile: minimal
           toolchain: stable
       - name: Build
         run: |
@@ -74,8 +72,8 @@ jobs:
   release-darwin:
     runs-on: macos-11
     steps:
-      - uses: actions/checkout@v1
-      - uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@v1
         with:
           toolchain: stable
       - name: Build
@@ -96,8 +94,8 @@ jobs:
   release-win:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v1
-      - uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@v1
         with:
           toolchain: stable
       - name: Build
@@ -117,7 +115,7 @@ jobs:
   release-docker:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v4
       - name: Build and push image
         run: |
           GIT_TAG=$(git describe --tags `git rev-list --tags --max-count=1` | sed "s/v//")
@@ -133,7 +131,7 @@ jobs:
   # release-crate:
   #   runs-on: ubuntu-latest
   #   steps:
-  #     - uses: actions/checkout@v1
+  #     - uses: actions/checkout@v4
   #     - name: Build and publish to crates.io
   #       run: |
   #         cargo login ${{ secrets.CRATES_TOKEN }}
