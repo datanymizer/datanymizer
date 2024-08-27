@@ -1,16 +1,15 @@
 use anyhow::{anyhow, Result};
-use structopt::{clap::arg_enum, StructOpt};
+use clap::{ArgAction, Parser, ValueEnum};
 use url::Url;
 
-arg_enum! {
-    #[derive(Debug, Clone)]
-    pub enum TransactionConfig {
-        NoTransaction,
-        ReadUncommitted,
-        ReadCommitted,
-        RepeatableRead,
-        Serializable,
-    }
+#[derive(ValueEnum, Debug, Clone)]
+#[value(rename_all = "PascalCase")]
+pub enum TransactionConfig {
+    NoTransaction,
+    ReadUncommitted,
+    ReadCommitted,
+    RepeatableRead,
+    Serializable,
 }
 
 impl Default for TransactionConfig {
@@ -19,13 +18,21 @@ impl Default for TransactionConfig {
     }
 }
 
-#[derive(StructOpt, Debug, Clone, Default)]
-#[structopt(name = "pg_datanymizer")]
+#[derive(Parser, Debug, Clone, Default)]
+#[command(
+    name = "pg_datanymizer",
+    about = "Powerful Postgres database anonymizer with flexible rules",
+    version,
+    disable_help_flag = true
+)]
 pub struct Options {
-    #[structopt(name = "DBNAME", env = "PGDATABASE")]
+    #[arg(long, action = ArgAction::HelpLong)]
+    help: Option<bool>,
+
+    #[arg(name = "DBNAME", env = "PGDATABASE")]
     database: String,
 
-    #[structopt(
+    #[arg(
         short,
         long,
         help = "Path to config file",
@@ -33,7 +40,7 @@ pub struct Options {
     )]
     pub config: String,
 
-    #[structopt(
+    #[arg(
         short,
         long,
         name = "FILE",
@@ -41,7 +48,7 @@ pub struct Options {
     )]
     pub file: Option<String>,
 
-    #[structopt(
+    #[arg(
         short,
         long = "dbname",
         help = "database to dump",
@@ -49,7 +56,7 @@ pub struct Options {
     )]
     pub db_name: String,
 
-    #[structopt(
+    #[arg(
         short,
         long,
         help = "Database server host or socket directory",
@@ -58,7 +65,7 @@ pub struct Options {
     )]
     pub host: String,
 
-    #[structopt(
+    #[arg(
         short,
         long,
         help = "Database server port number [default: 5432]",
@@ -66,59 +73,59 @@ pub struct Options {
     )]
     pub port: Option<u16>,
 
-    #[structopt(
-        short = "U",
+    #[arg(
+        short = 'U',
         long,
         help = "Connect as specified database user",
         env = "PGUSER"
     )]
     pub username: Option<String>,
 
-    #[structopt(short = "W", long, help = "User password", env = "PGPASSWORD")]
+    #[arg(short = 'W', long, help = "User password", env = "PGPASSWORD")]
     pub password: Option<String>,
 
-    #[structopt(
+    #[arg(
+        value_enum,
         long,
-        default_value,
-        case_insensitive = true,
-        possible_values = &TransactionConfig::variants(),
-        help = "Using a transaction when dumping data, you can specify the isolation level",
+        default_value_t,
+        ignore_case = true,
+        help = "Using a transaction when dumping data, you can specify the isolation level"
     )]
     pub dump_transaction: TransactionConfig,
 
-    #[structopt(
+    #[arg(
         long = "pg_dump",
         help = "pg_dump file location",
         default_value = "pg_dump"
     )]
     pub pg_dump_location: String,
 
-    #[structopt(
+    #[arg(
         long = "accept_invalid_hostnames",
         help = "Accept or not invalid hostnames when using SSL"
     )]
     pub accept_invalid_hostnames: bool,
 
-    #[structopt(
+    #[arg(
         long = "accept_invalid_certs",
         help = "Accept or not invalid certificates (e.g., self-signed) when using SSL"
     )]
     pub accept_invalid_certs: bool,
 
-    #[structopt(
+    #[arg(
         name = "PG_DUMP_ARGS",
         help = "The remaining arguments are passed directly to `pg_dump` calls. You should add `--` before <DBNAME> in such cases"
     )]
     pub pg_dump_args: Vec<String>,
 
-    #[structopt(
-        parse(from_occurrences),
-        short = "v",
+    #[arg(
+        action = ArgAction::Count,
+        short = 'v',
         help = "Turn on verbose logging features to get more information about dumper errors"
     )]
-    pub verbose: u64,
+    pub verbose: u8,
 
-    #[structopt(long, name = "no-indicator", help = "Disable indicator")]
+    #[arg(long, name = "no-indicator", help = "Disable indicator")]
     pub no_indicator: bool,
 }
 
@@ -220,7 +227,7 @@ mod tests {
             "--no-owner",
             "--no-acl",
         ];
-        let options = Options::from_iter(cmd);
+        let options = Options::parse_from(cmd);
 
         assert_eq!(
             options.database_url().unwrap().as_str(),
@@ -228,6 +235,13 @@ mod tests {
         );
         assert_eq!(options.config, "some_config.yml");
         assert_eq!(options.file, Some("some_file.sql".to_string()));
+        assert_eq!(options.verbose, 0);
+        assert!(!options.accept_invalid_hostnames);
+        assert!(!options.accept_invalid_certs);
+        assert!(matches!(
+            options.dump_transaction,
+            TransactionConfig::ReadCommitted
+        ));
         assert_eq!(options.pg_dump_args, vec!["--no-owner", "--no-acl"]);
     }
 
@@ -247,5 +261,61 @@ mod tests {
 
         assert_eq!(opts1.database_url().unwrap().to_string(), scheme1);
         assert_eq!(opts2.database_url().unwrap().to_string(), scheme2);
+    }
+
+    #[test]
+    fn dump_transaction_pascal_case() {
+        let cmd = vec![
+            "pg_datanymizer",
+            "--dump-transaction",
+            "RepeatableRead",
+            "database",
+        ];
+        let options = Options::parse_from(cmd);
+
+        assert!(matches!(
+            options.dump_transaction,
+            TransactionConfig::RepeatableRead
+        ));
+    }
+
+    #[test]
+    fn dump_transaction_lower_case() {
+        let cmd = vec![
+            "pg_datanymizer",
+            "--dump-transaction",
+            "repeatableread",
+            "database",
+        ];
+        let options = Options::parse_from(cmd);
+
+        assert!(matches!(
+            options.dump_transaction,
+            TransactionConfig::RepeatableRead
+        ));
+    }
+
+    #[test]
+    fn verbose() {
+        let cmd = vec!["pg_datanymizer", "-v", "database"];
+        let options = Options::parse_from(cmd);
+
+        assert_eq!(options.verbose, 1);
+    }
+
+    #[test]
+    fn very_verbose() {
+        let cmd = vec!["pg_datanymizer", "-vv", "database"];
+        let options = Options::parse_from(cmd);
+
+        assert_eq!(options.verbose, 2);
+    }
+
+    #[test]
+    fn accept_invalid_hostnames() {
+        let cmd = vec!["pg_datanymizer", "--accept_invalid_hostnames", "database"];
+        let options = Options::parse_from(cmd);
+
+        assert!(options.accept_invalid_hostnames);
     }
 }

@@ -1,5 +1,5 @@
 use anyhow::Result;
-use structopt::StructOpt;
+use clap::Parser;
 
 use app::App;
 use options::Options;
@@ -8,7 +8,7 @@ mod app;
 mod options;
 
 fn main() -> Result<()> {
-    let options = Options::from_args();
+    let options = Options::parse();
 
     env_logger::init_from_env(env_logger::Env::default().filter_or(
         "RUST_LOG",
