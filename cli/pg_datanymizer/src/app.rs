@@ -86,21 +86,21 @@ impl App {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use structopt::StructOpt;
 
     mod isolation_level {
         use super::*;
+        use clap::Parser;
 
         #[test]
         fn default() {
             let options =
-                Options::from_iter(vec!["DBNAME", "postgres://postgres@localhost/dbname"]);
+                Options::parse_from(vec!["DBNAME", "postgres://postgres@localhost/dbname"]);
             let level = App::from_options(options).unwrap().dump_isolation_level();
             assert!(matches!(level, Some(IsolationLevel::ReadCommitted)));
         }
 
         fn level(dt: &str) -> Option<IsolationLevel> {
-            let options = Options::from_iter(vec![
+            let options = Options::parse_from(vec![
                 "DBNAME",
                 "postgres://postgres@localhost/dbname",
                 "--dump-transaction",
