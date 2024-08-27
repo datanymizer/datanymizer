@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### ⚙️ Changed
 - Don't use forked Tera anymore (the security issue has fixed), update some dependencies
   [#214](https://github.com/datanymizer/datanymizer/pull/214) ([@evgeniy-r](https://github.com/evgeniy-r))
+- Replace [structopt](https://github.com/TeXitoi/structopt) (which is in maintenance mode) with 
+  [clap](https://github.com/clap-rs/clap) itself ([@evgeniy-r](https://github.com/evgeniy-r)) 
 
 ### 🛠 Fixed
 
