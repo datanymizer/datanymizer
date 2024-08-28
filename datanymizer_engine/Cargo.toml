@@ -1,6 +1,6 @@
 [package]
 name = "datanymizer_engine"
-version = "0.7.0"
+version = "0.7.1"
 authors = ["Aleksandr Kirillov <saratovsource@gmail.com>", "Evgeniy Rashchepkin <e.a.rashchepkin@gmail.com>"]
 edition = "2021"
 

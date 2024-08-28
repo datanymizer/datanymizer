@@ -7,8 +7,8 @@ We support only the last released version and the version from the `main` branch
 | Version | Supported          |
 |---------| ------------------ |
 | main    | :white_check_mark: |
-| 0.7.0   | :white_check_mark: |
-| < 0.7.0 | :x:                |
+| 0.7.1   | :white_check_mark: |
+| < 0.7.1 | :x:                |
 
 ## Reporting a Vulnerability
 

@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🛠 Fixed
 
-## [v0.7.0] - 2024-08-28
+## [v0.7.1] - 2024-08-28
 ### 🚀 Added
 - Ignore computed columns (previously they would cause an error). [#202](https://github.com/datanymizer/datanymizer/pull/202)
   ([@gregwebs](https://github.com/gregwebs))
@@ -30,6 +30,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### 🛠 Fixed
 - Fix escaping multibyte strings [#219](https://github.com/datanymizer/datanymizer/pull/219)
   ([@dakulov](https://github.com/dakulov), [@kontsevoye](https://github.com/kontsevoye))
+
+## [v0.7.0] - 2024-08-28
+
+The release was yanked.
 
 ## [v0.6.0] - 2022-08-09
 ### 🚀 Added

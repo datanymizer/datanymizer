@@ -27,7 +27,6 @@ jobs:
         with:
           files: pg_datanymizer-*
           draft: true
-          body_path: CHANGELOG.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -65,12 +64,11 @@ jobs:
         with:
           files: pg_datanymizer-*
           draft: true
-          body_path: CHANGELOG.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   release-darwin:
-    runs-on: macos-11
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@v1
@@ -78,7 +76,8 @@ jobs:
           toolchain: stable
       - name: Build
         run: |
-          cargo build --release --target x86_64-apple-darwin
+          rustup target add x86_64-apple-darwin
+          OPENSSL_DIR=/opt/homebrew/opt/openssl@3/ cargo build --release --target x86_64-apple-darwin
           cp target/x86_64-apple-darwin/release/pg_datanymizer ./pg_datanymizer
           chmod +x pg_datanymizer
           tar -czf pg_datanymizer-darwin-x86_64.tar.gz pg_datanymizer
@@ -87,7 +86,6 @@ jobs:
         with:
           files: pg_datanymizer-*
           draft: true
-          body_path: CHANGELOG.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -108,7 +106,6 @@ jobs:
         with:
           files: pg_datanymizer-*
           draft: true
-          body_path: CHANGELOG.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
