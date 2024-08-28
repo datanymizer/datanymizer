@@ -27,7 +27,6 @@ jobs:
         with:
           files: pg_datanymizer-*
           draft: true
-          body_path: CHANGELOG.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -65,12 +64,11 @@ jobs:
         with:
           files: pg_datanymizer-*
           draft: true
-          body_path: CHANGELOG.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   release-darwin:
-    runs-on: macos-11
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@v1
@@ -87,7 +85,6 @@ jobs:
         with:
           files: pg_datanymizer-*
           draft: true
-          body_path: CHANGELOG.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -108,7 +105,6 @@ jobs:
         with:
           files: pg_datanymizer-*
           draft: true
-          body_path: CHANGELOG.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
