@@ -14,12 +14,9 @@ jobs:
         with:
           toolchain: stable
       - name: Build
-        run: |
-          brew install openssl@3
-          export LDFLAGS="-L/opt/homebrew/opt/openssl@3/lib"
-          export CPPFLAGS="-I/opt/homebrew/opt/openssl@3/include"
+        run: |                    
           rustup target add x86_64-apple-darwin
-          cargo build --release --target x86_64-apple-darwin
+          OPENSSL_DIR=/usr/local/opt/openssl/ cargo build --release --target x86_64-apple-darwin
           cp target/x86_64-apple-darwin/release/pg_datanymizer ./pg_datanymizer
           chmod +x pg_datanymizer
           tar -czf pg_datanymizer-darwin-x86_64.tar.gz pg_datanymizer
