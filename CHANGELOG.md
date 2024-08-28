@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### 🚀 Added
+
+### ⚙️ Changed
+
+### 🛠 Fixed
+
+## [v0.7.0] - 2024-08-28
+### 🚀 Added
 - Ignore computed columns (previously they would cause an error). [#202](https://github.com/datanymizer/datanymizer/pull/202)
   ([@gregwebs](https://github.com/gregwebs))
 - Add the JSON transformer [#134](https://github.com/datanymizer/datanymizer/pull/134)
