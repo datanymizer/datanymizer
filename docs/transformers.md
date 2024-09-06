@@ -780,6 +780,30 @@ The transformer will collect information about generated numbers and check their
 If such a number already exists in the list, then the transformer will try to generate the value again.
 The number of attempts is limited by the number of available invariants based on the format.
 
+#### phone_north_america
+
+Phone North America generates valid north american phone numbers.
+It increments through the numeric space one-by-one. With real_area_code=true and middle55=true, it will generate as the first two numbers:
+
+* "+1-201-555-0000"
+* "+1-201-555-0001"
+
+Two options are available:
+
+* real_area_code: use a valid north american area code
+* middle555: always use 555 for the middle digits. 555-01## is usually reserved for testing, and 555-#### probably works for testing
+
+```yaml
+phone_north_america:
+    real_area_code: true
+    middle555: true
+```
+
+
+#### phone_north_america_area_code
+
+Randomly chooses a valid north america area code.
+
 #### user_agent 🌐
 
 Gets a User-Agent header.
