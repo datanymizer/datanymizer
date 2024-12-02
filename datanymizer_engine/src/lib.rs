@@ -1,5 +1,6 @@
 mod engine;
 mod errors;
+mod generator;
 mod locale;
 mod settings;
 pub(crate) mod store;
