@@ -9,6 +9,7 @@
 ![Release Version](https://img.shields.io/github/v/release/datanymizer/datanymizer)
 [![CodeCov](https://codecov.io/gh/datanymizer/datanymizer/branch/main/graph/badge.svg)](https://codecov.io/gh/datanymizer/datanymizer)
 [![Audit](https://github.com/datanymizer/datanymizer/actions/workflows/audit.yml/badge.svg)](https://github.com/datanymizer/datanymizer/actions/workflows/audit.yml)
+[![libs.tech recommends](https://libs.tech/project/315741354/badge.svg)](https://libs.tech/project/315741354/datanymizer)
 
 Powerful database anonymizer with flexible rules. Written in Rust.
 
