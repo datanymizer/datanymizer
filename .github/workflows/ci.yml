@@ -106,25 +106,28 @@ jobs:
           cargo install --version $GRCOV_VERSION grcov
         if: steps.test-grcov.outputs.cache-hit != 'true'
       - name: Clean coverage
-        run: rm -f target/debug/deps/*.profraw
+        run: |
+          rm -rf .coverage
+          rm -rf cli/pg_datanymizer/.coverage
+          rm -rf datanymizer_dumper/.coverage
+          rm -rf datanymizer_engine/.coverage
       - name: Run tests
         run: cargo test --all-features
         env:
-          CARGO_INCREMENTAL: '0'
-          LLVM_PROFILE_FILE: "datanymizer-%p-%m.profraw"
+          LLVM_PROFILE_FILE: ".coverage/%Nm-%p-%m.profraw"
           DATANYMIZER_TEST_PG_DB: |
             postgres://postgres:${{ env.postgres_password }}@localhost:${{ env.postgres_port }}/datanymizer_test
           RUSTFLAGS: |
-            -Zpanic_abort_tests -Cinstrument-coverage -Ccodegen-units=1 -Clink-dead-code -Coverflow-checks=off
-      - run: ls target/debug/deps/*.profraw
+            -Cinstrument-coverage
+          RUSTDOCFLAGS: |
+            -Cinstrument-coverage -Zunstable-options --persist-doctests target/debug/doctests
       - name: Prepare coverage info for Codecov
-        run: |
-          cd target/debug/deps
-          find . -name "pg_datanymizer-*.gcda" -o -name "pg_datanymizer-*.gcno" -o \
-                 -name "datanymizer_dumper-*.gcda" -o -name "datanymizer_dumper-*.gcno" -o \
-                 -name "datanymizer_engine-*.gcda" -o -name "datanymizer_engine-*.gcno" | zip ../../../coverage -@
-          cd ../../..
-          grcov --llvm --output-type=lcov --output-file=lcov.info coverage.zip
+        run: |          
+          grcov --output-type=lcov --output-file=lcov.info -b target/debug \
+            --keep-only=${{ github.workspace }}/datanymizer_engine/src/* \
+            --keep-only=${{ github.workspace }}/datanymizer_dumper/src/* \
+            --keep-only=${{ github.workspace }}/cli/pg_datanymizer/src/* \
+            datanymizer_engine/.coverage datanymizer_dumper/.coverage cli/pg_datanymizer/.coverage .coverage
       - uses: codecov/codecov-action@v4
         with:
           file: ./lcov.info
