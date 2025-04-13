@@ -185,9 +185,7 @@ impl PgTable {
         tr_fmt: fn(s: &String) -> String,
         already_dumped: u64,
     ) -> Option<String> {
-        if q.limit
-            .map_or(false, |limit| limit as u64 <= already_dumped)
-        {
+        if q.limit.is_some_and(|limit| limit as u64 <= already_dumped) {
             return None;
         }
 

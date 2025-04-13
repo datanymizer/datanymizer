@@ -62,9 +62,9 @@ mod tests {
 
         register(&mut t);
         let empty_template = "{{ password | bcrypt_hash }}";
-        t.add_raw_template("empty_filter", &empty_template).unwrap();
+        t.add_raw_template("empty_filter", empty_template).unwrap();
         let real_value = t.render("empty_filter", &context).unwrap();
-        assert!(verify(&pass, &real_value).unwrap());
+        assert!(verify(pass, &real_value).unwrap());
     }
 
     #[test]
@@ -76,8 +76,8 @@ mod tests {
 
         register(&mut t);
         let empty_template = "{{ password | bcrypt_hash(cost=10) }}";
-        t.add_raw_template("empty_filter", &empty_template).unwrap();
+        t.add_raw_template("empty_filter", empty_template).unwrap();
         let real_value = t.render("empty_filter", &context).unwrap();
-        assert!(verify(&pass, &real_value).unwrap());
+        assert!(verify(pass, &real_value).unwrap());
     }
 }
