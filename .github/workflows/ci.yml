@@ -160,7 +160,7 @@ jobs:
         with:
           toolchain: stable
       - name: Chown cargo registry because of caching
-        run: if [ -d ~/.cargo/registry ]; then sudo chown -R runner ~/.cargo/registry fi
+        run: if [ -d ~/.cargo/registry ]; then sudo chown -R runner ~/.cargo/registry; fi
       - name: Cache cargo registry and target
         uses: actions/cache@v4
         with:
