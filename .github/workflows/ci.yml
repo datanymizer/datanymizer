@@ -116,7 +116,7 @@ jobs:
           DATANYMIZER_TEST_PG_DB: |
             postgres://postgres:${{ env.postgres_password }}@localhost:${{ env.postgres_port }}/datanymizer_test
           RUSTFLAGS: |
-            -Zprofile -Zpanic_abort_tests -Ccodegen-units=1 -Clink-dead-code -Coverflow-checks=off
+            -Zpanic_abort_tests -Cinstrument-coverage -Ccodegen-units=1 -Clink-dead-code -Coverflow-checks=off
       - name: Prepare coverage info for Codecov
         run: |
           cd target/debug/deps
