@@ -106,17 +106,17 @@ jobs:
           cargo install --version $GRCOV_VERSION grcov
         if: steps.test-grcov.outputs.cache-hit != 'true'
       - name: Clean coverage
-        run: |
-          rm -f target/debug/deps/*.gcda
-          rm -f target/debug/deps/*.gcno
+        run: rm -f target/debug/deps/*.profraw
       - name: Run tests
         run: cargo test --all-features
         env:
           CARGO_INCREMENTAL: '0'
+          LLVM_PROFILE_FILE: "datanymizer-%p-%m.profraw"
           DATANYMIZER_TEST_PG_DB: |
             postgres://postgres:${{ env.postgres_password }}@localhost:${{ env.postgres_port }}/datanymizer_test
           RUSTFLAGS: |
             -Zpanic_abort_tests -Cinstrument-coverage -Ccodegen-units=1 -Clink-dead-code -Coverflow-checks=off
+      - run: ls target/debug/deps/*.profraw
       - name: Prepare coverage info for Codecov
         run: |
           cd target/debug/deps
