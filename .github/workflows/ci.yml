@@ -111,6 +111,8 @@ jobs:
           rm -rf cli/pg_datanymizer/.coverage
           rm -rf datanymizer_dumper/.coverage
           rm -rf datanymizer_engine/.coverage
+      - name: Add llvm-tools
+        run: rustup component add llvm-tools-preview
       - name: Run tests
         run: cargo test --all-features
         env:
