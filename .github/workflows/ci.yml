@@ -20,7 +20,7 @@ jobs:
         with:
           toolchain: stable
       - name: Chown cargo registry because of caching
-        run: sudo chown -Rf runner ~/.cargo/registry
+        run: if [ -d ~/.cargo/registry ]; then sudo chown -R runner ~/.cargo/registry; fi
       - name: Cache cargo registry and target
         uses: actions/cache@v4
         with:
@@ -56,7 +56,7 @@ jobs:
           toolchain: stable
           components: clippy
       - name: Chown cargo registry because of caching
-        run: sudo chown -Rf runner ~/.cargo/registry
+        run: if [ -d ~/.cargo/registry ]; then sudo chown -R runner ~/.cargo/registry; fi
       - name: Cache cargo registry and target
         uses: actions/cache@v4
         with:
@@ -89,7 +89,7 @@ jobs:
         with:
           toolchain: nightly
       - name: Chown cargo registry because of caching
-        run: sudo chown -Rf runner ~/.cargo/registry
+        run: if [ -d ~/.cargo/registry ]; then sudo chown -R runner ~/.cargo/registry; fi
       - name: Set grcov version
         run: echo "GRCOV_VERSION=$(cargo search --limit 1 grcov | head -n1 | cut -d '"' -f2)" >> $GITHUB_ENV
       - name: Cache cargo registry, target, and grcov binary
