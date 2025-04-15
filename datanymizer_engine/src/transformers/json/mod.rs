@@ -214,7 +214,7 @@ mod test {
             let new_user = &new_json[i]["user"];
             assert_eq!(new_user["name"], "UserName");
             let age = new_user["age"].as_u64().unwrap();
-            assert!(age >= 25 && age <= 55);
+            assert!((25..=55).contains(&age));
             assert_eq!(new_user["comment"], json[i]["user"]["comment"]);
         }
     }

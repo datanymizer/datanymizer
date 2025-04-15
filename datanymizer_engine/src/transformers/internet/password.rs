@@ -78,7 +78,7 @@ mod test {
             assert_eq!(p_transformer.min, MinValue(8));
             assert_eq!(p_transformer.max, MaxValue(20));
         } else {
-            assert!(false);
+            panic!();
         }
     }
 
@@ -95,7 +95,7 @@ mod test {
             assert_eq!(p_transformer.min, MinValue(1));
             assert_eq!(p_transformer.max, MaxValue(10));
         } else {
-            assert!(false);
+            panic!();
         }
     }
 

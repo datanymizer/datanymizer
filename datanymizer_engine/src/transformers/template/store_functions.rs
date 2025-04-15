@@ -112,10 +112,10 @@ mod tests {
           {{ store_inc(key='key3', value=1) }}";
 
         register(&mut t, store.clone());
-        t.add_raw_template("read", &read_template).unwrap();
-        t.add_raw_template("read_default", &read_default_template)
+        t.add_raw_template("read", read_template).unwrap();
+        t.add_raw_template("read_default", read_default_template)
             .unwrap();
-        t.add_raw_template("write", &write_template).unwrap();
+        t.add_raw_template("write", write_template).unwrap();
 
         t.render("write", &Context::new()).unwrap();
         assert_eq!(t.render("read", &Context::new()).unwrap(), "abc");

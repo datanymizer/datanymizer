@@ -547,7 +547,7 @@ mod tests {
         let t = CityTransformer::default();
         let value = t.transform("table.field", "t", &None).unwrap().unwrap();
         assert!(value.len() > 1);
-        assert!(('A'..='Z').contains(&value.chars().next().unwrap()));
+        assert!(&value.chars().next().unwrap().is_ascii_uppercase());
     }
 
     #[test]
@@ -555,7 +555,7 @@ mod tests {
         let t = CountryNameTransformer::default();
         let value = t.transform("table.field", "t", &None).unwrap().unwrap();
         assert!(value.len() > 1);
-        assert!(('A'..='Z').contains(&value.chars().next().unwrap()));
+        assert!(&value.chars().next().unwrap().is_ascii_uppercase());
     }
 
     #[test]
@@ -563,7 +563,7 @@ mod tests {
         let t = FirstNameTransformer::default();
         let value = t.transform("table.field", "t", &None).unwrap().unwrap();
         assert!(value.len() > 1);
-        assert!(('A'..='Z').contains(&value.chars().next().unwrap()));
+        assert!(&value.chars().next().unwrap().is_ascii_uppercase());
     }
 
     #[test]
@@ -571,7 +571,7 @@ mod tests {
         let t = LastNameTransformer::default();
         let value = t.transform("table.field", "t", &None).unwrap().unwrap();
         assert!(value.len() > 1);
-        assert!(('A'..='Z').contains(&value.chars().next().unwrap()));
+        assert!(&value.chars().next().unwrap().is_ascii_uppercase());
     }
 
     #[test]
@@ -599,7 +599,7 @@ mod tests {
             locale: Some(LocaleConfig::ZH_TW),
         };
         let value = t.transform("table.field", "t", &None).unwrap().unwrap();
-        assert!(!('A'..='Z').contains(&value.chars().next().unwrap()));
+        assert!(!&value.chars().next().unwrap().is_ascii_uppercase());
     }
 
     #[test]

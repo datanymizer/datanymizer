@@ -251,8 +251,8 @@ mod tests {
                 .unwrap()
                 .raw
                 .unwrap()
-                .iter()
-                .map(|(name, _)| name.to_string())
+                .keys()
+                .map(|key| key.to_string())
                 .collect()
         }
 

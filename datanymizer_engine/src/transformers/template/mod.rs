@@ -305,7 +305,7 @@ mod tests {
                 let mut t: Transformers = EnumWrapper::parse(config).unwrap();
                 t.init(&TransformerInitContext::default());
 
-                return t;
+                t
             }
 
             #[test]
@@ -340,7 +340,7 @@ mod tests {
                 let mut t: Transformers = EnumWrapper::parse(config).unwrap();
                 t.init(&TransformerInitContext::default());
 
-                return t;
+                t
             }
 
             #[test]
@@ -442,7 +442,7 @@ mod tests {
                 let mut t: Transformers = EnumWrapper::parse(config).unwrap();
                 t.init(&TransformerInitContext::default());
 
-                return t;
+                t
             }
 
             #[test]
@@ -682,8 +682,10 @@ mod tests {
             let templates_collection: TemplatesCollection =
                 serde_yaml::from_str(macro_config).unwrap();
             let mut t: Transformers = EnumWrapper::parse(config).unwrap();
-            let mut context = TransformerInitContext::default();
-            context.template_collection = templates_collection;
+            let context = TransformerInitContext {
+                template_collection: templates_collection,
+                ..Default::default()
+            };
             t.init(&context);
 
             let value = t.transform("field", "", &None).unwrap().unwrap();
