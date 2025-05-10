@@ -3,7 +3,6 @@ on:
   push:
     tags:
       - '*.*.*'
-  pull_request:
 
 env:
   CARGO_TERM_COLOR: always
@@ -23,13 +22,13 @@ jobs:
           chmod +x pg_datanymizer
           tar -czf pg_datanymizer-linux-x86_64.tar.gz pg_datanymizer
           rm pg_datanymizer
-#      - name: Publish release
-#        uses: softprops/action-gh-release@v2
-#        with:
-#          files: pg_datanymizer-*
-#          draft: true
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: pg_datanymizer-*
+          draft: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   release-linux-musl:
     runs-on: ubuntu-latest
@@ -60,13 +59,13 @@ jobs:
           mv target/x86_64-unknown-linux-musl/release/pg_datanymizer ./pg_datanymizer
           chmod +x pg_datanymizer
           tar -czf pg_datanymizer-alpine-x86_64.tar.gz pg_datanymizer
-#      - name: Publish release
-#        uses: softprops/action-gh-release@v2
-#        with:
-#          files: pg_datanymizer-*
-#          draft: true
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: pg_datanymizer-*
+          draft: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   release-darwin:
     runs-on: macos-latest
@@ -82,13 +81,13 @@ jobs:
           cp target/x86_64-apple-darwin/release/pg_datanymizer ./pg_datanymizer
           chmod +x pg_datanymizer
           tar -czf pg_datanymizer-darwin-x86_64.tar.gz pg_datanymizer
-#      - name: Publish release
-#        uses: softprops/action-gh-release@v2
-#        with:
-#          files: pg_datanymizer-*
-#          draft: true
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: pg_datanymizer-*
+          draft: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   release-win:
     runs-on: windows-latest
@@ -102,28 +101,28 @@ jobs:
         run: |
           cargo build --release --target x86_64-pc-windows-msvc
           Compress-Archive -Path ".\target\x86_64-pc-windows-msvc\release\pg_datanymizer.exe" -DestinationPath ".\pg_datanymizer-win-x64.zip"
-#      - name: Publish release
-#        uses: softprops/action-gh-release@v2
-#        with:
-#          files: pg_datanymizer-*
-#          draft: true
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: pg_datanymizer-*
+          draft: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-#  release-docker:
-#    runs-on: ubuntu-latest
-#    steps:
-#      - uses: actions/checkout@v4
-#      - name: Build and push image
-#        run: |
-#          GIT_TAG=$(git describe --tags `git rev-list --tags --max-count=1` | sed "s/v//")
-#          docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
-#
-#          docker build -t datanymizer/pg_datanymizer:${GIT_TAG} .
-#          docker push datanymizer/pg_datanymizer:${GIT_TAG}
-#
-#          docker build -t datanymizer/pg_datanymizer:latest .
-#          docker push datanymizer/pg_datanymizer:latest
+  release-docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and push image
+        run: |
+          GIT_TAG=$(git describe --tags `git rev-list --tags --max-count=1` | sed "s/v//")
+          docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+
+          docker build -t datanymizer/pg_datanymizer:${GIT_TAG} .
+          docker push datanymizer/pg_datanymizer:${GIT_TAG}
+
+          docker build -t datanymizer/pg_datanymizer:latest .
+          docker push datanymizer/pg_datanymizer:latest
 
   # TODO: Fix release process with cargo
   # release-crate:
