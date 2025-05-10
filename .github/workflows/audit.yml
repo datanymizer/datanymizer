@@ -2,6 +2,7 @@ name: Audit
 on:
   schedule:
     - cron: '0 0 * * *'
+  pull_request:
 jobs:
   audit:
     runs-on: ubuntu-latest
@@ -10,5 +11,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@v1
         with:
           toolchain: stable
-      - name: Audit
+      - name: Install Cargo audit
+        run: cargo install cargo-audit
+      - name: Run audit
         run: cargo audit

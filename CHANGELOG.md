@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🛠 Fixed
 
+## [v0.7.2] - 2025-05-10
+### 🛠 Fixed
+- Make crate updates and security fixes. [#233](https://github.com/datanymizer/datanymizer/pull/233)
+  ([@evgeniy-r](https://github.com/evgeniy-r))
+
 ## [v0.7.1] - 2024-08-28
 ### 🚀 Added
 - Ignore computed columns (previously they would cause an error). [#202](https://github.com/datanymizer/datanymizer/pull/202)
