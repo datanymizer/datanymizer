@@ -1,11 +1,12 @@
 use anyhow::Result;
 use core::iter::Iterator;
-use datanymizer_engine::{Filter, Settings};
+use datanymizer_engine::{Filter, Query as QueryCfg, Settings, Table as TableCfg};
 use indicatif::HumanDuration;
 use solvent::DepGraph;
 use std::{collections::HashMap, hash::Hash, time::Instant};
 
 pub mod indicator;
+pub mod mysql;
 pub mod postgres;
 
 // Dumper makes dump with same stages
@@ -143,7 +144,9 @@ pub trait Table<T>: Sized + Send + Clone + Eq + Hash {
     /// Returns table name with schema or other prefix, based on database type
     fn get_full_name(&self) -> String;
     /// Returns possible table names (e.g. full and short)
-    fn get_names(&self) -> Vec<String>;
+    fn get_names(&self) -> Vec<String> {
+        vec![self.get_full_name(), self.get_name()]
+    }
     /// Get table columns
     fn get_columns(&self) -> Vec<Self::Column>;
     /// Get columns names (needed in the future for SQL)
@@ -154,6 +157,85 @@ pub trait Table<T>: Sized + Send + Clone + Eq + Hash {
     fn get_column_indexes(&self) -> &HashMap<String, usize>;
     /// Get depended table names
     fn get_dep_table_names(&self) -> Vec<String>;
+
+    fn count_of_query_to(&self, cfg: Option<&TableCfg>) -> u64 {
+        let number = self.get_size() as u64;
+
+        cfg.and_then(|c| c.query.as_ref())
+            .and_then(|q| q.limit)
+            .and_then(|limit| {
+                if number > limit as u64 {
+                    Some(limit as u64)
+                } else {
+                    None
+                }
+            })
+            .unwrap_or(number)
+    }
+
+    fn query_unless_already_dumped(
+        &self,
+        q: &QueryCfg,
+        tr_fmt: fn(s: &String) -> String,
+        already_dumped: u64,
+    ) -> Option<String> {
+        if q.limit.is_some_and(|limit| limit as u64 <= already_dumped) {
+            return None;
+        }
+
+        Some(self.query_with_select(
+            vec![
+                q.dump_condition.as_ref().map(|c| format!("({})", c)),
+                q.transform_condition.as_ref().map(tr_fmt),
+            ],
+            q.limit.map(|limit| limit as u64 - already_dumped),
+        ))
+    }
+
+    fn transformed_query_to(&self, cfg: Option<&TableCfg>, already_dumped: u64) -> Option<String> {
+        cfg.and_then(|c| match &c.query {
+            Some(q) => self.query_unless_already_dumped(q, |s| format!("({})", s), already_dumped),
+            None => Some(self.default_query()),
+        })
+    }
+
+    fn untransformed_query_to(
+        &self,
+        cfg: Option<&TableCfg>,
+        already_dumped: u64,
+    ) -> Option<String> {
+        match cfg {
+            Some(c) => c.query.as_ref().and_then(|q| {
+                if q.transform_condition.is_some() {
+                    self.query_unless_already_dumped(
+                        q,
+                        |s| format!("((NOT ({})) OR (({}) IS NULL))", s, s),
+                        already_dumped,
+                    )
+                } else {
+                    None
+                }
+            }),
+            None => Some(self.default_query()),
+        }
+    }
+
+    fn query_with_select(&self, cs: Vec<Option<String>>, limit: Option<u64>) -> String;
+
+    fn default_query(&self) -> String;
+
+    fn sql_limit(limit: Option<u64>) -> String {
+        limit.map_or(String::new(), |limit| format!(" LIMIT {}", limit))
+    }
+
+    fn sql_conditions(cs: Vec<Option<String>>) -> String {
+        let conditions: Vec<String> = cs.into_iter().flatten().collect();
+        if conditions.is_empty() {
+            String::new()
+        } else {
+            format!(" WHERE {}", conditions.join(" AND "))
+        }
+    }
 }
 
 pub trait ColumnData<T> {
@@ -260,6 +342,14 @@ mod tests {
 
         fn get_dep_table_names(&self) -> Vec<String> {
             self.dep_table_names.iter().map(|s| s.to_string()).collect()
+        }
+
+        fn query_with_select(&self, _cs: Vec<Option<String>>, _limit: Option<u64>) -> String {
+            String::new()
+        }
+
+        fn default_query(&self) -> String {
+            String::new()
         }
     }
 

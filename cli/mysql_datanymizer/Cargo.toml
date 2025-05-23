@@ -1,0 +1,23 @@
+[package]
+name = "mysql_datanymizer"
+version = "0.1.0"
+authors = ["Evgeniy Rashchepkin <e.a.rashchepkin@gmail.com>"]
+edition = "2021"
+description = "Powerful database anonymizer with flexible rules"
+homepage = "https://github.com/datanymizer/datanymizer"
+license = "MIT"
+readme = "README.md"
+keywords = ["anonymizer", "data", "database", "mysql", "mysqldump", "faker"]
+categories = ["command-line-utilities"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0"
+clap = { version = "4.5", features = ["derive", "env"] }
+datanymizer_dumper = {path = "../../datanymizer_dumper"}
+datanymizer_engine = {path = "../../datanymizer_engine"}
+env_logger = "0.10.0"
+url = "2.3"
+[target.'cfg(not(target_os = "windows"))'.dependencies]
+openssl = { version = ">=0.10.55" }

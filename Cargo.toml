@@ -3,6 +3,7 @@ resolver = "2"
 members = [
     "datanymizer_engine",
     "datanymizer_dumper",
+    "cli/mysql_datanymizer",
     "cli/pg_datanymizer",
 ]
 
