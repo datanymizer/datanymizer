@@ -1,7 +1,5 @@
 use super::{
-    connector::Connection,
-    decoder::Decoder,
-    schema_inspector::MysqlSchemaInspector,
+    connector::Connection, decoder::Decoder, schema_inspector::MysqlSchemaInspector,
     table::MysqlTable,
 };
 use crate::{indicator::Indicator, Dumper, SchemaInspector, Table};

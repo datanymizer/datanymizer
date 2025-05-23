@@ -221,7 +221,7 @@ mod tests {
 
     mod query_to {
         use super::*;
-        use crate::{TableCfg, QueryCfg};
+        use crate::{QueryCfg, TableCfg};
 
         fn table_name() -> String {
             "some_table".to_string()

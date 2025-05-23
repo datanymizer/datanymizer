@@ -1,6 +1,9 @@
-use std::fmt::Display;
 use anyhow::anyhow;
-use sqlx::{mysql::{MySqlTypeInfo, MySqlValueRef}, Decode, MySql, TypeInfo};
+use sqlx::{
+    mysql::{MySqlTypeInfo, MySqlValueRef},
+    Decode, MySql, TypeInfo,
+};
+use std::fmt::Display;
 use time::{Date, OffsetDateTime, Time};
 
 pub enum Decoder {
