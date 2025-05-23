@@ -1,10 +1,10 @@
 use anyhow::anyhow;
+use rust_decimal::Decimal;
 use sqlx::{
     mysql::{MySqlTypeInfo, MySqlValueRef},
     Decode, MySql, TypeInfo,
 };
 use std::fmt::Display;
-use rust_decimal::Decimal;
 use time::{Date, OffsetDateTime, Time};
 
 pub enum Decoder {
