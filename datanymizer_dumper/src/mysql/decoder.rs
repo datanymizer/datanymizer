@@ -4,6 +4,7 @@ use sqlx::{
     Decode, MySql, TypeInfo,
 };
 use std::fmt::Display;
+use rust_decimal::Decimal;
 use time::{Date, OffsetDateTime, Time};
 
 pub enum Decoder {
@@ -11,6 +12,7 @@ pub enum Decoder {
     Unsigned,
     Signed,
     Float,
+    Decimal,
     Bool,
     Date,
     Datetime,
@@ -28,6 +30,7 @@ impl Decoder {
             Decoder::Unsigned => <u64 as Decode<MySql>>::decode(value).map(|v| v.to_string()),
             Decoder::Signed => <i64 as Decode<MySql>>::decode(value).map(|v| v.to_string()),
             Decoder::Float => <f64 as Decode<MySql>>::decode(value).map(|v| v.to_string()),
+            Decoder::Decimal => <Decimal as Decode<MySql>>::decode(value).map(|v| v.to_string()),
             Decoder::Bool => <bool as Decode<MySql>>::decode(value).map(|v| v.to_string()),
             Decoder::Date => <Date as Decode<MySql>>::decode(value).map(|v| v.to_string()),
             Decoder::Datetime => {
@@ -65,6 +68,7 @@ impl TryFrom<&MySqlTypeInfo> for Decoder {
             | "BIGINT UNSIGNED" | "YEAR" => Ok(Decoder::Unsigned),
             "TINYINT" | "SMALLINT" | "INT" | "MEDIUMINT" | "BIGINT" => Ok(Decoder::Signed),
             "FLOAT" | "DOUBLE" => Ok(Decoder::Float),
+            "DECIMAL" => Ok(Decoder::Decimal),
             "NULL" => Ok(Decoder::Null),
             "DATE" => Ok(Decoder::Date),
             "TIMESTAMP" | "DATETIME" => Ok(Decoder::Datetime),
@@ -74,7 +78,6 @@ impl TryFrom<&MySqlTypeInfo> for Decoder {
             }
             // "BIT",
             // "SET"
-            // "DECIMAL"
             // "GEOMETRY"
             // "JSON"
             // "BINARY"
