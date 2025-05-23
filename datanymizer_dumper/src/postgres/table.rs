@@ -1,7 +1,6 @@
 use super::{column::PgColumn, foreign_key::PgForeignKey, row::PgRow, sequence::PgSequence};
 use crate::Table;
 use anyhow::{anyhow, Result};
-use datanymizer_engine::{Query as QueryCfg, Table as TableCfg};
 use postgres::{types::Type, Row as PostgresRow};
 use std::{
     collections::HashMap,
@@ -46,10 +45,6 @@ impl Table<Type> for PgTable {
         format!("{}.{}", self.schemaname, self.tablename)
     }
 
-    fn get_names(&self) -> Vec<String> {
-        vec![self.get_full_name(), self.get_name()]
-    }
-
     fn get_columns(&self) -> Vec<Self::Column> {
         self.columns.clone()
     }
@@ -71,6 +66,27 @@ impl Table<Type> for PgTable {
             .iter()
             .map(|fk| format!("{}.{}", fk.foreign_table_schema, fk.foreign_table_name))
             .collect()
+    }
+
+    fn query_with_select(&self, cs: Vec<Option<String>>, limit: Option<u64>) -> String {
+        format!(
+            "COPY (SELECT * FROM {}{}{}) TO STDOUT",
+            self.quoted_full_name(),
+            Self::sql_conditions(cs),
+            Self::sql_limit(limit),
+        )
+    }
+
+    fn default_query(&self) -> String {
+        if !self.quoted_columns().is_empty() {
+            format!(
+                "COPY {}({}) TO STDOUT",
+                self.quoted_full_name(),
+                self.quoted_columns().join(", "),
+            )
+        } else {
+            format!("COPY {} TO STDOUT", self.quoted_full_name())
+        }
     }
 }
 
@@ -120,53 +136,6 @@ impl PgTable {
         self.foreign_keys = foreign_keys;
     }
 
-    pub fn transformed_query_to(
-        &self,
-        cfg: Option<&TableCfg>,
-        already_dumped: u64,
-    ) -> Option<String> {
-        cfg.and_then(|c| match &c.query {
-            Some(q) => self.query_unless_already_dumped(q, |s| format!("({})", s), already_dumped),
-            None => Some(self.default_query()),
-        })
-    }
-
-    pub fn untransformed_query_to(
-        &self,
-        cfg: Option<&TableCfg>,
-        already_dumped: u64,
-    ) -> Option<String> {
-        match cfg {
-            Some(c) => c.query.as_ref().and_then(|q| {
-                if q.transform_condition.is_some() {
-                    self.query_unless_already_dumped(
-                        q,
-                        |s| format!("((NOT ({})) OR (({}) IS NULL))", s, s),
-                        already_dumped,
-                    )
-                } else {
-                    None
-                }
-            }),
-            None => Some(self.default_query()),
-        }
-    }
-
-    pub fn count_of_query_to(&self, cfg: Option<&TableCfg>) -> u64 {
-        let number = self.get_size() as u64;
-
-        cfg.and_then(|c| c.query.as_ref())
-            .and_then(|q| q.limit)
-            .and_then(|limit| {
-                if number > limit as u64 {
-                    Some(limit as u64)
-                } else {
-                    None
-                }
-            })
-            .unwrap_or(number)
-    }
-
     pub fn query_from(&self) -> String {
         if !self.quoted_columns().is_empty() {
             format!(
@@ -177,59 +146,6 @@ impl PgTable {
         } else {
             format!("COPY {} FROM STDIN;", self.quoted_full_name())
         }
-    }
-
-    fn query_unless_already_dumped(
-        &self,
-        q: &QueryCfg,
-        tr_fmt: fn(s: &String) -> String,
-        already_dumped: u64,
-    ) -> Option<String> {
-        if q.limit.is_some_and(|limit| limit as u64 <= already_dumped) {
-            return None;
-        }
-
-        Some(self.query_with_select(
-            vec![
-                q.dump_condition.as_ref().map(|c| format!("({})", c)),
-                q.transform_condition.as_ref().map(tr_fmt),
-            ],
-            q.limit.map(|limit| limit as u64 - already_dumped),
-        ))
-    }
-
-    fn default_query(&self) -> String {
-        if !self.quoted_columns().is_empty() {
-            format!(
-                "COPY {}({}) TO STDOUT",
-                self.quoted_full_name(),
-                self.quoted_columns().join(", "),
-            )
-        } else {
-            format!("COPY {} TO STDOUT", self.quoted_full_name())
-        }
-    }
-
-    fn query_with_select(&self, cs: Vec<Option<String>>, limit: Option<u64>) -> String {
-        format!(
-            "COPY (SELECT * FROM {}{}{}) TO STDOUT",
-            self.quoted_full_name(),
-            Self::sql_conditions(cs),
-            Self::sql_limit(limit),
-        )
-    }
-
-    fn sql_conditions(cs: Vec<Option<String>>) -> String {
-        let conditions: Vec<String> = cs.into_iter().flatten().collect();
-        if conditions.is_empty() {
-            String::new()
-        } else {
-            format!(" WHERE {}", conditions.join(" AND "))
-        }
-    }
-
-    fn sql_limit(limit: Option<u64>) -> String {
-        limit.map_or(String::new(), |limit| format!(" LIMIT {}", limit))
     }
 
     fn quoted_columns(&self) -> Vec<String> {
@@ -305,6 +221,7 @@ mod tests {
 
     mod query_to {
         use super::*;
+        use crate::{TableCfg, QueryCfg};
 
         fn table_name() -> String {
             "some_table".to_string()
