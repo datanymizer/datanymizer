@@ -2,6 +2,7 @@ use super::{
     key::Key,
     seq_to_rand::{HashSeqToRand, SeqToRand},
 };
+use std::rc::Rc;
 
 pub trait ForeignKey {
     type Src: Key;
@@ -26,22 +27,22 @@ where
     }
 }
 
-pub struct MonotonicFKey<'a, Src: Key> {
-    src: &'a Src,
+pub struct MonotonicFKey<Src: Key> {
+    src: Rc<Src>,
     len: usize,
 }
 
-impl<'a, Src: Key> MonotonicFKey<'a, Src> {
-    pub fn new(src: &'a Src, len: usize) -> Self {
+impl<Src: Key> MonotonicFKey<Src> {
+    pub fn new(src: Rc<Src>, len: usize) -> Self {
         Self { src, len }
     }
 }
 
-impl<Src: Key> ForeignKey for MonotonicFKey<'_, Src> {
+impl<Src: Key> ForeignKey for MonotonicFKey<Src> {
     type Src = Src;
 
     fn source(&self) -> &Self::Src {
-        self.src
+        self.src.as_ref()
     }
 
     fn source_index(&self, i: usize) -> usize {
@@ -53,14 +54,14 @@ impl<Src: Key> ForeignKey for MonotonicFKey<'_, Src> {
     }
 }
 
-pub struct RandomFKey<'a, Src: Key, StR: SeqToRand> {
-    src: &'a Src,
+pub struct RandomFKey<Src: Key, StR: SeqToRand> {
+    src: Rc<Src>,
     len: usize,
     seq_to_rand: StR,
 }
 
-impl<'a, Src: Key, StR: SeqToRand> RandomFKey<'a, Src, StR> {
-    pub fn new(src: &'a Src, len: usize, seq_to_rand: StR) -> Self {
+impl<Src: Key, StR: SeqToRand> RandomFKey<Src, StR> {
+    pub fn new(src: Rc<Src>, len: usize, seq_to_rand: StR) -> Self {
         Self {
             src,
             len,
@@ -69,11 +70,11 @@ impl<'a, Src: Key, StR: SeqToRand> RandomFKey<'a, Src, StR> {
     }
 }
 
-impl<'a, Src: Key, StR: SeqToRand> ForeignKey for RandomFKey<'a, Src, StR> {
+impl<Src: Key, StR: SeqToRand> ForeignKey for RandomFKey<Src, StR> {
     type Src = Src;
 
     fn source(&self) -> &Self::Src {
-        self.src
+        self.src.as_ref()
     }
 
     fn source_index(&self, i: usize) -> usize {
@@ -85,14 +86,14 @@ impl<'a, Src: Key, StR: SeqToRand> ForeignKey for RandomFKey<'a, Src, StR> {
     }
 }
 
-pub struct MonotonicRandomFKey<'a, Src: Key, StR: SeqToRand> {
-    src: &'a Src,
+pub struct MonotonicRandomFKey<Src: Key, StR: SeqToRand> {
+    src: Rc<Src>,
     len: usize,
     seq_to_rand: StR,
 }
 
-impl<'a, Src: Key, StR: SeqToRand> MonotonicRandomFKey<'a, Src, StR> {
-    pub fn new(src: &'a Src, len: usize, seq_to_rand: StR) -> Self {
+impl<Src: Key, StR: SeqToRand> MonotonicRandomFKey<Src, StR> {
+    pub fn new(src: Rc<Src>, len: usize, seq_to_rand: StR) -> Self {
         Self {
             src,
             len,
@@ -101,11 +102,11 @@ impl<'a, Src: Key, StR: SeqToRand> MonotonicRandomFKey<'a, Src, StR> {
     }
 }
 
-impl<'a, Src: Key, StR: SeqToRand> ForeignKey for MonotonicRandomFKey<'a, Src, StR> {
+impl<Src: Key, StR: SeqToRand> ForeignKey for MonotonicRandomFKey<Src, StR> {
     type Src = Src;
 
     fn source(&self) -> &Self::Src {
-        self.src
+        self.src.as_ref()
     }
 
     fn source_index(&self, i: usize) -> usize {
@@ -118,7 +119,7 @@ impl<'a, Src: Key, StR: SeqToRand> ForeignKey for MonotonicRandomFKey<'a, Src, S
     }
 }
 
-fn default_seq_to_rand() -> HashSeqToRand {
+pub fn default_seq_to_rand() -> HashSeqToRand {
     HashSeqToRand::new()
 }
 
@@ -128,19 +129,16 @@ mod test {
     use super::*;
 
     #[test]
-    fn iter() {
+    fn index() {
         let k = MonotonicKey::from_one(2);
-        let fk = MonotonicFKey::new(&k, 6);
-        let mut iter = fk.iter();
-        for i in vec![1, 1, 1, 2, 2, 2] {
-            assert_eq!(iter.next(), Some(i));
+        let fk = MonotonicFKey::new(Rc::new(k), 6);
+        for (i, v) in [1, 1, 1, 2, 2, 2].into_iter().enumerate() {
+            assert_eq!(fk.index(i), v);
         }
-        assert_eq!(iter.next(), None);
 
-        let fk2 = MonotonicFKey::new(&fk, 9);
-        let mut iter = fk2.iter();
-        for i in vec![1, 1, 1, 1, 1, 2, 2, 2, 2] {
-            assert_eq!(iter.next(), Some(i));
+        let fk2 = MonotonicFKey::new(Rc::new(fk), 9);
+        for (i, v) in [1, 1, 1, 1, 1, 2, 2, 2, 2].into_iter().enumerate() {
+            assert_eq!(fk2.index(i), v);
         }
     }
 }

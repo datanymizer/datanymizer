@@ -24,7 +24,7 @@ impl SeqToRand for HashSeqToRand {
     fn rand_for(&self, n: usize) -> RandNumber {
         let mut hasher = self.state.build_hasher();
         hasher.write_usize(n);
-        hasher.finish() as RandNumber / usize::MAX as RandNumber
+        hasher.finish() as RandNumber / u64::MAX as RandNumber
     }
 }
 
