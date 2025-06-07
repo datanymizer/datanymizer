@@ -4,7 +4,7 @@ use super::{
 };
 use crate::{indicator::Indicator, Dumper, SchemaInspector, Table};
 use anyhow::Result;
-use datanymizer_engine::{Engine, Filter, Settings, TableList};
+use datanymizer_engine::{Engine, Generator, Filter, Settings, TableList};
 use log::warn;
 use postgres::IsolationLevel;
 use std::{
@@ -16,6 +16,7 @@ use std::{
 pub struct PgDumper<W: Write + Send, I: Indicator + Send> {
     schema_inspector: PgSchemaInspector,
     engine: Engine,
+    generator: Option<Generator>,
     dump_writer: W,
     indicator: I,
     dump_isolation_level: Option<IsolationLevel>,
@@ -33,8 +34,10 @@ impl<W: 'static + Write + Send, I: 'static + Indicator + Send> PgDumper<W, I> {
         indicator: I,
         pg_dump_args: Vec<String>,
     ) -> Result<Self> {
+        let generator = engine.generator();
         Ok(Self {
             engine,
+            generator,
             dump_writer,
             indicator,
             dump_isolation_level,
@@ -139,6 +142,14 @@ impl<W: 'static + Write + Send, I: 'static + Indicator + Send> PgDumper<W, I> {
 
         Ok(())
     }
+
+    fn generate_table(&mut self, _table: &PgTable) -> Result<()> {
+        Ok(())
+    }
+
+    fn should_generate(&self, _table_name: &str) -> bool {
+        self.generator.is_some()
+    }
 }
 
 impl<W: 'static + Write + Send, I: 'static + Indicator + Send> Dumper for PgDumper<W, I> {
@@ -168,7 +179,12 @@ impl<W: 'static + Write + Send, I: 'static + Indicator + Send> Dumper for PgDump
             ));
 
             if self.filter_table(table.get_full_name()) {
-                self.dump_table(table, &mut query_wrapper)?;
+                if self.should_generate(table.get_full_name().as_str()) {
+                    self.generate_table(table)?;
+                }
+                else {
+                    self.dump_table(table, &mut query_wrapper)?;   
+                }
             } else {
                 self.debug(format!("[Dumping: {}] --- SKIP ---", table.get_full_name()));
             }
@@ -199,7 +215,7 @@ impl<W: 'static + Write + Send, I: 'static + Indicator + Send> Dumper for PgDump
     fn filter_mut(&mut self) -> &mut Filter {
         &mut self.engine.settings.filter
     }
-
+    
     fn write_log(&mut self, message: String) -> Result<()> {
         self.dump_writer
             .write_all(format!("\n---\n--- {}\n---\n", message).as_bytes())

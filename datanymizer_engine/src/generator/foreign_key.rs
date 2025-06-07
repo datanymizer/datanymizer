@@ -130,7 +130,7 @@ mod test {
 
     #[test]
     fn index() {
-        let k = MonotonicKey::from_one(2);
+        let k = MonotonicKey::new(1, 2);
         let fk = MonotonicFKey::new(Rc::new(k), 6);
         for (i, v) in [1, 1, 1, 2, 2, 2].into_iter().enumerate() {
             assert_eq!(fk.index(i), v);

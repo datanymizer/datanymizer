@@ -3,6 +3,7 @@ mod table;
 mod templates;
 
 use crate::{
+    generator::GeneratorConfig,
     transformer::{TransformerDefaults, TransformerInitContext},
     transformers::Transformers,
     Transformer,
@@ -43,6 +44,8 @@ pub struct Settings {
     pub globals: Option<HashMap<String, JsonValue>>,
 
     pub templates: Option<TemplatesCollection>,
+
+    pub generator: Option<GeneratorConfig>,
 
     #[serde(skip)]
     transform_map: Option<HashMap<String, TransformList>>,

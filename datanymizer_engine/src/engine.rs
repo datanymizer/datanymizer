@@ -1,5 +1,6 @@
 use crate::{
     errors::{EngineError, UnknownColumnError},
+    generator::Generator,
     Settings, TransformContext, Transformer,
 };
 use std::{borrow::Cow, collections::HashMap};
@@ -54,6 +55,10 @@ impl Engine {
         }
 
         Ok(transformed_values)
+    }
+
+    pub fn generator(&self) -> Option<Generator> {
+        self.settings.generator.as_ref().map(Generator::from_config)
     }
 }
 

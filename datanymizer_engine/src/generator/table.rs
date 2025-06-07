@@ -1,7 +1,7 @@
 use super::key::Key;
 use std::{collections::HashMap, rc::Rc};
 
-type KeyColMap = HashMap<String, Rc<Box<dyn Key>>>;
+pub(crate) type KeyColMap = HashMap<String, Rc<Box<dyn Key>>>;
 
 pub struct GenTable {
     pub row_count: usize,
@@ -21,9 +21,10 @@ pub struct GenTableIter {
 }
 
 impl GenTableIter {
-    pub fn new(table: &GenTable, col_count: usize, column_indexes: HashMap<String, usize>) -> Self {
+    pub fn new(table: &GenTable, column_indexes: HashMap<String, usize>) -> Self {
         let i = 0;
         let len = table.row_count;
+        let col_count = column_indexes.len();
         let mut row_base: Vec<Option<Rc<Box<dyn Key>>>> = Vec::with_capacity(col_count);
         row_base.resize_with(col_count, || None);
         for (name, key) in &table.keys {
@@ -73,16 +74,16 @@ mod test {
 
     #[test]
     fn monotonic_fk_iteration() {
-        let mut all_keys: KeyColMap = HashMap::new();
+        let mut all_keys = KeyColMap::new();
 
         let tbl1_len = 6;
         all_keys.insert(
             "t1.id".to_string(),
-            Rc::new(Box::new(MonotonicKey::from_one(tbl1_len))),
+            Rc::new(Box::new(MonotonicKey::new(1, tbl1_len))),
         );
         all_keys.insert(
             "t2.id".to_string(),
-            Rc::new(Box::new(MonotonicKey::from_one(3))),
+            Rc::new(Box::new(MonotonicKey::new(1, 3))),
         );
         let id = all_keys["t2.id"].clone();
         all_keys.insert(
@@ -90,18 +91,17 @@ mod test {
             Rc::new(Box::new(MonotonicFKey::new(id, tbl1_len))),
         );
 
-        let mut keys: KeyColMap = HashMap::new();
+        let mut keys = KeyColMap::new();
         keys.insert("t1.id".to_string(), all_keys["t1.id"].clone());
         keys.insert("t1.fk1".to_string(), all_keys["t1.fk1"].clone());
         let gen_table = GenTable::new(tbl1_len, keys);
 
-        let col_count = 3;
         let mut col_indexes = HashMap::new();
         col_indexes.insert("t1.id".to_string(), 0);
         col_indexes.insert("t1.fk1".to_string(), 1);
         col_indexes.insert("t1.name".to_string(), 2);
 
-        let mut gen_iter = GenTableIter::new(&gen_table, col_count, col_indexes);
+        let mut gen_iter = GenTableIter::new(&gen_table, col_indexes);
         assert_row(&mut gen_iter, vec!["1", "1", ""]);
         assert_row(&mut gen_iter, vec!["2", "1", ""]);
         assert_row(&mut gen_iter, vec!["3", "2", ""]);

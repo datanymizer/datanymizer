@@ -23,10 +23,6 @@ impl MonotonicKey {
     pub fn new(start: usize, len: usize) -> Self {
         Self { start, len }
     }
-
-    pub fn from_one(len: usize) -> Self {
-        Self::new(1, len)
-    }
 }
 
 impl Key for MonotonicKey {
@@ -49,7 +45,7 @@ mod test {
 
     #[test]
     fn index() {
-        let k = MonotonicKey::from_one(4);
+        let k = MonotonicKey::new(1, 4);
         for (i, v) in [1, 2, 3, 4].iter().enumerate() {
             assert_eq!(k.index(i), *v);
         }
