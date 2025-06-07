@@ -7,8 +7,8 @@ use anyhow::Result;
 use datanymizer_engine::{Engine, Filter, Generator, Settings, TableList};
 use log::warn;
 use postgres::IsolationLevel;
-use std::borrow::Cow;
 use std::{
+    borrow::Cow,
     io::{self, prelude::*},
     process::{self, Command},
     time::Instant,
