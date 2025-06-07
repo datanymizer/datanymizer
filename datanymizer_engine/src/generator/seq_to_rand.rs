@@ -5,7 +5,7 @@ use std::{
 
 type RandNumber = f64;
 
-pub trait SeqToRand {
+pub trait SeqToRand: Send + Sync {
     fn rand_for(&self, n: usize) -> RandNumber;
 }
 

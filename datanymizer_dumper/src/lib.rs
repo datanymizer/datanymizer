@@ -9,7 +9,7 @@ pub mod indicator;
 pub mod postgres;
 
 // Dumper makes dump with same stages
-pub trait Dumper: 'static + Sized {
+pub trait Dumper: 'static + Sized + Send {
     type Connection;
     type SchemaInspector: SchemaInspector<Connection = Self::Connection>;
 

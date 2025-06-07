@@ -2,9 +2,9 @@ use super::{
     key::Key,
     seq_to_rand::{HashSeqToRand, SeqToRand},
 };
-use std::rc::Rc;
+use std::sync::Arc;
 
-pub trait ForeignKey {
+pub trait ForeignKey: Send + Sync {
     type Src: Key;
 
     fn source(&self) -> &Self::Src;
@@ -28,12 +28,12 @@ where
 }
 
 pub struct MonotonicFKey<Src: Key> {
-    src: Rc<Src>,
+    src: Arc<Src>,
     len: usize,
 }
 
 impl<Src: Key> MonotonicFKey<Src> {
-    pub fn new(src: Rc<Src>, len: usize) -> Self {
+    pub fn new(src: Arc<Src>, len: usize) -> Self {
         Self { src, len }
     }
 }
@@ -55,13 +55,13 @@ impl<Src: Key> ForeignKey for MonotonicFKey<Src> {
 }
 
 pub struct RandomFKey<Src: Key, StR: SeqToRand> {
-    src: Rc<Src>,
+    src: Arc<Src>,
     len: usize,
     seq_to_rand: StR,
 }
 
 impl<Src: Key, StR: SeqToRand> RandomFKey<Src, StR> {
-    pub fn new(src: Rc<Src>, len: usize, seq_to_rand: StR) -> Self {
+    pub fn new(src: Arc<Src>, len: usize, seq_to_rand: StR) -> Self {
         Self {
             src,
             len,
@@ -87,13 +87,13 @@ impl<Src: Key, StR: SeqToRand> ForeignKey for RandomFKey<Src, StR> {
 }
 
 pub struct MonotonicRandomFKey<Src: Key, StR: SeqToRand> {
-    src: Rc<Src>,
+    src: Arc<Src>,
     len: usize,
     seq_to_rand: StR,
 }
 
 impl<Src: Key, StR: SeqToRand> MonotonicRandomFKey<Src, StR> {
-    pub fn new(src: Rc<Src>, len: usize, seq_to_rand: StR) -> Self {
+    pub fn new(src: Arc<Src>, len: usize, seq_to_rand: StR) -> Self {
         Self {
             src,
             len,
@@ -131,12 +131,12 @@ mod test {
     #[test]
     fn index() {
         let k = MonotonicKey::new(1, 2);
-        let fk = MonotonicFKey::new(Rc::new(k), 6);
+        let fk = MonotonicFKey::new(Arc::new(k), 6);
         for (i, v) in [1, 1, 1, 2, 2, 2].into_iter().enumerate() {
             assert_eq!(fk.index(i), v);
         }
 
-        let fk2 = MonotonicFKey::new(Rc::new(fk), 9);
+        let fk2 = MonotonicFKey::new(Arc::new(fk), 9);
         for (i, v) in [1, 1, 1, 1, 1, 2, 2, 2, 2].into_iter().enumerate() {
             assert_eq!(fk2.index(i), v);
         }

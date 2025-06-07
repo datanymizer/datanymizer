@@ -1,3 +1,5 @@
+pub const NULL_STR: &str = r#"\N"#;
+
 /// The escaper for values from transformers.
 /// The character escaping rules for the PostgreSQL COPY command are described here:
 /// https://www.postgresql.org/docs/13/sql-copy.html#id-1.9.3.55.9.2
@@ -12,7 +14,7 @@
 ///
 /// Warning! This behavior can be changed in the future.
 pub fn replace_chars(s: &mut String) {
-    if s == r#"\N"# {
+    if s == NULL_STR {
         return;
     }
 
@@ -66,7 +68,7 @@ pub fn replace_chars(s: &mut String) {
 
 #[cfg(test)]
 mod tests {
-    use crate::postgres::escaper::replace_chars;
+    use super::replace_chars;
 
     #[test]
     fn replace() {

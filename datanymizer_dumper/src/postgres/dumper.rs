@@ -1,12 +1,13 @@
 use super::{
-    connector, query_wrapper::QueryWrapper, row::PgRow, schema_inspector::PgSchemaInspector,
-    table::PgTable,
+    connector, escaper, query_wrapper::QueryWrapper, row::PgRow,
+    schema_inspector::PgSchemaInspector, table::PgTable,
 };
 use crate::{indicator::Indicator, Dumper, SchemaInspector, Table};
 use anyhow::Result;
-use datanymizer_engine::{Engine, Generator, Filter, Settings, TableList};
+use datanymizer_engine::{Engine, Filter, Generator, Settings, TableList};
 use log::warn;
 use postgres::IsolationLevel;
+use std::borrow::Cow;
 use std::{
     io::{self, prelude::*},
     process::{self, Command},
@@ -143,7 +144,60 @@ impl<W: 'static + Write + Send, I: 'static + Indicator + Send> PgDumper<W, I> {
         Ok(())
     }
 
-    fn generate_table(&mut self, _table: &PgTable) -> Result<()> {
+    fn generate_table(&mut self, table: &PgTable) -> Result<()> {
+        let table_name = table.get_full_name();
+        self.write_log(format!("Dump table: {}", &table_name))?;
+
+        self.dump_writer.write_all(b"\n")?;
+        self.dump_writer.write_all(table.query_from().as_bytes())?;
+        self.dump_writer.write_all(b"\n")?;
+
+        let cfg = self.engine.settings.find_table(&table.get_names());
+
+        let generator = self.generator.as_ref().expect("Missed generator");
+        if let Some(gen_iter) =
+            generator.iter_for_table(&table_name, table.get_column_indexes().clone())
+        {
+            let started = Instant::now();
+            self.indicator.start_pb(gen_iter.len as u64, &table_name);
+
+            let column_indexes = table.get_column_indexes();
+            for line in gen_iter {
+                self.indicator.inc_pb(1);
+
+                let values: Vec<&str> = line
+                    .iter()
+                    .map(|i| match i {
+                        Some(s) => s.as_str(),
+                        None => escaper::NULL_STR,
+                    })
+                    .collect();
+                if let Some(cfg) = cfg {
+                    let mut transformed_values = self.engine.process_row(
+                        cfg.name.clone(),
+                        column_indexes,
+                        values.as_slice(),
+                    )?;
+                    for v in &mut transformed_values {
+                        if let Cow::Owned(ref mut s) = v {
+                            escaper::replace_chars(s);
+                        }
+                    }
+                    self.dump_writer
+                        .write_all(transformed_values.join("\t").as_bytes())?;
+                }
+                else {
+                    self.dump_writer.write_all(values.join("\t").as_bytes())?;
+                }
+                self.dump_writer.write_all(b"\n")?;
+            }
+
+            let finished = started.elapsed();
+            self.indicator.finish_pb(&table_name, finished);
+        } else {
+            self.debug("No key information, skip".to_string())
+        }
+
         Ok(())
     }
 
@@ -171,22 +225,26 @@ impl<W: 'static + Write + Send, I: 'static + Indicator + Send> Dumper for PgDump
         let mut query_wrapper =
             QueryWrapper::with_isolation_level(&mut connection.client, self.dump_isolation_level)?;
         for (ind, table) in self.tables.clone().iter().enumerate() {
+            let full_name = table.get_full_name();
             self.debug(format!(
                 "[{} / {}] Prepare to dump table: {}",
                 ind + 1,
                 all_tables_count,
-                table.get_full_name(),
+                full_name,
             ));
+            let should_generate = self.should_generate(&full_name);
+            if should_generate {
+                self.debug("Data will be generated".to_string());
+            }
 
-            if self.filter_table(table.get_full_name()) {
-                if self.should_generate(table.get_full_name().as_str()) {
+            if self.filter_table(full_name.clone()) {
+                if should_generate {
                     self.generate_table(table)?;
-                }
-                else {
-                    self.dump_table(table, &mut query_wrapper)?;   
+                } else {
+                    self.dump_table(table, &mut query_wrapper)?;
                 }
             } else {
-                self.debug(format!("[Dumping: {}] --- SKIP ---", table.get_full_name()));
+                self.debug(format!("[Dumping: {}] --- SKIP ---", full_name));
             }
         }
 
@@ -215,7 +273,7 @@ impl<W: 'static + Write + Send, I: 'static + Indicator + Send> Dumper for PgDump
     fn filter_mut(&mut self) -> &mut Filter {
         &mut self.engine.settings.filter
     }
-    
+
     fn write_log(&mut self, message: String) -> Result<()> {
         self.dump_writer
             .write_all(format!("\n---\n--- {}\n---\n", message).as_bytes())

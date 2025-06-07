@@ -1,7 +1,7 @@
 use config::{ForeignKeyKind, Key as KeyConfig};
 use foreign_key::{default_seq_to_rand, MonotonicFKey, MonotonicRandomFKey, RandomFKey};
 use key::{Key, MonotonicKey};
-use std::{collections::HashMap, rc::Rc, sync::{Arc, Mutex}};
+use std::{collections::HashMap, sync::Arc};
 use table::{GenTable, GenTableIter, KeyColMap};
 
 mod config;
@@ -47,7 +47,7 @@ impl Generator {
                     .unwrap_or(1);
                 table_keys.insert(
                     key_name,
-                    Rc::new(Box::new(MonotonicKey::new(table_cfg.row_count, from))),
+                    Arc::new(Box::new(MonotonicKey::new(table_cfg.row_count, from))),
                 );
             }
             all_keys.insert(table_cfg.name.clone(), table_keys);
@@ -103,16 +103,16 @@ impl Generator {
     fn get_foreign_key(
         kind: &ForeignKeyKind,
         row_count: usize,
-        src: Rc<Box<dyn Key>>,
-    ) -> Rc<Box<dyn Key>> {
+        src: Arc<Box<dyn Key>>,
+    ) -> Arc<Box<dyn Key>> {
         match kind {
-            ForeignKeyKind::Monotonic => Rc::new(Box::new(MonotonicFKey::new(src, row_count))),
-            ForeignKeyKind::Random => Rc::new(Box::new(RandomFKey::new(
+            ForeignKeyKind::Monotonic => Arc::new(Box::new(MonotonicFKey::new(src, row_count))),
+            ForeignKeyKind::Random => Arc::new(Box::new(RandomFKey::new(
                 src,
                 row_count,
                 default_seq_to_rand(),
             ))),
-            ForeignKeyKind::MonotonicRandom => Rc::new(Box::new(MonotonicRandomFKey::new(
+            ForeignKeyKind::MonotonicRandom => Arc::new(Box::new(MonotonicRandomFKey::new(
                 src,
                 row_count,
                 default_seq_to_rand(),

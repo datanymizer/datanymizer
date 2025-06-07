@@ -1,4 +1,4 @@
-pub trait Key {
+pub trait Key: Send + Sync {
     fn len(&self) -> usize;
 
     fn index(&self, i: usize) -> usize;
