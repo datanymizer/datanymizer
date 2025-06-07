@@ -185,8 +185,7 @@ impl<W: 'static + Write + Send, I: 'static + Indicator + Send> PgDumper<W, I> {
                     }
                     self.dump_writer
                         .write_all(transformed_values.join("\t").as_bytes())?;
-                }
-                else {
+                } else {
                     self.dump_writer.write_all(values.join("\t").as_bytes())?;
                 }
                 self.dump_writer.write_all(b"\n")?;
