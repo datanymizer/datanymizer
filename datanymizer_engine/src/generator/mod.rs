@@ -119,8 +119,8 @@ impl Generator {
 }
 
 mod tests {
-    use super::{Generator, config::Config};
-        
+    use super::{config::Config, Generator};
+
     #[test]
     fn from_config() {
         let config = r#"
@@ -158,4 +158,3 @@ mod tests {
         assert!(g.contains_table("public.address"));
     }
 }
-
