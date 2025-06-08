@@ -26,6 +26,8 @@ pub struct Table {
     pub rule_order: Option<Vec<String>>,
     /// Limit and conditions for the dumping query
     pub query: Option<Query>,
+    #[serde(default)]
+    pub dump_when_generate: bool,
 }
 
 impl Table {

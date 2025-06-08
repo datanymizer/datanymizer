@@ -1,0 +1,14 @@
+filter:
+  only:
+    - public.actor
+tables:
+  - name: actor
+    rules:
+      first_name:
+        first_name: {}
+      last_name:
+        last_name: {}
+      last_update:
+        datetime:
+          from: 1990-01-01T00:00:00+00:00
+          to: 2010-12-31T00:00:00+00:00

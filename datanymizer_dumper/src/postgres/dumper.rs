@@ -14,6 +14,8 @@ use std::{
     time::Instant,
 };
 
+const BATCH_SIZE: usize = 1000;
+
 pub struct PgDumper<W: Write + Send, I: Indicator + Send> {
     schema_inspector: PgSchemaInspector,
     engine: Engine,
@@ -161,6 +163,8 @@ impl<W: 'static + Write + Send, I: 'static + Indicator + Send> PgDumper<W, I> {
             let started = Instant::now();
             self.indicator.start_pb(gen_iter.len as u64, &table_name);
 
+            let mut batch_str = String::new();
+            let mut batch_count: usize = 0;
             let column_indexes = table.get_column_indexes();
             for line in gen_iter {
                 self.indicator.inc_pb(1);
@@ -183,13 +187,26 @@ impl<W: 'static + Write + Send, I: 'static + Indicator + Send> PgDumper<W, I> {
                             escaper::replace_chars(s);
                         }
                     }
-                    self.dump_writer
-                        .write_all(transformed_values.join("\t").as_bytes())?;
+                    batch_str.push_str(transformed_values.join("\t").as_str());
                 } else {
-                    self.dump_writer.write_all(values.join("\t").as_bytes())?;
+                    batch_str.push_str(values.join("\t").as_str());
                 }
-                self.dump_writer.write_all(b"\n")?;
+                batch_str.push('\n');
+                batch_count += 1;
+
+                if batch_count >= BATCH_SIZE {
+                    self.dump_writer.write_all(batch_str.as_bytes())?;
+                    batch_str.clear();
+                    batch_count = 0;
+                }
             }
+            if batch_count > 0 {
+                self.dump_writer.write_all(batch_str.as_bytes())?;
+            }
+
+            self.dump_writer.write_all(b"\\.\n")?;
+
+            // TODO: update sequences
 
             let finished = started.elapsed();
             self.indicator.finish_pb(&table_name, finished);
@@ -200,8 +217,21 @@ impl<W: 'static + Write + Send, I: 'static + Indicator + Send> PgDumper<W, I> {
         Ok(())
     }
 
-    fn should_generate(&self, _table_name: &str) -> bool {
-        self.generator.is_some()
+    fn should_generate(&self, table_name: &str) -> bool {
+        self.generator
+            .as_ref()
+            .map(|g| g.contains_table(table_name))
+            .unwrap_or_default()
+    }
+
+    fn should_dump(&self, table: &PgTable) -> bool {
+        self.generator.is_none()
+            || self
+                .engine
+                .settings
+                .find_table(&table.get_names())
+                .map(|t| t.dump_when_generate)
+                .unwrap_or_default()
     }
 }
 
@@ -231,19 +261,26 @@ impl<W: 'static + Write + Send, I: 'static + Indicator + Send> Dumper for PgDump
                 all_tables_count,
                 full_name,
             ));
-            let should_generate = self.should_generate(&full_name);
-            if should_generate {
-                self.debug("Data will be generated".to_string());
-            }
-
             if self.filter_table(full_name.clone()) {
-                if should_generate {
+                if self.should_generate(&full_name) {
+                    self.debug(format!(
+                        "[Dumping: {}] --- Data will be generated",
+                        full_name
+                    ));
                     self.generate_table(table)?;
-                } else {
+                } else if self.should_dump(table) {
                     self.dump_table(table, &mut query_wrapper)?;
+                } else {
+                    self.debug(format!(
+                        "[Dumping: {}] --- SKIP (no key data for the generation mode) ---",
+                        full_name
+                    ));
                 }
             } else {
-                self.debug(format!("[Dumping: {}] --- SKIP ---", full_name));
+                self.debug(format!(
+                    "[Dumping: {}] --- SKIP (filtered out) ---",
+                    full_name
+                ));
             }
         }
 

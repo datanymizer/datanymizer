@@ -1,4 +1,4 @@
-use config::{ForeignKeyKind, Key as KeyConfig};
+use config::ForeignKeyKind;
 use foreign_key::{default_seq_to_rand, MonotonicFKey, MonotonicRandomFKey, RandomFKey};
 use key::{Key, MonotonicKey};
 use std::{collections::HashMap, sync::Arc};
@@ -11,6 +11,8 @@ mod seq_to_rand;
 mod table;
 
 pub use config::Config as GeneratorConfig;
+
+const DEFAULT_PRIMARY_KEY_FROM: usize = 1;
 
 pub struct Generator {
     tables: HashMap<String, GenTable>,
@@ -44,10 +46,10 @@ impl Generator {
                     .options
                     .get("from")
                     .map(|s| s.parse().expect("Invalid from value"))
-                    .unwrap_or(1);
+                    .unwrap_or(DEFAULT_PRIMARY_KEY_FROM);
                 table_keys.insert(
                     key_name,
-                    Arc::new(Box::new(MonotonicKey::new(table_cfg.row_count, from))),
+                    Arc::new(Box::new(MonotonicKey::new(from, table_cfg.row_count))),
                 );
             }
             all_keys.insert(table_cfg.name.clone(), table_keys);
@@ -63,14 +65,9 @@ impl Generator {
             let prev_count = fkey_total;
             for table_cfg in &cfg.tables {
                 for key in table_cfg.foreign_keys.iter() {
-                    let source_cfg = key.source.as_ref();
-                    let (src_name, src_table_name) = match source_cfg {
-                        KeyConfig::Primary(src) => (
-                            &src.name,
-                            src.table_name.as_ref().expect("Require table name"),
-                        ),
-                        KeyConfig::Foreign(src) => (&src.name, &src.table_name),
-                    };
+                    let src_name = &key.source.name;
+                    let src_table_name = &key.source.table_name;
+
                     let src_table_keys = &all_keys[src_table_name];
                     // if the source has been processed already
                     if let Some(src) = src_table_keys.get(src_name) {
