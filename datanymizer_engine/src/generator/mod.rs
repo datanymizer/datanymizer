@@ -117,3 +117,45 @@ impl Generator {
         }
     }
 }
+
+mod tests {
+    use super::{Generator, config::Config};
+        
+    #[test]
+    fn from_config() {
+        let config = r#"
+          tables:
+            - name: public.country
+              row_count: 1
+              key:
+                name: country_id
+            - name: public.city
+              row_count: 100
+              key:
+                name: city_id
+              foreign_keys:
+                - name: country_id
+                  source:
+                    table_name: public.country
+                    name: country_id
+            - name: public.address
+              row_count: 1000
+              key:
+                name: address_id
+              foreign_keys:
+                - name: city_id
+                  source:
+                    table_name: public.city
+                    name: city_id
+            "#;
+
+        let cfg: Config = serde_yaml::from_str(config).unwrap();
+        let g = Generator::from_config(&cfg);
+
+        assert_eq!(g.tables.len(), 3);
+        assert!(g.contains_table("public.country"));
+        assert!(g.contains_table("public.city"));
+        assert!(g.contains_table("public.address"));
+    }
+}
+
