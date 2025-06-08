@@ -48,7 +48,10 @@ pub enum ForeignKeyKind {
     MonotonicRandom,
 }
 
+#[cfg(test)]
 mod tests {
+    use super::*;
+
     #[test]
     fn parse() {
         let config = r#"
@@ -77,7 +80,7 @@ mod tests {
                     name: city_id
             "#;
 
-        let c: super::Config = serde_yaml::from_str(config).unwrap();
+        let c: Config = serde_yaml::from_str(config).unwrap();
 
         assert_eq!(c.tables.len(), 3);
 

@@ -118,8 +118,9 @@ impl Generator {
     }
 }
 
+#[cfg(test)]
 mod tests {
-    use super::{config::Config, Generator};
+    use super::{config::Config, *};
 
     #[test]
     fn from_config() {
