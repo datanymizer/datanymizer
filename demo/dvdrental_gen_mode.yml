@@ -1,13 +1,115 @@
-filter:
-  only:
-    - public.actor
+generator:
+  tables:
+    - name: public.country
+      row_count: 1
+      key:
+        name: country_id
+    - name: public.city
+      row_count: 10
+      key:
+        name: city_id
+      foreign_keys:
+        - name: country_id
+          source:
+            table_name: public.country
+            name: country_id
+    - name: public.address
+      row_count: 1000
+      key:
+        name: address_id
+      foreign_keys:
+        - name: city_id
+          source:
+            table_name: public.city
+            name: city_id
+    - name: public.store
+      row_count: 50
+      key:
+        name: store_id
+      foreign_keys:
+        - name: address_id
+          kind: monotonic
+          source:
+            table_name: public.address
+            name: address_id
+        - name: manager_staff_id
+          kind: monotonic
+          source:
+            table_name: public.staff
+            name: staff_id
+    - name: public.staff
+      row_count: 500
+      key:
+        name: staff_id
+      foreign_keys:
+        - name: address_id
+          source:
+            table_name: public.address
+            name: address_id
+        - name: store_id
+          source:
+            table_name: public.store
+            name: store_id
+
 tables:
-  - name: actor
+  - name: country
+    rules:
+      country:
+        country_name: {}
+      last_update:
+        datetime:
+          from: 1990-01-01T00:00:00+00:00
+          to: 2010-12-31T00:00:00+00:00
+  - name: city
+    rules:
+      city:
+        city: {}
+      last_update:
+        datetime:
+          from: 1990-01-01T00:00:00+00:00
+          to: 2010-12-31T00:00:00+00:00
+  - name: address
+    rules:
+      address:
+        template:
+          format: "{{_1}}, {{_2}} {{_3}}"
+          rules:
+            - building_number: {}
+            - street_name: {}
+            - street_suffix: {}
+      district:
+        state_name: {}
+      phone:
+        phone:
+          format: "+7^#########"
+      postal_code:
+        post_code: {}
+      last_update:
+        datetime:
+          from: 1990-01-01T00:00:00+00:00
+          to: 2010-12-31T00:00:00+00:00
+  - name: staff
     rules:
       first_name:
         first_name: {}
       last_name:
         last_name: {}
+      email:
+        email: {}
+      username:
+        template:
+          format: "{{_1 | truncate(length=16, killwords=true, end='')}}"
+          rules:
+            - username: {}
+      active:
+        boolean:
+          ratio: 90
+      last_update:
+        datetime:
+          from: 1990-01-01T00:00:00+00:00
+          to: 2010-12-31T00:00:00+00:00
+  - name: store
+    rules:
       last_update:
         datetime:
           from: 1990-01-01T00:00:00+00:00
