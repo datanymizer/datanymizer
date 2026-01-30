@@ -8,10 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### 🚀 Added
 
 ### ⚙️ Changed
-- Add matrix build for Docker images with PostgreSQL versions 14, 15, 16, 17, and latest.
-  Docker images now available with version suffixes: `-pg14`, `-pg15`, `-pg16`, `-pg17`.
 
 ### 🛠 Fixed
+
+## [v0.7.3] - 2026-01-30
+### ⚙️ Changed
+- Add matrix build for Docker images with PostgreSQL versions 14, 15, 16, 17, and latest.
+  Docker images now available with version suffixes: `-pg14`, `-pg15`, `-pg16`, `-pg17`.
 
 ## [v0.7.2] - 2025-05-10
 ### 🛠 Fixed
