@@ -4,18 +4,14 @@ use url::Url;
 
 #[derive(ValueEnum, Debug, Clone)]
 #[value(rename_all = "PascalCase")]
+#[derive(Default)]
 pub enum TransactionConfig {
     NoTransaction,
     ReadUncommitted,
+    #[default]
     ReadCommitted,
     RepeatableRead,
     Serializable,
-}
-
-impl Default for TransactionConfig {
-    fn default() -> Self {
-        Self::ReadCommitted
-    }
 }
 
 #[derive(Parser, Debug, Clone, Default)]
