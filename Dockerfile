@@ -1,11 +1,13 @@
-FROM rust:latest as builder
+ARG POSTGRES_VERSION=latest
+
+FROM rust:latest AS builder
 WORKDIR /usr/src
 
 COPY . .
-RUN cargo build --target x86_64-unknown-linux-gnu --release
+RUN cargo build --release
 
-FROM postgres:latest
+FROM postgres:${POSTGRES_VERSION}
 WORKDIR /
-COPY --from=builder /usr/src/target/x86_64-unknown-linux-gnu/release/pg_datanymizer .
+COPY --from=builder /usr/src/target/release/pg_datanymizer .
 USER 1000
 ENTRYPOINT ["/pg_datanymizer"]

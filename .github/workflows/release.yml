@@ -2,7 +2,7 @@ name: Release
 on:
   push:
     tags:
-      - '*.*.*'
+      - "*.*.*"
 
 env:
   CARGO_TERM_COLOR: always
@@ -111,18 +111,30 @@ jobs:
 
   release-docker:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        postgres_version: [14, 15, 16, 17, latest]
+    # To test matrix locally with act:
+    # act -j release-docker --matrix postgres_version=14
     steps:
       - uses: actions/checkout@v4
       - name: Build and push image
         run: |
           GIT_TAG=$(git describe --tags `git rev-list --tags --max-count=1` | sed "s/v//")
+          PG_TAG_SUFFIX=${{ matrix.postgres_version != 'latest' && format('-pg{0}', matrix.postgres_version) || '' }}
           docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
 
-          docker build -t datanymizer/pg_datanymizer:${GIT_TAG} .
-          docker push datanymizer/pg_datanymizer:${GIT_TAG}
+          # Build with specific PostgreSQL version
+          docker build --build-arg POSTGRES_VERSION=${{ matrix.postgres_version }} \
+            -t datanymizer/pg_datanymizer:${GIT_TAG}${PG_TAG_SUFFIX} .
+          docker push datanymizer/pg_datanymizer:${GIT_TAG}${PG_TAG_SUFFIX}
 
-          docker build -t datanymizer/pg_datanymizer:latest .
-          docker push datanymizer/pg_datanymizer:latest
+          # Add latest tag only for postgres:latest
+          if [[ "${{ matrix.postgres_version }}" == "latest" ]]; then
+            docker build --build-arg POSTGRES_VERSION=${{ matrix.postgres_version }} \
+              -t datanymizer/pg_datanymizer:latest .
+            docker push datanymizer/pg_datanymizer:latest
+          fi
 
   # TODO: Fix release process with cargo
   # release-crate:
