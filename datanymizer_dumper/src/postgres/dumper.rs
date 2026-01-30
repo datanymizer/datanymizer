@@ -119,8 +119,6 @@ impl<W: 'static + Write + Send, I: 'static + Indicator + Send> PgDumper<W, I> {
 
                 self.dump_writer.write_all(line?.as_bytes())?;
                 self.dump_writer.write_all(b"\n")?;
-
-                count += 1;
             }
         }
 

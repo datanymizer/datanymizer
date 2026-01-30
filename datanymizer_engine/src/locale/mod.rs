@@ -12,18 +12,12 @@ pub type EN = fake::locales::EN;
 pub type ZH_TW = fake::locales::ZH_TW;
 
 #[allow(non_camel_case_types, clippy::upper_case_acronyms)]
-#[derive(Copy, Serialize, Deserialize, PartialEq, Eq, Hash, Debug, Clone)]
+#[derive(Copy, Serialize, Deserialize, PartialEq, Eq, Hash, Debug, Clone, Default)]
 pub enum LocaleConfig {
+    #[default]
     EN,
     RU,
     ZH_TW,
-}
-
-impl Default for LocaleConfig {
-    // We need some method to take default for all tables from config
-    fn default() -> Self {
-        Self::EN
-    }
 }
 
 pub trait Localized {

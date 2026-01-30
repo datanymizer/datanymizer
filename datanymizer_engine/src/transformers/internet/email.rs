@@ -104,18 +104,13 @@ impl Default for EmailTransformer {
 }
 
 /// Kind of email
-#[derive(Serialize, Deserialize, PartialEq, Eq, Hash, Clone, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Eq, Hash, Clone, Debug, Default)]
 pub enum EmailKind {
     /// Only for free email providers (e.g., "gmail.com", "yahoo.com", "hotmail.com")
     Free,
     /// Only for example domains (e.g., "example.com") - not real email addresses
+    #[default]
     Safe,
-}
-
-impl Default for EmailKind {
-    fn default() -> Self {
-        Self::Safe
-    }
 }
 
 impl EmailTransformer {
