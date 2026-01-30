@@ -56,9 +56,21 @@ $ brew install --HEAD datanymizer/tap/pg_datanymizer
 
 #### Docker
 
+Docker images are available for different PostgreSQL versions. Use the tag format `<version>-pg<pg_version>`:
+
 ```bash
-$ docker run --rm -v `pwd`:/app -w /app datanymizer/pg_datanymizer
+# Latest version with PostgreSQL latest
+$ docker run --rm -v `pwd`:/app -w /app datanymizer/pg_datanymizer:latest
+
+# Specific version (e.g., 0.7.2) with different PostgreSQL versions
+$ docker run --rm -v `pwd`:/app -w /app datanymizer/pg_datanymizer:0.7.2        # PostgreSQL latest
+$ docker run --rm -v `pwd`:/app -w /app datanymizer/pg_datanymizer:0.7.2-pg17   # PostgreSQL 17
+$ docker run --rm -v `pwd`:/app -w /app datanymizer/pg_datanymizer:0.7.2-pg16   # PostgreSQL 16
+$ docker run --rm -v `pwd`:/app -w /app datanymizer/pg_datanymizer:0.7.2-pg15   # PostgreSQL 15
+$ docker run --rm -v `pwd`:/app -w /app datanymizer/pg_datanymizer:0.7.2-pg14   # PostgreSQL 14
 ```
+
+Available PostgreSQL versions: 14, 15, 16, 17, and latest (no suffix).
 
 ## Getting started with CLI dumper
 
