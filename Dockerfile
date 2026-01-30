@@ -4,7 +4,8 @@ WORKDIR /usr/src
 COPY . .
 RUN cargo build --target x86_64-unknown-linux-gnu --release
 
-FROM postgres:latest
+ARG POSTGRES_VERSION=latest
+FROM postgres:${POSTGRES_VERSION}
 WORKDIR /
 COPY --from=builder /usr/src/target/x86_64-unknown-linux-gnu/release/pg_datanymizer .
 USER 1000
