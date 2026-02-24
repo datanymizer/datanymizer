@@ -1,5 +1,6 @@
 mod engine;
 mod errors;
+mod generator;
 mod locale;
 mod settings;
 pub(crate) mod store;
@@ -10,6 +11,7 @@ pub mod utils;
 mod value;
 
 pub use engine::Engine;
+pub use generator::Generator;
 pub use locale::{ExtData, LocaleConfig, Localized, LocalizedFaker};
 pub use settings::{Filter, Query, Settings, Table, TableList, Tables};
 pub use transformer::{

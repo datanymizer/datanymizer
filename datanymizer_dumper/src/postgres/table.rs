@@ -340,6 +340,7 @@ mod tests {
                 rules: HashMap::new(),
                 rule_order: None,
                 query,
+                dump_when_generate: false,
             }
         }
 

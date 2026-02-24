@@ -48,6 +48,10 @@ dump:
 	echo -e "\n==> Create the dump"
 	docker compose run --rm pg_datanymizer postgres://postgres:postgres@pg_database/dvdrental -c /dvdrental.yml > $(dump_file)
 
+generate:
+	echo -e "\n==> Generate the dump without data from DB"
+	docker compose run --rm pg_datanymizer postgres://postgres:postgres@pg_database/dvdrental -c /dvdrental_gen_mode.yml > $(dump_file)
+
 restore_dump: create_fake_db
 	echo -e "\n==> Restore the dump to the database for fake data"
 	cat $(dump_file) | docker compose exec -T pg_database psql -Upostgres -d dvdrental_fake -v "ON_ERROR_STOP=1"
