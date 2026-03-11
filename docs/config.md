@@ -178,6 +178,7 @@ The config file contains following sections:
 | [table_order](#table_order) | no        | list       | An order of table dumping
 | [default](#default)         | no        | dictionary | Default values for different anonymization rules
 | [filter](#filter)           | no        | dictionary | A filter for tables schema and data (what to skip when dumping)
+| [asserts](#asserts)         | no        | list       | SQL assertions executed before dumping starts
 | [globals](#globals)         | no        | dictionary | Some global values (they are available in anonymization templates)
 
 ## tables
@@ -230,6 +231,7 @@ tables:
 | [rules](#rules)           | yes       | dictionary | Anonymization rules for this table (the column names are the dictionary keys)
 | [rule_order](#rule_order) | no        | list       | An order of rule execution
 | [query](#query)           | no        | dictionary | Conditions for SQL queries for dumping data 
+| [asserts](#asserts)       | no        | list       | SQL assertions executed for this table before dumping starts
 
 You can use table names with schema (e.g. `public.users`) or without it (just `users`). In the latter case, this means
 that the rules will be applied to the `users` table in any schema.
@@ -533,6 +535,113 @@ You can use the `dump_condition`, `transform_condition` and `limit` options in a
 `transform_condition`; `transform_condition` and `limit`; etc).
 
 If you don't need data from a particular table at all, please refer to the [filter](#filter) section.
+
+## asserts
+
+Assertions are SQL checks executed against the source database before dumping starts. You can define
+them globally or inside a specific table. Both forms use the same YAML schema.
+
+See also the complete example config: [`docs/examples/asserts.yml`](examples/asserts.yml).
+
+```yaml
+asserts:
+  - name: no_orphan_payments
+    sql: |
+      select p.id
+      from payments p
+      left join users u on u.id = p.user_id
+      where u.id is null
+    expect: no_rows
+    message: "payments must reference existing users"
+    severity: error
+
+tables:
+  - name: users
+    rules: {}
+    asserts:
+      - name: email_not_null
+        sql: |
+          select count(*) from users where email is null
+        expect:
+          eq: 0
+```
+
+### assert
+
+| Section    | Mandatory | YAML type        | Description
+|---         |---        |---               |---
+| `name`     | yes       | text             | Assertion name shown in errors
+| `sql`      | yes       | text             | SQL query executed before dump
+| `expect`   | yes       | text/dictionary  | Expected result (`no_rows`, `rows_exist`, or scalar comparisons)
+| `message`  | no        | text             | Extra context added to failure output
+| `severity` | no        | text             | `error` stops dumping, `warn` logs a warning
+
+`expect: no_rows` means the SQL query must return zero rows.
+
+```yaml
+asserts:
+  - name: no_duplicate_emails
+    sql: |
+      select email
+      from users
+      group by email
+      having count(*) > 1
+    expect: no_rows
+```
+
+`expect.eq` is intended for scalar queries that return exactly one value.
+
+```yaml
+asserts:
+  - name: active_users_present
+    sql: |
+      select count(*) from users where active = true
+    expect:
+      eq: 42
+```
+
+`expect: rows_exist` means the SQL query must return at least one row.
+
+```yaml
+asserts:
+  - name: users_exist
+    sql: |
+      select 1 from users limit 1
+    expect: rows_exist
+```
+
+Scalar comparisons may be combined, and all of them must pass (`AND` semantics).
+
+```yaml
+asserts:
+  - name: pending_jobs_in_range
+    sql: |
+      select count(*) from jobs where state = 'pending'
+    expect:
+      gt: 0
+      lte: 100
+```
+
+Supported scalar operators:
+
+- `eq`
+- `not_eq`
+- `gt`
+- `gte`
+- `lt`
+- `lte`
+
+Scalar comparisons require the SQL query to return exactly one scalar value. Numeric operators
+(`gt`, `gte`, `lt`, `lte`) require a numeric result.
+
+Recommended style:
+
+- use `expect: no_rows` and `expect: rows_exist` only for row-based checks
+- use dictionary form for scalar checks, even when there is only one operator
+- combine scalar operators only when all conditions must pass (`AND`)
+
+Global assertions run first. Table assertions run after them in the same order as tables are defined
+in the config.
 
 ## table_order
 

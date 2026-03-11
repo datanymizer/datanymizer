@@ -11,7 +11,10 @@ mod value;
 
 pub use engine::Engine;
 pub use locale::{ExtData, LocaleConfig, Localized, LocalizedFaker};
-pub use settings::{Filter, Query, Settings, Table, TableList, Tables};
+pub use settings::{
+    Assert, AssertError, AssertExpectation, AssertScope, AssertSeverity, Filter, Query,
+    ScalarExpectations, Settings, Table, TableList, Tables,
+};
 pub use transformer::{
     TransformContext, TransformResult, Transformer, TransformerDefaults, TransformerInitContext,
 };

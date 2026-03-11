@@ -62,12 +62,12 @@ Docker images are available for different PostgreSQL versions. Use the tag forma
 # Latest version with PostgreSQL latest
 $ docker run --rm -v `pwd`:/app -w /app datanymizer/pg_datanymizer:latest
 
-# Specific version (e.g., 0.7.3) with different PostgreSQL versions
-$ docker run --rm -v `pwd`:/app -w /app datanymizer/pg_datanymizer:0.7.3        # PostgreSQL latest
-$ docker run --rm -v `pwd`:/app -w /app datanymizer/pg_datanymizer:0.7.3-pg17   # PostgreSQL 17
-$ docker run --rm -v `pwd`:/app -w /app datanymizer/pg_datanymizer:0.7.3-pg16   # PostgreSQL 16
-$ docker run --rm -v `pwd`:/app -w /app datanymizer/pg_datanymizer:0.7.3-pg15   # PostgreSQL 15
-$ docker run --rm -v `pwd`:/app -w /app datanymizer/pg_datanymizer:0.7.3-pg14   # PostgreSQL 14
+# Specific version (e.g., 0.7.4) with different PostgreSQL versions
+$ docker run --rm -v `pwd`:/app -w /app datanymizer/pg_datanymizer:0.7.4        # PostgreSQL latest
+$ docker run --rm -v `pwd`:/app -w /app datanymizer/pg_datanymizer:0.7.4-pg17   # PostgreSQL 17
+$ docker run --rm -v `pwd`:/app -w /app datanymizer/pg_datanymizer:0.7.4-pg16   # PostgreSQL 16
+$ docker run --rm -v `pwd`:/app -w /app datanymizer/pg_datanymizer:0.7.4-pg15   # PostgreSQL 15
+$ docker run --rm -v `pwd`:/app -w /app datanymizer/pg_datanymizer:0.7.4-pg14   # PostgreSQL 14
 ```
 
 Available PostgreSQL versions: 14, 15, 16, 17, and latest (no suffix).
@@ -280,6 +280,52 @@ tables:
 
 You can use the `dump_condition`, `transform_condition` and `limit` options in any combination (only
 `transform_condition`; `transform_condition` and `limit`; etc).
+
+### SQL assertions
+
+You can validate source data before dump generation with SQL-based assertions. Assertions may be
+defined globally or per table, and both forms use the same schema.
+
+For a complete ready-to-copy example, see [`docs/examples/asserts.yml`](docs/examples/asserts.yml).
+
+```yaml
+asserts:
+  - name: no_duplicate_emails
+    sql: |
+      select email
+      from users
+      group by email
+      having count(*) > 1
+    expect: no_rows
+
+tables:
+  - name: users
+    rules: {}
+    asserts:
+      - name: users_count
+        sql: select count(*) from users
+        expect:
+          eq: 100
+```
+
+`expect: no_rows` requires the query to return zero rows. `expect.eq` requires a scalar query that
+returns exactly one value. Optional `severity: warn` logs a warning instead of stopping the dump.
+
+`expect: rows_exist` requires the query to return at least one row. Scalar comparisons also support
+`not_eq`, `gt`, `gte`, `lt`, and `lte`, and several scalar operators may be combined with `AND`
+semantics.
+
+```yaml
+asserts:
+  - name: pending_jobs_in_range
+    sql: select count(*) from jobs where state = 'pending'
+    expect:
+      gt: 0
+      lte: 100
+```
+
+Assertions are executed before the schema/data dump starts. `severity: error` stops the dump,
+while `severity: warn` reports the failure and continues.
 
 ### Global variables
 

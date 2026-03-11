@@ -30,6 +30,10 @@ fn dump(name: &str) {
 
 #[test]
 fn simple_dump() {
+    if !helpers::is_configured() {
+        return;
+    }
+
     dump("simple");
 
     let mut src_client = helpers::src_client();

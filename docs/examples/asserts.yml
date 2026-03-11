@@ -1,0 +1,61 @@
+asserts:
+  - name: users_exist
+    sql: |
+      select 1
+      from users
+      limit 1
+    expect: rows_exist
+
+  - name: no_duplicate_emails
+    sql: |
+      select email
+      from users
+      group by email
+      having count(*) > 1
+    expect: no_rows
+    message: "users.email must remain unique"
+
+  - name: pending_jobs_in_range
+    sql: |
+      select count(*)
+      from jobs
+      where state = 'pending'
+    expect:
+      gt: 0
+      lte: 100
+
+  - name: completed_jobs_not_zero
+    sql: |
+      select count(*)
+      from jobs
+      where state = 'completed'
+    expect:
+      not_eq: 0
+    severity: warn
+
+tables:
+  - name: users
+    rules:
+      email:
+        email: {}
+      first_name:
+        first_name: {}
+      last_name:
+        last_name: {}
+    asserts:
+      - name: users_count_non_negative
+        sql: |
+          select count(*)
+          from users
+        expect:
+          gte: 0
+
+  - name: jobs
+    rules: {}
+    asserts:
+      - name: jobs_count_below_hard_limit
+        sql: |
+          select count(*)
+          from jobs
+        expect:
+          lt: 100000

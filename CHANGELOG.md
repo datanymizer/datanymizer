@@ -6,8 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### 🚀 Added
+- Add SQL assertions in `config.yml` with support for global and table-level checks, row-based
+  expectations (`no_rows`, `rows_exist`), scalar comparisons (`eq`, `not_eq`, `gt`, `gte`, `lt`,
+  `lte`), and integration tests for PostgreSQL execution.
 
 ### ⚙️ Changed
+- Run assertions as part of the dumper lifecycle before dump generation starts, while keeping the
+  comparison semantics and validation logic inside `datanymizer_engine`.
+- Extend configuration and CLI documentation with assertion examples and release-ready usage notes.
 
 ### 🛠 Fixed
 

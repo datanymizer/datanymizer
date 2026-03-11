@@ -1,3 +1,4 @@
+mod assert;
 mod filter;
 mod table;
 mod templates;
@@ -14,6 +15,10 @@ use serde_json::Value as JsonValue;
 use std::collections::HashMap;
 
 pub use filter::{Filter, TableList};
+pub use r#assert::{
+    Assert, AssertError, AssertExpectation, AssertScope, AssertSeverity, ScalarExpectations,
+    TableAssert,
+};
 pub use table::{Query, Table};
 pub use templates::TemplatesCollection;
 
@@ -37,6 +42,10 @@ pub struct Settings {
 
     #[serde(default)]
     pub filter: Filter,
+
+    /// SQL assertions executed before the dump starts.
+    #[serde(default)]
+    pub asserts: Vec<Assert>,
 
     /// Global values. Visible in any template.
     /// They may be shadowed by template variables.
@@ -81,6 +90,23 @@ impl Settings {
         self.tables.iter().find(|t| t.name == name)
     }
 
+    /// Returns global and table-local assertions in execution order.
+    pub fn all_asserts(&self) -> Vec<AssertScope<'_>> {
+        let mut asserts = Vec::new();
+
+        for assert in &self.asserts {
+            asserts.push(AssertScope::Global(assert));
+        }
+
+        for table in &self.tables {
+            for assert in &table.asserts {
+                asserts.push(AssertScope::Table(TableAssert { table, assert }));
+            }
+        }
+
+        asserts
+    }
+
     pub fn find_table<T: AsRef<str>>(&self, names: &[T]) -> Option<&Table> {
         for name in names {
             let table = self.get_table(name.as_ref());
@@ -122,6 +148,7 @@ impl Settings {
 mod tests {
     use super::*;
     use crate::{transformers::PersonNameTransformer, LocaleConfig};
+    use serde_json::json;
 
     #[test]
     fn set_defaults() {
@@ -279,5 +306,59 @@ mod tests {
             assert_eq!(get_raw_templates(&s).len(), 2);
             assert_eq!(get_files_templates(&s).len(), 2);
         }
+    }
+
+    #[test]
+    fn collects_global_and_table_asserts() {
+        let config = r#"
+            asserts:
+              - name: global_check
+                sql: select count(*) from users
+                expect:
+                  eq: 1
+            tables:
+              - name: users
+                rules: {}
+                asserts:
+                  - name: table_check
+                    sql: select 1 where false
+                    expect: no_rows
+            "#;
+
+        let settings = Settings::from_yaml(config).unwrap();
+        let asserts = settings.all_asserts();
+
+        assert_eq!(asserts.len(), 2);
+        assert_eq!(asserts[0].assert().name, "global_check");
+        assert_eq!(asserts[0].scope_name(), "global");
+        assert_eq!(asserts[1].assert().name, "table_check");
+        assert_eq!(asserts[1].scope_name(), "users");
+    }
+
+    #[test]
+    fn parses_global_asserts() {
+        let config = r#"
+            asserts:
+              - name: users_count
+                sql: select count(*) from users
+                expect:
+                  eq: 0
+            tables: []
+            "#;
+
+        let settings = Settings::from_yaml(config).unwrap();
+
+        assert_eq!(settings.asserts.len(), 1);
+        assert_eq!(
+            settings.asserts[0].expect,
+            AssertExpectation::Scalar(Box::new(ScalarExpectations {
+                eq: Some(json!(0)),
+                not_eq: None,
+                gt: None,
+                gte: None,
+                lt: None,
+                lte: None,
+            }))
+        );
     }
 }

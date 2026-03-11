@@ -311,7 +311,7 @@ define_fk_transformers![
     "Gets a company name (another variant).",
     ("company_name_alt", CompanyNameAltTransformer, CompanyNameAlt, String, Empty),
     "Gets a company motto.",
-    ("company_motto", CompanyMottoTransformer, CatchPhase, String, Empty),
+    ("company_motto", CompanyMottoTransformer, CatchPhrase, String, Empty),
     "Gets a head component of a company motto.",
     ("company_motto_head", CompanyMottoHeadTransformer, Buzzword, String, Empty),
     "Gets a middle component of a company motto.",

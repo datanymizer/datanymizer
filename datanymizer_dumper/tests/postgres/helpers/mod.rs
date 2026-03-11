@@ -30,6 +30,10 @@ pub fn pg_dump_path() -> String {
     env::var(PG_DUMP_PATH_KEY).unwrap_or("pg_dump".to_string())
 }
 
+pub fn is_configured() -> bool {
+    env::var(DB_ENV_KEY).is_ok()
+}
+
 pub fn src_database_url() -> Url {
     Url::parse(
         env::var(DB_ENV_KEY)

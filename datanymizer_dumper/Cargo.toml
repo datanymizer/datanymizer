@@ -1,6 +1,6 @@
 [package]
 name = "datanymizer_dumper"
-version = "0.7.3"
+version = "0.7.4"
 authors = ["Aleksandr Kirillov <saratovsource@gmail.com>", "Evgeniy Rashchepkin <e.a.rashchepkin@gmail.com>"]
 edition = "2021"
 
@@ -9,11 +9,12 @@ edition = "2021"
 [dependencies]
 datanymizer_engine = { path= "../datanymizer_engine" }
 anyhow = "1.0"
-indicatif = "0.17.3"
+indicatif = "0.18.4"
 log = "0.4.17"
 native-tls = "0.2.11"
-postgres = "0.19.5"
+postgres = { version = "0.19.5", features = ["with-serde_json-1"] }
 postgres-native-tls = "0.5.0"
+serde_json = "1.0"
 solvent = "0.8.3"
 url = "2.3"
 

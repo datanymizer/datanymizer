@@ -42,4 +42,18 @@ impl<'a> QueryWrapper<'a> {
             Self::WithoutTransaction(c) => c.query_one(query, params),
         }
     }
+
+    pub fn query_opt<T>(
+        &mut self,
+        query: &T,
+        params: &[&(dyn ToSql + Sync)],
+    ) -> Result<Option<Row>, postgres::Error>
+    where
+        T: ?Sized + ToStatement,
+    {
+        match self {
+            Self::WithTransaction(t) => t.query_opt(query, params),
+            Self::WithoutTransaction(c) => c.query_opt(query, params),
+        }
+    }
 }

@@ -340,6 +340,7 @@ mod tests {
                 rules: HashMap::new(),
                 rule_order: None,
                 query,
+                asserts: Vec::new(),
             }
         }
 

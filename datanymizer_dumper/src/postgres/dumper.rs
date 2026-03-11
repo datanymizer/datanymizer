@@ -1,6 +1,6 @@
 use super::{
-    connector, query_wrapper::QueryWrapper, row::PgRow, schema_inspector::PgSchemaInspector,
-    table::PgTable,
+    asserts::run_asserts, connector, query_wrapper::QueryWrapper, row::PgRow,
+    schema_inspector::PgSchemaInspector, table::PgTable,
 };
 use crate::{indicator::Indicator, Dumper, SchemaInspector, Table};
 use anyhow::Result;
@@ -146,6 +146,11 @@ impl<W: 'static + Write + Send, I: 'static + Indicator + Send> Dumper for PgDump
     // Stage before dumping data. It makes dump schema with any options
     fn pre_data(&mut self, connection: &mut Self::Connection) -> Result<()> {
         self.debug("Prepare data scheme...".into());
+        run_asserts(
+            &self.engine.settings,
+            &mut connection.client,
+            self.dump_isolation_level,
+        )?;
         self.run_pg_dump("pre-data", connection.url.as_str())
     }
 
