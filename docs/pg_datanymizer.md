@@ -2,6 +2,10 @@
 
 `pg_datanymizer` is the command line application for anonymizing data from PostgreSQL databases.
 
+If the configuration contains SQL assertions, `pg_datanymizer` executes them before writing the
+dump. Failed assertions with `severity: error` stop the process; `severity: warn` prints warnings
+and continues.
+
 #### Usage:
 
 ```

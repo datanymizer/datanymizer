@@ -1,5 +1,6 @@
 use crate::SchemaInspector;
 
+pub mod asserts;
 pub mod column;
 pub mod connector;
 pub mod dumper;

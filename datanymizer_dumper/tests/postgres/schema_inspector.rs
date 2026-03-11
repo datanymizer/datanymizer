@@ -32,6 +32,10 @@ fn assert_fks(table: &PgTable, expected: Vec<&'static str>) {
 
 #[test]
 fn get_tables() {
+    if !helpers::is_configured() {
+        return;
+    }
+
     let mut connection = Connection::new(helpers::src_client(), helpers::src_database_url());
     let inspector = PgSchemaInspector;
     let tables = inspector.get_tables(&mut connection).unwrap();

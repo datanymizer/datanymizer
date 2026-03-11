@@ -1,4 +1,5 @@
 use super::TransformList;
+use crate::settings::Assert;
 use crate::Transformers;
 use serde::Deserialize;
 use std::collections::HashMap;
@@ -26,6 +27,9 @@ pub struct Table {
     pub rule_order: Option<Vec<String>>,
     /// Limit and conditions for the dumping query
     pub query: Option<Query>,
+    /// SQL assertions executed for this table before the dump starts.
+    #[serde(default)]
+    pub asserts: Vec<Assert>,
 }
 
 impl Table {

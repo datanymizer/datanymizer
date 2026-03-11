@@ -46,10 +46,11 @@ impl App {
     {
         let mut connection = self.connector().connect()?;
         let engine = self.engine()?;
+        let dump_isolation_level = self.dump_isolation_level();
 
         PgDumper::new(
             engine,
-            self.dump_isolation_level(),
+            dump_isolation_level,
             self.options.pg_dump_location.clone(),
             w,
             i,

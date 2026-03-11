@@ -19,6 +19,10 @@ fn test_connection(tls_mode: &str) {
 
 #[test]
 fn connect() {
+    if !helpers::is_configured() {
+        return;
+    }
+
     helpers::create_src_db();
 
     test_connection("disable");
