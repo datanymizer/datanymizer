@@ -359,6 +359,7 @@ globals:
 | `city`                         | City names generator                                                         |
 | `phone`                        | Generate random phone with different `format`                                |
 | `pipeline`                     | Use pipeline to generate more complicated values                             |
+| `null`                         | Sets the field value to NULL                                                 |
 | `capitalize`                   | Like filter, it capitalizes input value                                      |
 | `template`                     | Template engine for generate random text with included rules                 |
 | `digit`                        | Random digit (in range `0..9`)                                               |

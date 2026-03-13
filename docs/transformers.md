@@ -220,6 +220,18 @@ Example:
 none: ~
 ```
 
+#### null
+
+Sets the field value to NULL (`\N` in PostgreSQL COPY format).
+This is useful when you want to clear a column during anonymization.
+
+Example:
+
+```yaml
+# You should use ~ (the null value in YAML) for this transformer
+null: ~
+```
+
 #### pipeline
 
 You can use pipelines with complicated rules to generate more difficult values.

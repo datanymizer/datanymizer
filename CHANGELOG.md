@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### 🚀 Added
+- Add `null` transformer to explicitly set field values to NULL (`\N` in PostgreSQL COPY format).
 - Add SQL assertions in `config.yml` with support for global and table-level checks, row-based
   expectations (`no_rows`, `rows_exist`), scalar comparisons (`eq`, `not_eq`, `gt`, `gte`, `lt`,
   `lte`), and integration tests for PostgreSQL execution.
