@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### 🚀 Added
+- Add `default.preserve_null` option to keep NULL values (`\N`) as-is instead of transforming them.
+- Add wildcard patterns for table names and column rules. Use `name: "public.*"` to match all
+  tables in a schema, `names: ["A.*", "B.*"]` to target multiple schemas, and `"*iban"` in column
+  rules to anonymize every column ending in `iban`. Exact matches always take priority over wildcards.
 - Add SQL assertions in `config.yml` with support for global and table-level checks, row-based
   expectations (`no_rows`, `rows_exist`), scalar comparisons (`eq`, `not_eq`, `gt`, `gte`, `lt`,
   `lte`), and integration tests for PostgreSQL execution.

@@ -676,20 +676,25 @@ For additional information please refer to the [template](transformers.md#templa
 
 ## default
 
-| Section       | Mandatory | YAML type | Description
-|---            |---        |---        |---
-| `locale`      | no        | text      | The default locale for transformers
+| Section          | Mandatory | YAML type | Description
+|---               |---        |---        |---
+| `locale`         | no        | text      | The default locale for transformers
+| `preserve_null`  | no        | boolean   | When `true`, NULL values (`\N`) are preserved instead of transformed (default: `false`)
 
 Supported locales are `EN` (the default one), `ZH_TW` (traditional chinese) and `RU` (translation in progress).
 We plan to support more locales in the future.
 
 You can override the locale for each transformer (rule) in its options. Some transformers are not affected by locale.
 
+By default, NULL values (represented as `\N` in PostgreSQL COPY format) are passed to transformers
+and replaced with generated data. Set `preserve_null: true` to keep NULLs as-is globally.
+
 Example:
 
 ```yaml
 default:
   locale: RU
+  preserve_null: true
 ```
 
 ## filter

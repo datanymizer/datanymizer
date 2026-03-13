@@ -308,7 +308,10 @@ mod tests {
                           "#;
         let mut transformer: EmailTransformer = serde_yaml::from_str(config).unwrap();
         let locale = LocaleConfig::RU;
-        let ctx = TransformerInitContext::from_defaults(TransformerDefaults { locale });
+        let ctx = TransformerInitContext::from_defaults(TransformerDefaults {
+            locale,
+            ..Default::default()
+        });
 
         Transformer::init(&mut transformer, &ctx);
 
