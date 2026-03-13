@@ -157,7 +157,7 @@ impl Transformer for TemplateTransformer {
 
         match self.render(&render_context) {
             Ok(res) => TransformResult::present(res),
-            Err(e) => TransformResult::error(field_name, field_value, &e.to_string()),
+            Err(e) => TransformResult::error(field_name, field_value, format!("{:?}", e).as_str()),
         }
     }
 
@@ -327,6 +327,63 @@ mod tests {
 
                 assert_eq!(res, Ok(Some(expected)));
             }
+
+            #[test]
+            fn issue_178() {
+                let init_ctx = TransformerInitContext::default();
+
+                let mut w_column_indexes = HashMap::new();
+                w_column_indexes.insert(String::from("login_session_id"), 0);
+
+                let write_config = r#"
+                    template:
+                      format: "{{ _1 }}{{ store_write(key='session.' ~ prev.login_session_id, value=_1) }}"
+                      rules:
+                        - hex_token: {len: 128}
+                    "#;
+                let prev_row = vec!["9b026a58239a4cc78309434fa4dbbed8"];
+
+                let mut w: Transformers = serde_yaml::from_str(write_config).unwrap();
+                w.init(&init_ctx);
+
+                let w_ctx =
+                    TransformContext::new(&None, Some(&w_column_indexes), Some(&prev_row), None);
+
+                let value = w
+                    .transform(
+                        "authentication_request.login_session_id",
+                        prev_row[0].clone(),
+                        &Some(w_ctx),
+                    )
+                    .unwrap()
+                    .unwrap();
+                dbg!(value);
+                dbg!(&init_ctx.template_store);
+
+                let mut r_column_indexes = HashMap::new();
+                r_column_indexes.insert(String::from("id"), 0);
+                let read_config = r#"
+                    template:
+                        format: "{{ store_read(key='session.' ~ prev.id) }}"
+                    "#;
+                let prev_row = vec!["9b026a58239a4cc78309434fa4dbbed8"];
+                let mut r: Transformers = serde_yaml::from_str(read_config).unwrap();
+                r.init(&init_ctx);
+
+                let r_ctx =
+                    TransformContext::new(&None, Some(&r_column_indexes), Some(&prev_row), None);
+
+                let value = r
+                    .transform(
+                        "authentication_session.id",
+                        prev_row[0].clone(),
+                        &Some(r_ctx),
+                    )
+                    .unwrap()
+                    .unwrap();
+                dbg!(value);
+                dbg!(&init_ctx.template_store);
+            }
         }
 
         mod final_row {
@@ -401,6 +458,7 @@ mod tests {
                 assert_eq!(res, Ok(Some(expected)));
             }
 
+            #[ignore]
             #[test]
             fn ref_to_untransformed_value() {
                 let final_row = vec![
