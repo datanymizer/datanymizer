@@ -9,7 +9,7 @@ use crate::options::{Options, TransactionConfig};
 
 use datanymizer_dumper::{
     indicator::{ConsoleIndicator, Indicator, SilentIndicator},
-    postgres::{connector::Connector, dumper::PgDumper, IsolationLevel},
+    postgres::{connector::Connector, dry_run, dumper::PgDumper, IsolationLevel},
     Dumper,
 };
 use datanymizer_engine::{Engine, Settings};
@@ -30,6 +30,12 @@ impl App {
     }
 
     pub fn run(&self) -> Result<()> {
+        if self.options.dry_run {
+            let mut connection = self.connector().connect()?;
+            let mut settings = Settings::new(self.options.config.clone())?;
+            return dry_run::run(&mut connection, &mut settings);
+        }
+
         match (&self.options.file, &self.options.no_indicator) {
             (Some(filename), false) => {
                 self.make_dump(File::create(filename)?, ConsoleIndicator::new())

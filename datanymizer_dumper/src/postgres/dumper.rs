@@ -78,36 +78,67 @@ impl<W: 'static + Write + Send, I: 'static + Indicator + Send> PgDumper<W, I> {
 
     fn dump_table(&mut self, table: &PgTable, qw: &mut QueryWrapper) -> Result<()> {
         let started = Instant::now();
+        let full_name = table.get_full_name();
 
-        self.write_log(format!("Dump table: {}", &table.get_full_name()))?;
+        self.write_log(format!("Dump table: {}", &full_name))?;
 
         self.dump_writer.write_all(b"\n")?;
         self.dump_writer.write_all(table.query_from().as_bytes())?;
         self.dump_writer.write_all(b"\n")?;
 
-        let cfg = self.engine.settings.find_table(&table.get_names());
+        let matched_cfg = self.engine.settings.find_table(&table.get_names());
+
+        // Determine the transform_map key: for wildcard/names entries, use the
+        // full table name (registered by register_table_transforms); for exact
+        // entries, use the config name.
+        let transform_key = matched_cfg
+            .map(|c| {
+                if c.has_wildcards() || c.name.is_empty() {
+                    full_name.clone()
+                } else {
+                    c.name.clone()
+                }
+            })
+            .unwrap_or_default();
+
+        let has_transforms = self
+            .engine
+            .settings
+            .transformers_for(&transform_key)
+            .is_some_and(|t| !t.is_empty());
+
+        // For wildcard config entries with no matching columns, treat as no config
+        let cfg = if has_transforms {
+            matched_cfg
+        } else if matched_cfg.is_some_and(|c| c.has_wildcards() || c.name.is_empty()) {
+            None
+        } else {
+            matched_cfg
+        };
 
         self.indicator
-            .start_pb(table.count_of_query_to(cfg), &table.get_full_name());
+            .start_pb(table.count_of_query_to(cfg), &full_name);
 
         let mut count: u64 = 0;
-        if let Some(cfg) = cfg {
-            if let Some(transformed_query) = table.transformed_query_to(Some(cfg), count) {
-                let reader = qw.copy_out(transformed_query.as_str())?;
-                for line in reader.lines() {
-                    self.indicator.inc_pb(1);
+        if has_transforms {
+            if let Some(cfg) = cfg {
+                if let Some(transformed_query) = table.transformed_query_to(Some(cfg), count) {
+                    let reader = qw.copy_out(transformed_query.as_str())?;
+                    for line in reader.lines() {
+                        self.indicator.inc_pb(1);
 
-                    let row = PgRow::from_string_row(line?, table.clone());
-                    let transformed =
-                        row.transform(&self.engine, cfg.name.as_str())
+                        let row = PgRow::from_string_row(line?, table.clone());
+                        let transformed = row
+                            .transform(&self.engine, transform_key.as_str())
                             .map_err(|err| {
                                 warn!("{:#?}", err);
                                 err
                             })?;
-                    self.dump_writer.write_all(transformed.as_bytes())?;
-                    self.dump_writer.write_all(b"\n")?;
+                        self.dump_writer.write_all(transformed.as_bytes())?;
+                        self.dump_writer.write_all(b"\n")?;
 
-                    count += 1;
+                        count += 1;
+                    }
                 }
             }
         }
@@ -157,6 +188,18 @@ impl<W: 'static + Write + Send, I: 'static + Indicator + Send> Dumper for PgDump
     // This stage makes dump data only
     fn data(&mut self, connection: &mut Self::Connection) -> Result<()> {
         self.write_log("Start dumping data".into())?;
+
+        // Resolve wildcard table/column rules against actual table metadata
+        let table_info: Vec<_> = self
+            .tables
+            .iter()
+            .map(|t| (t.get_full_name(), t.get_name(), t.get_columns_names()))
+            .collect();
+        for (full_name, short_name, columns) in &table_info {
+            self.engine
+                .settings
+                .register_table_transforms(full_name, short_name, columns);
+        }
 
         let all_tables_count = self.tables.len();
 

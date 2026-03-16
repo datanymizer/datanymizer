@@ -123,6 +123,12 @@ pub struct Options {
 
     #[arg(long, name = "no-indicator", help = "Disable indicator")]
     pub no_indicator: bool,
+
+    #[arg(
+        long,
+        help = "Dry-run: show anonymization plan without dumping data"
+    )]
+    pub dry_run: bool,
 }
 
 impl Options {
