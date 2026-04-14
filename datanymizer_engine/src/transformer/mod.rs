@@ -32,6 +32,7 @@ pub struct TransformError {
 #[serde(default)]
 pub struct TransformerDefaults {
     pub locale: LocaleConfig,
+    pub preserve_null: bool,
 }
 
 #[derive(Default)]

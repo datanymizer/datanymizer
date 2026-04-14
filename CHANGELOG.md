@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### 🚀 Added
+- Add `default.preserve_null` option to keep NULL values (`\N`) as-is instead of transforming them.
+- Add wildcard patterns for table names and column rules. Use `name: "public.*"` to match all
+  tables in a schema, `names: ["A.*", "B.*"]` to target multiple schemas, and `"*iban"` in column
+  rules to anonymize every column ending in `iban`. Exact matches always take priority over wildcards.
 - Add wildcard patterns for table names. Use `name: "public.*"` to match all tables in a schema,
   or `names: ["A.*", "B.*"]` to apply the same rules across multiple schemas. Exact matches always
   take priority over wildcards. When a table is matched via wildcard, column rules for columns that

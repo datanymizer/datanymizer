@@ -85,6 +85,7 @@ mod tests {
         t.init(&TransformerInitContext::from_defaults(
             TransformerDefaults {
                 locale: LocaleConfig::RU,
+                ..Default::default()
             },
         ));
 
