@@ -4,7 +4,7 @@ use crate::Transformers;
 use serde::Deserialize;
 use std::collections::HashMap;
 
-type Rules = HashMap<String, Transformers>;
+pub type Rules = HashMap<String, Transformers>;
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct Query {
@@ -18,9 +18,12 @@ pub struct Query {
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct Table {
-    /// Table name
+    /// Table name (exact or wildcard pattern like "public.*")
+    #[serde(default)]
     pub name: String,
-    /// Rule set for columns
+    /// Alternative: list of table name patterns (e.g. ["A.*", "B.*"])
+    pub names: Option<Vec<String>>,
+    /// Rule set for columns (keys are exact column names)
     #[serde(with = "serde_yaml::with::singleton_map_recursive")]
     pub rules: Rules,
     /// Order of applying rules. All rules not listed are placed at the beginning
@@ -33,6 +36,25 @@ pub struct Table {
 }
 
 impl Table {
+    /// Returns the list of table name patterns this config entry matches against.
+    pub fn patterns(&self) -> Vec<&str> {
+        if let Some(names) = &self.names {
+            names.iter().map(|s| s.as_str()).collect()
+        } else {
+            vec![&self.name]
+        }
+    }
+
+    /// Returns true if any pattern contains wildcard characters (* or ?).
+    pub fn has_wildcards(&self) -> bool {
+        let is_wild = |s: &str| s.contains('*') || s.contains('?');
+        if let Some(names) = &self.names {
+            names.iter().any(|p| is_wild(p))
+        } else {
+            is_wild(&self.name)
+        }
+    }
+
     pub fn transform_list(&self) -> TransformList {
         let explicit_rule_order = self.rule_order.clone().unwrap_or_default();
         let mut transform_list: TransformList = self
