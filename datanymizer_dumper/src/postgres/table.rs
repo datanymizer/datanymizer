@@ -337,6 +337,7 @@ mod tests {
         fn cfg(query: Option<QueryCfg>) -> TableCfg {
             TableCfg {
                 name: table_name(),
+                names: None,
                 rules: HashMap::new(),
                 rule_order: None,
                 query,

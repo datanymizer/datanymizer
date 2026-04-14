@@ -7,7 +7,7 @@ use options::Options;
 mod app;
 mod options;
 
-fn main() -> Result<()> {
+fn main() {
     let options = Options::parse();
 
     env_logger::init_from_env(env_logger::Env::default().filter_or(
@@ -21,6 +21,13 @@ fn main() -> Result<()> {
         },
     ));
 
+    if let Err(err) = run(options) {
+        eprintln!("Error: {err:#}");
+        std::process::exit(1);
+    }
+}
+
+fn run(options: Options) -> Result<()> {
     let app = App::from_options(options)?;
     app.run()
 }
