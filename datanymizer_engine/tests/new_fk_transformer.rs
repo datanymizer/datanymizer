@@ -74,6 +74,7 @@ fn set_defaults() {
     t.init(&TransformerInitContext::from_defaults(
         TransformerDefaults {
             locale: LocaleConfig::RU,
+            ..Default::default()
         },
     ));
     assert_eq!(t.locale(), Some(LocaleConfig::RU));
