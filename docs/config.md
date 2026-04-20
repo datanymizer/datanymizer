@@ -227,20 +227,90 @@ tables:
 
 | Section                   | Mandatory | YAML type  | Description
 |---                        |---        |---         |---
-| `name`                    | yes       | text       | The table name in the database
+| `name`                    | no*       | text       | The table name (exact or wildcard pattern)
+| `names`                   | no*       | list       | A list of table name patterns
 | [rules](#rules)           | yes       | dictionary | Anonymization rules for this table (the column names are the dictionary keys)
 | [rule_order](#rule_order) | no        | list       | An order of rule execution
-| [query](#query)           | no        | dictionary | Conditions for SQL queries for dumping data 
+| [query](#query)           | no        | dictionary | Conditions for SQL queries for dumping data
 | [asserts](#asserts)       | no        | list       | SQL assertions executed for this table before dumping starts
+
+\* Either `name` or `names` should be provided.
 
 You can use table names with schema (e.g. `public.users`) or without it (just `users`). In the latter case, this means
 that the rules will be applied to the `users` table in any schema.
+
+#### Wildcard patterns in table names
+
+Table names (in both `name` and `names`) support wildcard patterns:
+
+* `*` matches arbitrary many (including zero) occurrences of any character
+* `?` matches exactly one occurrence of any character
+
+##### Wildcard table names
+
+Use wildcards in `name` to match multiple tables:
+
+```yaml
+tables:
+  # Match all tables in the public schema
+  - name: "public.*"
+    rules:
+      email:
+        email: {}
+```
+
+##### The `names` field
+
+Use `names` to apply the same rules to tables matching any of several patterns:
+
+```yaml
+tables:
+  # Apply to all tables in schemas A and B
+  - names: ["A.*", "B.*"]
+    rules:
+      email:
+        email: {}
+```
+
+When a table is matched via a wildcard pattern, exact column names that don't exist in that table
+are silently skipped — the same rule set may apply to tables with different schemas.
+
+When a table is matched exactly (`name: users` or a non-wildcard entry in `names`), exact column
+names that don't exist produce an error, catching typos.
+
+##### Precedence
+
+When multiple table entries could match, the most specific one wins:
+
+1. **Exact table name** (`public.users`) always takes priority over wildcards
+2. **First matching wildcard entry** wins when multiple wildcard entries could match (config order matters)
+
+Example:
+
+```yaml
+tables:
+  # Wildcard: applies to all public tables
+  - name: "public.*"
+    rules:
+      email:
+        email: {}
+
+  # Exact: overrides the wildcard for this specific table
+  - name: public.users
+    rules:
+      email:
+        email:
+          uniq: true
+```
+
+In this example, `public.users` uses the exact entry (with `uniq: true`), while all other
+`public.*` tables use the wildcard entry.
 
 #### rules
 
 Anonymization rules (we call them `transformers`) for the table columns.
 
-Dictionary keys are the column names.
+Dictionary keys are the exact column names.
 Each value contains an anonymizing configuration for column (a name of transformer - an address, a company name, a person name, 
 some template, etc, with its options).
 
@@ -254,6 +324,7 @@ some template, etc, with its options).
 | `city`                         | City names generator                                                          |
 | `phone`                        | Generate random phone with different `format`                                 |
 | `pipeline`                     | Use pipeline to generate more complicated values                              |
+| `null`                         | Sets the field value to NULL                                                  |
 | `capitalize`                   | Like filter, it capitalizes input value                                       |
 | `template`                     | Template engine for generate random text with included rules                  |
 | `digit`                        | Random digit (in range `0..9`), localized                                               |
@@ -676,20 +747,25 @@ For additional information please refer to the [template](transformers.md#templa
 
 ## default
 
-| Section       | Mandatory | YAML type | Description
-|---            |---        |---        |---
-| `locale`      | no        | text      | The default locale for transformers
+| Section          | Mandatory | YAML type | Description
+|---               |---        |---        |---
+| `locale`         | no        | text      | The default locale for transformers
+| `preserve_null`  | no        | boolean   | When `true`, NULL values (`\N`) are preserved instead of transformed (default: `false`)
 
 Supported locales are `EN` (the default one), `ZH_TW` (traditional chinese) and `RU` (translation in progress).
 We plan to support more locales in the future.
 
 You can override the locale for each transformer (rule) in its options. Some transformers are not affected by locale.
 
+By default, NULL values (represented as `\N` in PostgreSQL COPY format) are passed to transformers
+and replaced with generated data. Set `preserve_null: true` to keep NULLs as-is globally.
+
 Example:
 
 ```yaml
 default:
   locale: RU
+  preserve_null: true
 ```
 
 ## filter

@@ -4,6 +4,9 @@ use serde::{Deserialize, Serialize};
 mod none;
 pub use none::NoneTransformer;
 
+mod null;
+pub use null::NullTransformer;
+
 mod internet;
 pub use internet::{EmailKind, EmailTransformer, IpTransformer, PasswordTransformer};
 
@@ -78,6 +81,7 @@ macro_rules! define_transformers_enum {
 
 define_transformers_enum![
     ("none", None, NoneTransformer),
+    ("null", Null, NullTransformer),
     ("email", Email, EmailTransformer),
     ("ip", Ip, IpTransformer),
     ("phone", Phone, PhoneTransformer),
@@ -198,6 +202,7 @@ mod tests {
         ts.init(&TransformerInitContext::from_defaults(
             TransformerDefaults {
                 locale: LocaleConfig::RU,
+                ..Default::default()
             },
         ));
 

@@ -246,6 +246,67 @@ You can use wildcards in the `filter` section:
 * `?` matches exactly one occurrence of any character;
 * `*` matches arbitrary many (including zero) occurrences of any character.
 
+For example, to skip all tables in the `audit` schema and dump only `public.user*` tables:
+
+```yaml
+# config.yml
+#...
+filter:
+  data:
+    only:
+      - "public.user*"
+  schema:
+    except:
+      - "audit.*"
+```
+
+### Wildcard patterns in table names
+
+Table names support wildcard patterns (`*`, `?`). Anonymize all tables in a schema:
+
+```yaml
+# config.yml
+tables:
+  - name: "public.*"
+    rules:
+      email:
+        email: {}
+```
+
+Apply the same rules to tables across multiple schemas with `names`:
+
+```yaml
+# config.yml
+tables:
+  - names: ["schema_a.*", "schema_b.*"]
+    rules:
+      email:
+        email: {}
+```
+
+Exact table entries always take priority over wildcards. When a table is matched by a wildcard,
+column rules for columns that don't exist are silently skipped:
+
+```yaml
+# config.yml
+tables:
+  # Wildcard: applies to all public tables (missing columns silently skipped)
+  - name: "public.*"
+    rules:
+      email:
+        email: {}
+
+  # Exact: overrides the wildcard for public.users
+  - name: public.users
+    rules:
+      email:
+        email:
+          uniq: true
+```
+
+Either `name` or `names` must be provided (not both). For the full specification see
+[config.yml](docs/config.md).
+
 ### Dump conditions and limit
 
 You can specify conditions (SQL `WHERE` statement) and limit for dumped data per table:
@@ -359,6 +420,7 @@ globals:
 | `city`                         | City names generator                                                         |
 | `phone`                        | Generate random phone with different `format`                                |
 | `pipeline`                     | Use pipeline to generate more complicated values                             |
+| `null`                         | Sets the field value to NULL                                                 |
 | `capitalize`                   | Like filter, it capitalizes input value                                      |
 | `template`                     | Template engine for generate random text with included rules                 |
 | `digit`                        | Random digit (in range `0..9`)                                               |
