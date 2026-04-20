@@ -29,6 +29,10 @@ impl Engine {
         if let Some(ts) = ts {
             for (field, tr) in ts {
                 if let Some(&i) = column_indexes.get(field) {
+                    if values[i] == "\\N" && self.settings.default.preserve_null {
+                        continue;
+                    }
+
                     match tr.transform(
                         &format!("{}.{}", table, field),
                         values[i],
@@ -98,6 +102,60 @@ mod tests {
         assert_eq!(tr_values[2], "");
         assert_eq!(tr_values[3], "");
         assert_ne!(tr_values[4], "");
+    }
+
+    #[test]
+    fn preserve_null_keeps_null_values() {
+        let config = r#"
+          source: {}
+          default:
+            preserve_null: true
+          tables:
+            - name: actor
+              rules:
+                first_name:
+                  first_name: {}
+        "#;
+        let settings = Settings::from_yaml(config).unwrap();
+
+        let table = String::from("actor");
+        let values = vec!["\\N"];
+
+        let mut column_indexes = HashMap::new();
+        column_indexes.insert(String::from("first_name"), 0);
+
+        let tr_values = Engine::new(settings)
+            .process_row(table, &column_indexes, &values)
+            .unwrap();
+
+        assert_eq!(tr_values[0], "\\N");
+    }
+
+    #[test]
+    fn preserve_null_still_transforms_non_null() {
+        let config = r#"
+          source: {}
+          default:
+            preserve_null: true
+          tables:
+            - name: actor
+              rules:
+                first_name:
+                  capitalize: ~
+        "#;
+        let settings = Settings::from_yaml(config).unwrap();
+
+        let table = String::from("actor");
+        let values = vec!["hello"];
+
+        let mut column_indexes = HashMap::new();
+        column_indexes.insert(String::from("first_name"), 0);
+
+        let tr_values = Engine::new(settings)
+            .process_row(table, &column_indexes, &values)
+            .unwrap();
+
+        assert_eq!(tr_values[0], "Hello");
     }
 
     mod row_refs {
