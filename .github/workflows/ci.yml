@@ -77,12 +77,20 @@ jobs:
       postgres_password: 'pgpass'
       postgres_port: 5432
       postgres_version: 14
+      mysql_password: 'mysqlpass'
+      mysql_port: 3307
+      mysql_version: '8.4'
     steps:
       - name: Run Postgres (with Docker)
         # requires the `server.crt` file for TLS support
         run: |
           docker run -d -p 127.0.0.1:${{ env.postgres_port }}:5432 -e POSTGRES_PASSWORD=${{ env.postgres_password }} \
             postgres:${{ env.postgres_version }}
+      - name: Run MySQL (with Docker)
+        # the runner's preinstalled `mysql` and `mysqldump` clients are used by the tests
+        run: |
+          docker run -d -p 127.0.0.1:${{ env.mysql_port }}:3306 -e MYSQL_ROOT_PASSWORD=${{ env.mysql_password }} \
+            mysql:${{ env.mysql_version }}
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@v1
         id: toolchain
@@ -113,18 +121,25 @@ jobs:
           rm -rf datanymizer_engine/.coverage
       - name: Add llvm-tools
         run: rustup component add llvm-tools-preview
+      - name: Wait for MySQL
+        run: |
+          for i in $(seq 60); do
+            MYSQL_PWD=${{ env.mysql_password }} mysqladmin --protocol=TCP -h127.0.0.1 -P${{ env.mysql_port }} -uroot ping && break
+            sleep 2
+          done
       - name: Run tests
         run: cargo test --all-features
         env:
           LLVM_PROFILE_FILE: ".coverage/%Nm-%p-%m.profraw"
           DATANYMIZER_TEST_PG_DB: |
             postgres://postgres:${{ env.postgres_password }}@localhost:${{ env.postgres_port }}/datanymizer_test
+          DATANYMIZER_TEST_MYSQL_DB: mysql://root:${{ env.mysql_password }}@127.0.0.1:${{ env.mysql_port }}/datanymizer_test
           RUSTFLAGS: |
             -Cinstrument-coverage
           RUSTDOCFLAGS: |
             -Cinstrument-coverage -Zunstable-options --persist-doctests target/debug/doctests
       - name: Prepare coverage info for Codecov
-        run: |          
+        run: |
           grcov --output-type=lcov --output-file=lcov.info -b target/debug \
             --keep-only=${{ github.workspace }}/datanymizer_engine/src/* \
             --keep-only=${{ github.workspace }}/datanymizer_dumper/src/* \
