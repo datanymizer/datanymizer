@@ -1522,6 +1522,7 @@ dependencies = [
  "datanymizer_dumper",
  "datanymizer_engine",
  "env_logger",
+ "mysql",
  "openssl",
  "url",
 ]

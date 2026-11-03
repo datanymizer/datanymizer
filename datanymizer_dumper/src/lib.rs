@@ -350,11 +350,11 @@ mod tests {
         }
 
         fn default_query(&self) -> String {
-            String::new()
+            "default".to_string()
         }
 
-        fn query_with_select(&self, _cs: Vec<Option<String>>, _limit: Option<u64>) -> String {
-            String::new()
+        fn query_with_select(&self, cs: Vec<Option<String>>, limit: Option<u64>) -> String {
+            format!("select{}{}", sql_conditions(cs), sql_limit(limit))
         }
     }
 
@@ -621,6 +621,54 @@ mod tests {
                 assert_eq!(weight_map["public.table2"], 0);
                 assert_eq!(weight_map["public.table3"], 0);
             }
+        }
+    }
+
+    mod table_queries {
+        use super::*;
+
+        fn cfg(yaml: &str) -> Settings {
+            Settings::from_yaml(&format!("tables:\n  - name: t\n{}", yaml)).unwrap()
+        }
+
+        #[test]
+        fn without_config() {
+            let t = MockTable::new("public", "t");
+            assert_eq!(t.transformed_query_to(None, 0), None);
+            assert_eq!(t.untransformed_query_to(None, 0), Some("default".into()));
+            assert_eq!(t.count_of_query_to(None), 0);
+        }
+
+        #[test]
+        fn without_query() {
+            let t = MockTable::new("public", "t");
+            let s = cfg("    rules: {}");
+            let c = s.find_table(&["t".to_string()]);
+            assert_eq!(t.transformed_query_to(c, 0), Some("default".into()));
+            assert_eq!(t.untransformed_query_to(c, 0), None);
+        }
+
+        #[test]
+        fn with_query() {
+            let t = MockTable::new("public", "t");
+            let s = cfg(
+                "    query:\n      limit: 10\n      dump_condition: a = 1\n      transform_condition: b = 2\n    rules: {}",
+            );
+            let c = s.find_table(&["t".to_string()]);
+            assert_eq!(
+                t.transformed_query_to(c, 3),
+                Some("select WHERE (a = 1) AND (b = 2) LIMIT 7".into())
+            );
+            assert_eq!(
+                t.untransformed_query_to(c, 3),
+                Some(
+                    "select WHERE (a = 1) AND ((NOT (b = 2)) OR ((b = 2) IS NULL)) LIMIT 7".into()
+                )
+            );
+            // the limit is reached
+            assert_eq!(t.untransformed_query_to(c, 10), None);
+            // table size (0) is less than the limit
+            assert_eq!(t.count_of_query_to(c), 0);
         }
     }
 }

@@ -184,6 +184,20 @@ fn dump_from(
 }
 
 /// Values only: `Row` equality also compares column metadata (including the database name)
+/// Dumps the source db into nowhere (for checking errors)
+fn dump_to_sink(config: &str, mysqldump: String) -> anyhow::Result<()> {
+    MyDumper::new(
+        Engine::new(Settings::from_yaml(config).unwrap()),
+        None,
+        mysqldump,
+        std::io::sink(),
+        SilentIndicator,
+        vec![],
+    )
+    .unwrap()
+    .dump(&mut src_connection())
+}
+
 fn rows(conn: &mut Conn, sql: &str) -> Vec<Vec<Value>> {
     conn.query_map(sql, Row::unwrap).unwrap()
 }
@@ -286,6 +300,18 @@ asserts:
     sql: SELECT COUNT(*) FROM users
     expect:
       eq: {}
+  - name: string_scalar
+    sql: SELECT login FROM users WHERE id = 1
+    expect:
+      eq: alice
+  - name: null_scalar
+    sql: SELECT email FROM users WHERE id = 2
+    expect:
+      not_eq: 1
+  - name: only_a_warning
+    sql: SELECT id FROM users
+    expect: no_rows
+    severity: warn
 tables: []
 "#,
             count
@@ -626,4 +652,76 @@ fn all_types() {
             }
         }
     }
+}
+
+#[test]
+fn mysqldump_error() {
+    if !is_configured() {
+        return;
+    }
+
+    // `false` exits with an error
+    let err = dump_to_sink("tables: []", "false".to_string()).unwrap_err();
+    assert!(err.to_string().contains("mysqldump error"));
+}
+
+#[test]
+fn transform_error() {
+    if !is_configured() {
+        return;
+    }
+
+    let config = r#"
+tables:
+  - name: users
+    rules:
+      email:
+        template:
+          format: "{{ prev.no_such_column }}"
+"#;
+    let mysqldump = env::var(MYSQLDUMP_PATH_KEY).unwrap_or("mysqldump".to_string());
+    assert!(dump_to_sink(config, mysqldump).is_err());
+}
+
+#[test]
+fn only_filter() {
+    if !is_configured() {
+        return;
+    }
+
+    let config = "filter:\n  schema:\n    only:\n      - \"*.audit\"\ntables: []";
+    let dst_url = dump("only", config, None).unwrap();
+    assert_eq!(
+        strings(&mut conn(&dst_url), "SHOW TABLES"),
+        vec![Some("audit".into())]
+    );
+}
+
+#[test]
+fn tls() {
+    if !is_configured() {
+        return;
+    }
+
+    let cipher = |mut c: Connection| -> String {
+        let row: Option<(String, String)> = c
+            .conn
+            .query_first("SHOW SESSION STATUS LIKE 'Ssl_cipher'")
+            .unwrap();
+        row.unwrap().1
+    };
+
+    // the test server uses a self-signed certificate
+    let with_flags = Connector::new(src_url(), true, true).connect().unwrap();
+    assert!(!cipher(with_flags).is_empty());
+
+    let mut url = src_url();
+    url.set_query(Some(
+        "danger_accept_invalid_certs=true&danger_skip_domain_validation=true",
+    ));
+    let with_params = Connector::new(url, false, false).connect().unwrap();
+    assert!(!cipher(with_params).is_empty());
+
+    let plain = Connector::new(src_url(), false, false).connect().unwrap();
+    assert!(cipher(plain).is_empty());
 }

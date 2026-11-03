@@ -62,6 +62,7 @@ How the dump is built:
 * The "schema" part of a table name is the database name: filters use `app.users` (rules may use just `users`).
 * Generated columns are skipped (they are recalculated on restore); binary columns are written as hex literals.
 * `--dump-transaction RepeatableRead` gives a consistent snapshot across all tables (InnoDB).
-* TLS is configured with the URL params of the [mysql crate](https://docs.rs/mysql), e.g. `?require_ssl=true`.
+* TLS is enabled by any TLS URL param of the [mysql crate](https://docs.rs/mysql/latest/mysql/struct.Opts.html#method.from_url),
+  e.g. `?root_cert_path=/path/to/ca.pem`, or by the `--accept_invalid_certs` / `--accept_invalid_hostnames` flags.
 * The password is passed to `mysqldump` via the `MYSQL_PWD` environment variable.
 * Use the `mysqldump` matching your server: MariaDB's dumps start with a sandbox-mode line that MySQL clients reject.

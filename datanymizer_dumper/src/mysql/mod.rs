@@ -30,13 +30,21 @@ impl Connector {
         }
     }
 
-    /// TLS is configured via URL params of the `mysql` crate (e.g. `?require_ssl=true`)
+    /// TLS is enabled by any TLS URL param of the `mysql` crate (e.g. `?root_cert_path=ca.pem`)
+    /// or by the `accept_invalid_*` flags
     pub fn connect(&self) -> Result<Connection> {
         let opts = Opts::from_url(self.url.as_str())?;
-        let ssl_opts = opts.get_ssl_opts().cloned().map(|o: SslOpts| {
-            o.with_danger_skip_domain_validation(self.accept_invalid_hostnames)
-                .with_danger_accept_invalid_certs(self.accept_invalid_certs)
-        });
+        let flags = self.accept_invalid_hostnames || self.accept_invalid_certs;
+        let ssl_opts = opts
+            .get_ssl_opts()
+            .cloned()
+            .or_else(|| flags.then(SslOpts::default))
+            .map(|o| {
+                let skip_domain = o.skip_domain_validation() || self.accept_invalid_hostnames;
+                let invalid_certs = o.accept_invalid_certs() || self.accept_invalid_certs;
+                o.with_danger_skip_domain_validation(skip_domain)
+                    .with_danger_accept_invalid_certs(invalid_certs)
+            });
         let opts: Opts = OptsBuilder::from_opts(opts).ssl_opts(ssl_opts).into();
         let mut conn = Conn::new(opts.clone())?;
         mysql::prelude::Queryable::query_drop(&mut conn, "SET NAMES utf8mb4")?;
@@ -194,4 +202,42 @@ impl MyTable {
 
 pub fn quote_ident(name: &str) -> String {
     format!("`{}`", name.replace('`', "``"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::HashSet;
+
+    #[test]
+    fn column() {
+        let c = MyColumn {
+            position: 2,
+            name: "email".into(),
+            data_type: "varchar".into(),
+        };
+        assert_eq!(c.position(), 1);
+        assert_eq!(c.name(), "email");
+        assert_eq!(c.inner_kind(), None);
+    }
+
+    #[test]
+    fn table() {
+        let mut t = MyTable::new("users".into(), "app".into());
+        t.set_columns(vec![MyColumn {
+            position: 1,
+            name: "id".into(),
+            data_type: "int".into(),
+        }]);
+        assert_eq!(t.get_columns().len(), 1);
+        assert_eq!(t.get_names(), vec!["app.users", "users"]);
+
+        // equality and hashing use the full name only
+        let same = MyTable::new("users".into(), "app".into());
+        let other = MyTable::new("users".into(), "other".into());
+        assert_eq!(t, same);
+        assert_ne!(t, other);
+        let set: HashSet<_> = [t, same, other].into_iter().collect();
+        assert_eq!(set.len(), 2);
+    }
 }

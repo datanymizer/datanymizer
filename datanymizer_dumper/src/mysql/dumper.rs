@@ -7,12 +7,7 @@ use datanymizer_engine::{
 use log::warn;
 use mysql::{consts::ColumnType, prelude::Queryable, AccessMode, Column, Opts, Row, TxOpts, Value};
 use serde_json::Value as JsonValue;
-use std::{
-    borrow::Cow,
-    io::{self, prelude::*},
-    process::{self, Command},
-    time::Instant,
-};
+use std::{borrow::Cow, io::prelude::*, process::Command, time::Instant};
 
 pub use mysql::IsolationLevel;
 
@@ -89,13 +84,12 @@ impl<W: 'static + Write + Send, I: 'static + Indicator + Send> MyDumper<W, I> {
         }
         let dump_output = cmd.args(&args).output()?;
         if !dump_output.status.success() {
-            eprintln!(
-                "mysqldump error. Command:\n{} {}\nOutput:",
+            return Err(anyhow!(
+                "mysqldump error. Command:\n{} {}\nOutput:\n{}",
                 program,
-                args.join(" ")
-            );
-            io::stderr().write_all(&dump_output.stderr)?;
-            process::exit(1);
+                args.join(" "),
+                String::from_utf8_lossy(&dump_output.stderr)
+            ));
         }
 
         self.dump_writer
@@ -303,10 +297,7 @@ fn row_cells(row: &Row) -> (Vec<String>, Vec<String>) {
                 (s, lit)
             }
             // the text protocol returns only NULL or bytes, but keep a sane fallback
-            v => {
-                let s = v.as_sql(true);
-                (s.clone(), s)
-            }
+            v => (v.as_sql(true), v.as_sql(true)),
         })
         .unzip()
 }

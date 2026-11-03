@@ -21,3 +21,6 @@ env_logger = "0.10.0"
 url = "2.3"
 [target.'cfg(not(target_os = "windows"))'.dependencies]
 openssl = { version = ">=0.10.55" }
+
+[dev-dependencies]
+mysql = { version = "28", default-features = false, features = ["minimal-rust", "native-tls"] }
