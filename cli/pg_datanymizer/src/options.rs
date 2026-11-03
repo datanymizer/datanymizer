@@ -17,7 +17,7 @@ pub enum TransactionConfig {
 #[derive(Parser, Debug, Clone, Default)]
 #[command(
     name = "pg_datanymizer",
-    about = "Powerful Postgres database anonymizer with flexible rules",
+    about = "Powerful Postgres and MySQL database anonymizer with flexible rules",
     version,
     disable_help_flag = true
 )]
@@ -97,6 +97,13 @@ pub struct Options {
     pub pg_dump_location: String,
 
     #[arg(
+        long = "mysqldump",
+        help = "mysqldump file location (used with mysql:// URLs)",
+        default_value = "mysqldump"
+    )]
+    pub mysqldump_location: String,
+
+    #[arg(
         long = "accept_invalid_hostnames",
         help = "Accept or not invalid hostnames when using SSL"
     )]
@@ -110,7 +117,7 @@ pub struct Options {
 
     #[arg(
         name = "PG_DUMP_ARGS",
-        help = "The remaining arguments are passed directly to `pg_dump` calls. You should add `--` before <DBNAME> in such cases"
+        help = "The remaining arguments are passed directly to `pg_dump` (or `mysqldump`) calls. You should add `--` before <DBNAME> in such cases"
     )]
     pub pg_dump_args: Vec<String>,
 
@@ -129,7 +136,7 @@ impl Options {
     pub fn database_url(&self) -> Result<Url> {
         if let Ok(url) = Url::parse(self.database.as_str()) {
             return match url.scheme() {
-                "postgres" | "postgresql" => Ok(url),
+                "postgres" | "postgresql" | "mysql" => Ok(url),
                 _ => Err(anyhow!("Scheme url error")),
             };
         }

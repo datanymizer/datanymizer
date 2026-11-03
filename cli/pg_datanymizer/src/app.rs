@@ -9,6 +9,7 @@ use crate::options::{Options, TransactionConfig};
 
 use datanymizer_dumper::{
     indicator::{ConsoleIndicator, Indicator, SilentIndicator},
+    mysql,
     postgres::{connector::Connector, dumper::PgDumper, IsolationLevel},
     Dumper,
 };
@@ -44,6 +45,9 @@ impl App {
         W: 'static + Write + Send,
         I: 'static + Indicator + Send,
     {
+        if self.database_url.scheme() == "mysql" {
+            return self.make_mysql_dump(w, i);
+        }
         let mut connection = self.connector().connect()?;
         let engine = self.engine()?;
         let dump_isolation_level = self.dump_isolation_level();
@@ -55,6 +59,36 @@ impl App {
             w,
             i,
             self.options.pg_dump_args.clone(),
+        )?
+        .dump(&mut connection)
+    }
+
+    fn make_mysql_dump<W, I>(&self, w: W, i: I) -> Result<()>
+    where
+        W: 'static + Write + Send,
+        I: 'static + Indicator + Send,
+    {
+        let options = &self.options;
+        let mut connection = mysql::Connector::new(
+            self.database_url.clone(),
+            options.accept_invalid_hostnames,
+            options.accept_invalid_certs,
+        )
+        .connect()?;
+        let level = self.dump_isolation_level().map(|l| match l {
+            IsolationLevel::ReadUncommitted => mysql::dumper::IsolationLevel::ReadUncommitted,
+            IsolationLevel::RepeatableRead => mysql::dumper::IsolationLevel::RepeatableRead,
+            IsolationLevel::Serializable => mysql::dumper::IsolationLevel::Serializable,
+            _ => mysql::dumper::IsolationLevel::ReadCommitted,
+        });
+
+        mysql::dumper::MyDumper::new(
+            self.engine()?,
+            level,
+            options.mysqldump_location.clone(),
+            w,
+            i,
+            options.pg_dump_args.clone(),
         )?
         .dump(&mut connection)
     }

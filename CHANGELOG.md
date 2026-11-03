@@ -9,13 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add SQL assertions in `config.yml` with support for global and table-level checks, row-based
   expectations (`no_rows`, `rows_exist`), scalar comparisons (`eq`, `not_eq`, `gt`, `gte`, `lt`,
   `lte`), and integration tests for PostgreSQL execution.
+- Add MySQL / MariaDB support: pass a `mysql://` URL to `pg_datanymizer` (the same config format;
+  schema via `mysqldump`, data as multi-row `INSERT`s, triggers after data, consistent snapshot with
+  `--dump-transaction RepeatableRead`, SQL assertions), with integration tests for MySQL 8.4 and
+  MariaDB 11 covering all column types.
 
 ### ⚙️ Changed
+- Move the shared table query logic (`transformed_query_to`, `untransformed_query_to`,
+  `count_of_query_to`) to default methods of the `Table` trait.
 - Run assertions as part of the dumper lifecycle before dump generation starts, while keeping the
   comparison semantics and validation logic inside `datanymizer_engine`.
 - Extend configuration and CLI documentation with assertion examples and release-ready usage notes.
 
 ### 🛠 Fixed
+- PostgreSQL integration test `simple_dump`: wait for `psql` to apply the dump instead of killing it.
 
 ## [v0.7.3] - 2026-01-30
 ### ⚙️ Changed

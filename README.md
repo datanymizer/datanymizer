@@ -11,6 +11,7 @@
 [![Audit](https://github.com/datanymizer/datanymizer/actions/workflows/audit.yml/badge.svg)](https://github.com/datanymizer/datanymizer/actions/workflows/audit.yml)
 
 Powerful database anonymizer with flexible rules. Written in Rust.
+Supports PostgreSQL and MySQL/MariaDB ([MySQL notes](docs/pg_datanymizer.md#mysql--mariadb)).
 
 Datanymizer is created & [supported by Evrone](https://evrone.com/?utm_campaign=datanymizer). See what else we [develop with Rust](https://evrone.com/rust?utm_source=github&utm_campaign=datanymizer).
 

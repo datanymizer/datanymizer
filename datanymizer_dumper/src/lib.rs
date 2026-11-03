@@ -6,6 +6,7 @@ use solvent::DepGraph;
 use std::{collections::HashMap, hash::Hash, time::Instant};
 
 pub mod indicator;
+pub mod mysql;
 pub mod postgres;
 
 // Dumper makes dump with same stages

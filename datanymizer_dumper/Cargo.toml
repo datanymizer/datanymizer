@@ -17,6 +17,8 @@ postgres-native-tls = "0.5.0"
 serde_json = "1.0"
 solvent = "0.8.3"
 url = "2.3"
+mysql = { version = "28", default-features = false, features = ["minimal-rust", "native-tls"] }
 
 [features]
 pg_db_tests = []
+mysql_db_tests = []
