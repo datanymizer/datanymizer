@@ -34,9 +34,7 @@ mod tests {
         let faker = MiddleName(RU);
         let value: String = faker.fake();
 
-        assert!(RU::NAME_MIDDLE_NAME
-            .iter()
-            .any(|&dict_value| dict_value == value.as_str()));
+        assert!(RU::NAME_MIDDLE_NAME.contains(&value.as_str()));
     }
 
     #[test]

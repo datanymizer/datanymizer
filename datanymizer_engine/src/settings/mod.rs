@@ -126,7 +126,7 @@ impl Settings {
         }
 
         for table in self.tables.iter_mut() {
-            for (_name, rule) in table.rules.iter_mut() {
+            for rule in table.rules.values_mut() {
                 rule.init(&init_ctx);
             }
         }

@@ -79,7 +79,7 @@ impl<W: 'static + Write + Send, I: 'static + Indicator + Send> PgDumper<W, I> {
     fn dump_table(&mut self, table: &PgTable, qw: &mut QueryWrapper) -> Result<()> {
         let started = Instant::now();
 
-        self.write_log(format!("Dump table: {}", &table.get_full_name()))?;
+        self.write_log(format!("Dump table: {}", table.get_full_name()))?;
 
         self.dump_writer.write_all(b"\n")?;
         self.dump_writer.write_all(table.query_from().as_bytes())?;
