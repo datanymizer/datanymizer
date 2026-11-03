@@ -24,6 +24,8 @@ fn dump(name: &str) {
     .unwrap();
     let mut connection = Connection::new(helpers::src_client(), helpers::src_database_url());
     dumper.dump(&mut connection).unwrap();
+    // closes psql's stdin
+    drop(dumper);
 
     dst.close();
 }

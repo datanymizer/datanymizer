@@ -22,7 +22,8 @@ impl DstWrapper {
     }
 
     pub fn close(&mut self) {
-        self.0.kill().unwrap();
+        // the dumper has dropped stdin, so psql exits after applying the whole dump
+        assert!(self.0.wait().unwrap().success());
     }
 }
 
